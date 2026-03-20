@@ -1,0 +1,165 @@
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../utils/platform/web_utils.dart';
+import '../providers/user_profile_state_provider.dart';
+
+import '../../router/app_router.dart';
+
+import '../providers/core_providers.dart';
+import '../../features/postLogin/users/user_barrel.dart';
+import '../constants/app_constants.dart';
+import '../exceptions/app_exceptions.dart';
+import 'connectivity_service.dart';
+import 'rbac_service.dart';
+import 'error_handler.dart';
+
+class AuthService {
+  final SupabaseClient _client;
+  final RbacService _rbacService;
+  final Ref _ref;
+  StreamSubscription<List<Map<String, dynamic>>>? _profileSubscription;
+
+  AuthService(this._client, this._rbacService, this._ref);
+
+  /// Sign in with Google and load user profile
+  Future<void> signInWithGoogle() async {
+    final String redirectUri;
+    if (kIsWeb) {
+      redirectUri = kReleaseMode
+          ? AppConstants.webAppProdUrl
+          : AppConstants.webAppLocalUrl;
+    } else {
+      redirectUri = AppConstants.mobileRedirectUri;
+    }
+
+    try {
+      if (!await ConnectivityService.isOnline()) {
+        throw NoInternetException();
+      }
+      await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: redirectUri,
+      );
+    } catch (e, stackTrace) {
+      ErrorHandler.handle(
+        e,
+        stackTrace,
+        context: 'Google Sign-In',
+        showToUser: true,
+      );
+      rethrow;
+    }
+  }
+
+  /// Listen for auth state changes and keep profile in sync
+  void initializeAuthListener() {
+    _client.auth.onAuthStateChange.listen((authState) async {
+      switch (authState.event) {
+        case AuthChangeEvent.signedIn:
+          if (kIsWeb) {
+            webUtils.cleanUrlParameters();
+          }
+          await loadAndStoreUserProfile();
+          initializeUserProfileStream();
+          break;
+        case AuthChangeEvent.signedOut:
+          disposeProfileStream();
+          _ref.read(userProfileStateProvider.notifier).clearProfile();
+          _ref.read(routerProvider).go('/'); // Navigate to welcome page
+          break;
+        case AuthChangeEvent.tokenRefreshed:
+        case AuthChangeEvent.userUpdated:
+          // Keep profile fresh when token or user info changes
+          await loadAndStoreUserProfile();
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  /// Load user profile from Supabase and store globally, then initialize RBAC
+  Future<void> loadAndStoreUserProfile() async {
+    try {
+      if (!await ConnectivityService.isOnline()) {
+        throw NoInternetException();
+      }
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in');
+
+      final userData = await _client
+          .from(ModelUserFields.table)
+          .select('*')
+          .eq(ModelUserFields.userId, userId)
+          .single();
+
+      final profile = ModelUser.fromMap(userData);
+
+      // Initialize RBAC for the logged-in user BEFORE marking profile as ready
+      await _rbacService.initializeRbac(userId);
+
+      _ref.read(userProfileStateProvider.notifier).setProfile(profile);
+    } catch (e, st) {
+      ErrorHandler.handle(
+        e,
+        st,
+        context: 'Loading user profile',
+        showToUser: e is! NoInternetException, // Don't show redundant offline toast
+        logLevel:
+            e is NoInternetException
+                ? ErrorLogLevel.warning
+                : ErrorLogLevel.error,
+      );
+      // We don't rethrow here to prevent crashing the global initialization flow
+    }
+  }
+
+  /// Subscribe to realtime updates for the current user's profile
+  void initializeUserProfileStream() {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    // Cancel any existing subscription
+    _profileSubscription?.cancel();
+
+    _profileSubscription = _client
+        .from(ModelUserFields.table)
+        .stream(primaryKey: [ModelUserFields.userId])
+        .eq(ModelUserFields.userId, userId)
+        .listen(
+          (snapshot) {
+            if (snapshot.isNotEmpty) {
+              final updatedProfile = ModelUser.fromMap(snapshot.first);
+              _ref
+                  .read(userProfileStateProvider.notifier)
+                  .setProfile(updatedProfile);
+            }
+          },
+          onError: (error, stackTrace) {
+            _ref.read(loggerServiceProvider).error(
+              'Error in userProfileStream (AuthService): $error',
+              stackTrace is StackTrace ? stackTrace : null,
+            );
+          },
+        );
+  }
+
+  /// Cancel profile stream subscription
+  void disposeProfileStream() {
+    _profileSubscription?.cancel();
+    _profileSubscription = null;
+  }
+
+  /// Sign out the current user
+  Future<void> signOut() async {
+    _rbacService.clearCache();
+    await _client.auth.signOut();
+    disposeProfileStream();
+    _ref.read(userProfileStateProvider.notifier).clearProfile();
+  }
+
+  /// Get the current Supabase user
+  User? get currentUser => _client.auth.currentUser;
+}
