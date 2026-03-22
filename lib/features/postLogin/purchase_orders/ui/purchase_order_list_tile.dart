@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/utils/date_utils.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/po_items/po_item_barrel.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 
 import '../../../../core/services/entity_service.dart';
+import '../../cart/providers/cart_providers.dart';
 import '../model/purchase_order_model.dart';
 import '../providers/purchase_order_tile_logic.dart';
 
@@ -33,7 +36,6 @@ class PurchaseOrderListTile extends ConsumerStatefulWidget {
 
 class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
   bool _isUpdating = false;
-  bool _isExpanded = false;
 
   void _onStatusChanged(String? newStatus) {
     if (newStatus == null) return;
@@ -49,143 +51,126 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isRbacReady = ref.watch(rbacInitializationProvider);
-    final rbacService = ref.watch(rbacServiceProvider);
-
-    final canUpdate = isRbacReady && rbacService.canUpdate('purchase_order');
-    final canDelete = isRbacReady && rbacService.canDelete('purchase_order');
+    final l10n = ref.watch(l10nProvider);
 
     final dateStr = widget.entity.createdAt != null
         ? formatTimestamp(widget.entity.createdAt!)
         : '';
-    final shopName =
-        widget.adapter
-            .getLabelValue(widget.entity, ModelPurchaseOrderFields.poShopId)
-            ?.toString() ??
-        'Unknown Shop';
+    final userComment = widget.entity.userComment ?? 'No Birthdate';
     final status = widget.entity.status ?? 'pending';
-    final itemCount = widget.entity.poLineItemCount ?? 0;
+    final statusColor = PurchaseOrderTileLogic.getStatusColor(status);
+    final birthdateLabel = l10n['birthdate_label'] ?? 'Birthdate';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          width: 1,
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          width: 1.5,
         ),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => setState(() => _isExpanded = !_isExpanded),
-        child: Padding(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          final userComment = widget.entity.userComment;
+          if (userComment != null && userComment != 'No Birthdate') {
+            try {
+              final birthdate = DateFormat('dd-MMM-yyyy').parse(userComment);
+              ref.read(birthdateProvider.notifier).state = birthdate;
+            } catch (e) {
+              debugPrint('Error parsing birthdate from history: $e');
+            }
+          }
+          context.goNamed(AppRoute.cartName);
+        },
+        child: Container(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.surface,
+                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              ],
+            ),
+          ),
+          child: Row(
             children: [
-              if (widget.poItemTile != true) ...[
-                _buildHeader(theme, dateStr, _isExpanded, status),
-                const SizedBox(height: 12),
-              ],
-              _buildShopInfo(context, theme, shopName, canDelete, status),
-              const SizedBox(height: 12),
-              _buildStatsRow(theme, itemCount, status, canUpdate),
-              if (widget.entity.poId != null && _isExpanded) ...[
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 16),
-                PoItemPillList(poId: widget.entity.poId!),
-              ],
+              // Mystical Icon Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Main content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      userComment,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "$birthdateLabel • $dateStr",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Actions & Status
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _StatusBadge(status: status, statusColor: statusColor),
+                  if (status.toLowerCase() == 'confirmed' && widget.entity.poId != null) ...[
+                    const SizedBox(height: 4),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: theme.colorScheme.error.withValues(alpha: 0.7),
+                        size: 20,
+                      ),
+                      tooltip: 'Delete Order',
+                      onPressed: () => PurchaseOrderTileLogic.deleteOrder(
+                        context: context,
+                        ref: ref,
+                        poId: widget.entity.poId!,
+                        setUpdating: (val) => setState(() => _isUpdating = val),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(
-    ThemeData theme,
-    String dateStr,
-    bool isExpanded,
-    String status,
-  ) {
-    final statusColor = PurchaseOrderTileLogic.getStatusColor(status);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            dateStr,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        _StatusBadge(status: status, statusColor: statusColor),
-        const SizedBox(width: 8),
-        Icon(
-          isExpanded ? Icons.expand_less : Icons.expand_more,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShopInfo(
-    BuildContext context,
-    ThemeData theme,
-    String shopName,
-    bool canDelete,
-    String status,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            shopName,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsRow(
-    ThemeData theme,
-    int itemCount,
-    String status,
-    bool canUpdate,
-  ) {
-    final profitStr = PurchaseOrderTileLogic.formatCurrency(
-      widget.entity.profitToShop,
-    );
-    final amountStr = PurchaseOrderTileLogic.formatCurrency(
-      widget.entity.poTotalAmount,
-    );
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _StatItem(label: 'Items', value: '$itemCount'),
-        _StatItem(
-          label: 'Shop Profit',
-          value: '₹$profitStr',
-          valueColor: Colors.green[700],
-        ),
-        _StatItem(
-          label: 'Total Amount',
-          value: '₹$amountStr',
-          valueColor: theme.colorScheme.primary,
-          crossAxisAlignment: CrossAxisAlignment.end,
-        ),
-      ],
     );
   }
 }
@@ -218,39 +203,3 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final CrossAxisAlignment crossAxisAlignment;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.crossAxisAlignment = CrossAxisAlignment.center,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        Text(
-          value,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
-}

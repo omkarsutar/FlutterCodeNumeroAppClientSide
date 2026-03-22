@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/user_profile_state_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/product_routes_json.dart';
+import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 
 class LoadingPage extends ConsumerWidget {
@@ -22,16 +22,7 @@ class LoadingPage extends ConsumerWidget {
     if (isRbacInitialized && (isGuest || profile?.preferredRouteId != null)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
-
-        final rbacService = ref.read(rbacServiceProvider);
-        final roleName = rbacService.roleName?.toLowerCase();
-
-        if (roleName == 'guest') {
-          context.goNamed(ProductsRoutesJson.listRouteName);
-        } else {
-          context.goNamed(ProductsRoutesJson.listRouteName);
-          // context.goNamed(PurchaseOrdersRoutesJson.listRouteName);
-        }
+        context.goNamed(AppRoute.cartName);
       });
     }
 

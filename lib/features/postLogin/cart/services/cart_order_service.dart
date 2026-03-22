@@ -1,29 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/exceptions/app_exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../purchase_orders/purchase_order_barrel.dart';
-import '../../po_items/model/po_item_model.dart';
-import '../../po_items/service/po_item_service_impl.dart';
-import '../providers/cart_view_logic.dart';
 
 class CartOrderService {
   final SupabaseClient client;
   final PurchaseOrderServiceImpl poService;
-  final PoItemServiceImpl poItemService;
 
-  CartOrderService({
-    required this.client,
-    required this.poService,
-    required this.poItemService,
-  });
+  CartOrderService({required this.client, required this.poService});
 
   Future<void> placeOrder({
-    required ProcessedCartData viewData,
     required String userId,
     required String? roleName,
+    String? birthdate,
   }) async {
     // Check connectivity before placing order
     if (!await ConnectivityService.isOnline()) {
@@ -72,72 +63,17 @@ class CartOrderService {
     }
 
     final po = ModelPurchaseOrder(
-      poTotalAmount: double.tryParse(viewData.totalAmount.replaceAll(',', '')),
-      poLineItemCount: viewData.itemCount,
-      poShopId: poShopId,
-      poRouteId: poRouteId,
+      poTotalAmount: 0,
+      poLineItemCount: 0,
+      poShopId: null,
+      poRouteId: null,
       status: 'confirmed',
-      userComment: null, // Keep userComment untouched as per request
-      adminComment: userComment, // Store metadata info in adminComment
+      userComment: birthdate,
+      adminComment: userComment,
       createdBy: userId,
       updatedBy: userId,
     );
 
-    final createdPo = await poService.create(po);
-    final newPoId = createdPo.poId;
-
-    if (newPoId == null) {
-      throw Exception('Failed to get generated PO ID');
-    }
-
-    for (final processedItem in viewData.items) {
-      final item = ModelPoItem(
-        poItemId: null,
-        poId: newPoId,
-        productId: processedItem.item.productId,
-        itemName: processedItem.item.itemName,
-        itemQty: processedItem.item.itemQty,
-        itemSellRate: processedItem.item.itemSellRate,
-        itemPrice: processedItem.item.itemPrice,
-        itemUnitMrp: processedItem.item.itemUnitMrp,
-        profitToShop: processedItem.item.profitToShop,
-        createdBy: userId,
-        updatedBy: userId,
-      );
-      await poItemService.create(item);
-    }
-
-    // WhatsApp sharing
-    // await shareOrderToWhatsApp(viewData);
-  }
-
-  Future<void> shareOrderToWhatsApp(ProcessedCartData viewData) async {
-    final buffer = StringBuffer();
-    buffer.writeln('🛒 *Order Details*');
-    buffer.writeln('');
-    buffer.writeln('Total Items: ${viewData.itemCount}');
-    buffer.writeln('');
-    buffer.writeln('📋 *Items:*');
-
-    for (var processedItem in viewData.items) {
-      buffer.writeln('');
-      buffer.writeln('▪️ ${processedItem.productName}');
-      buffer.writeln('   Qty: ${processedItem.formattedQty}');
-    }
-
-    buffer.writeln('');
-    buffer.writeln('━━━━━━━━━━━━━━━');
-    buffer.writeln('💰 *Total Amount:* ₹${viewData.totalAmount}');
-    buffer.writeln('📈 *Shop Profit:* ₹${viewData.totalProfit}');
-
-    final message = Uri.encodeComponent(buffer.toString());
-    final whatsappUrl = 'https://wa.me/919421582162?text=$message';
-    final uri = Uri.parse(whatsappUrl);
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      debugPrint('[CartOrderService] Could not launch WhatsApp');
-    }
+    await poService.create(po);
   }
 }

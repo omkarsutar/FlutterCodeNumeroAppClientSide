@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/product_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,7 +12,6 @@ import 'core/providers/auth_providers.dart';
 import 'core/providers/localization_provider.dart';
 import 'core/services/connectivity_service.dart';
 import 'router/app_router.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,9 +40,6 @@ void main() async {
       debugPrint('Error in web diagnostics: $e');
     }
   }
-
-  // Initialize JSON-based routes
-  await ProductsRoutesJson.initialize();
 
   // Make error messages selectable on web
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -89,7 +84,7 @@ class _MainAppState extends ConsumerState<MainApp> {
       child: RoleChangeDetector(
         child: RetailerShopLinkChangeDetector(
           child: MaterialApp.router(
-            title: 'Orderzapp',
+            title: 'NumeroApp',
             scaffoldMessengerKey: scaffoldMessengerKey,
             routerConfig: router,
             theme: ThemeData(
@@ -161,10 +156,11 @@ class RoleChangeDetector extends ConsumerWidget {
               children: [
                 const Icon(Icons.security, color: Colors.white),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Your access permissions have changed. Reloading app...',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    ref.read(l10nProvider)['role_change_msg'] ??
+                        'Your access permissions have changed. Reloading app...',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -234,10 +230,11 @@ class RetailerShopLinkChangeDetector extends ConsumerWidget {
               children: [
                 const Icon(Icons.link, color: Colors.white),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Your shop assignments have changed. Reloading app...',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    ref.read(l10nProvider)['shop_link_change_msg'] ??
+                        'Your shop assignments have changed. Reloading app...',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

@@ -1,23 +1,56 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'user_profile_state_provider.dart';
+import 'auth_providers.dart';
 
 enum AppLanguage { english, hindi, marathi }
 
 class LanguageNotifier extends Notifier<AppLanguage> {
   @override
-  AppLanguage build() => AppLanguage.hindi;
+  AppLanguage build() {
+    // Listen to profile changes to sync language from DB
+    final profile = ref.watch(userProfileStateProvider).profile;
+    final dbLang = profile?.userLanguage;
+
+    if (dbLang != null) {
+      return _mapCodeToLanguage(dbLang);
+    }
+
+    return AppLanguage.hindi; // Default language
+  }
 
   void toggleLanguage() {
+    AppLanguage next;
     if (state == AppLanguage.english) {
-      state = AppLanguage.hindi;
+      next = AppLanguage.hindi;
     } else if (state == AppLanguage.hindi) {
-      state = AppLanguage.marathi;
+      next = AppLanguage.marathi;
     } else {
-      state = AppLanguage.english;
+      next = AppLanguage.english;
     }
+    setLanguage(next);
   }
 
   void setLanguage(AppLanguage lang) {
+    if (state == lang) return;
     state = lang;
+
+    // Persist to Supabase if logged in
+    final authService = ref.read(authServiceProvider);
+    if (authService.currentUser != null) {
+      authService.updateUserLanguage(lang);
+    }
+  }
+
+  AppLanguage _mapCodeToLanguage(String code) {
+    switch (code) {
+      case 'hi':
+        return AppLanguage.hindi;
+      case 'mr':
+        return AppLanguage.marathi;
+      case 'en':
+      default:
+        return AppLanguage.english;
+    }
   }
 }
 
@@ -32,8 +65,14 @@ final l10nProvider = Provider<Map<String, String>>((ref) {
 
 const _translations = {
   AppLanguage.english: {
-    'app_title': 'OrderZApp',
+    'app_title': 'NumeroApp',
     'my_cart': 'My Cart',
+    'birthdate_label': 'Birthdate',
+    'age_prefix': 'Your age today is',
+    'no_birthdate': 'No Birthdate',
+    'years': 'years',
+    'months': 'months',
+    'days': 'days',
     'products': 'Products',
     'search_hint': 'Search products...',
     'add_to_cart': 'Add to Cart',
@@ -43,6 +82,7 @@ const _translations = {
     'add_items': 'Add Items',
     'empty_cart_btn': 'Empty Cart',
     'place_order': 'Place Order',
+    'pay_now': 'Pay Now',
     'thank_you': 'Thank You!',
     'order_success': 'Your order has been placed successfully.',
     'continue_shopping': 'Continue Shopping',
@@ -63,9 +103,9 @@ const _translations = {
     'profile': 'Profile',
     'orders': 'Orders',
     'home': 'Home',
-    'welcome_orderzapp': 'Welcome to Orderzapp',
+    'welcome_numeroapp': 'Welcome to NumeroApp',
     'welcome_user': 'Welcome, {name}',
-    'welcome_suffix': 'to Orderzapp',
+    'welcome_suffix': 'to NumeroApp',
     'role': 'Role',
     'purchase_history': 'Purchase History',
     'login': 'Login',
@@ -81,10 +121,19 @@ const _translations = {
     'save_failed': 'Failed to save.',
     'delete_failed': 'Failed to delete.',
     'please_wait': 'Please wait...',
+    'role_change_msg': 'Your access permissions have changed. Reloading app...',
+    'shop_link_change_msg':
+        'Your shop assignments have changed. Reloading app...',
   },
   AppLanguage.marathi: {
-    'app_title': 'OrderZApp',
+    'app_title': 'NumeroApp',
     'my_cart': ' माझे कार्ट',
+    'birthdate_label': 'जन्म तारीख',
+    'age_prefix': 'तुमचे आजचे वय',
+    'no_birthdate': 'जन्म तारीख निवडली नाही',
+    'years': 'वर्षे',
+    'months': 'महिने',
+    'days': 'दिवस',
     'products': 'प्रोडक्ट्स',
     'search_hint': 'प्रोडक्ट्स शोधा...',
     'add_to_cart': 'कार्टमध्ये टाका',
@@ -94,6 +143,7 @@ const _translations = {
     'add_items': 'प्रोडक्ट्स वाढवा',
     'empty_cart_btn': 'कार्ट रिकामे करा',
     'place_order': 'ऑर्डर करा',
+    'pay_now': 'आता पैसे द्या',
     'thank_you': 'धन्यवाद!',
     'order_success': 'आपली ऑर्डर यशस्वीरीत्या पूर्ण झाली आहे.',
     'continue_shopping': 'खरेदी सुरू ठेवा',
@@ -114,9 +164,9 @@ const _translations = {
     'profile': 'माझे प्रोफाइल',
     'orders': 'माझी ऑर्डर',
     'home': 'All',
-    'welcome_orderzapp': 'OrderZApp मध्ये स्वागत आहे',
+    'welcome_numeroapp': 'NumeroApp मध्ये स्वागत आहे',
     'welcome_user': 'स्वागत आहे, {name}',
-    'welcome_suffix': 'OrderZApp मध्ये',
+    'welcome_suffix': 'NumeroApp मध्ये',
     'role': 'Role',
     'purchase_history': 'जुने ऑर्डर',
     'login': 'लॉगिन करा',
@@ -132,10 +182,19 @@ const _translations = {
     'save_failed': 'सेव्ह होऊ शकले नाही.',
     'delete_failed': 'डिलीट होऊ शकले नाही.',
     'please_wait': 'कृपया थांबा..',
+    'role_change_msg': 'तुमची परवानगी बदलली आहे. अ‍ॅप पुन्हा लोड होत आहे...',
+    'shop_link_change_msg':
+        'तुमची शॉप असाइनमेंट बदलली आहे. अ‍ॅप पुन्हा लोड होत आहे...',
   },
   AppLanguage.hindi: {
-    'app_title': 'OrderZApp',
+    'app_title': 'NumeroApp',
     'my_cart': 'मेरा कार्ट',
+    'birthdate_label': 'जन्म तिथि',
+    'age_prefix': 'आपकी आज की उम्र',
+    'no_birthdate': 'जन्म तिथि नहीं चुनी गई',
+    'years': 'साल',
+    'months': 'महीने',
+    'days': 'दिन',
     'products': 'प्रोडक्ट्स',
     'search_hint': 'प्रोडक्ट खोजें...',
     'add_to_cart': 'कार्ट में डालें',
@@ -145,6 +204,7 @@ const _translations = {
     'add_items': 'प्रोडक्ट जोड़ें',
     'empty_cart_btn': 'कार्ट खाली करें',
     'place_order': 'ऑर्डर करें',
+    'pay_now': 'अभी भुगतान करें',
     'thank_you': 'धन्यवाद!',
     'order_success': 'आपका ऑर्डर सफलतापूर्वक हो गया है।',
     'continue_shopping': 'खरीदारी जारी रखें',
@@ -165,9 +225,9 @@ const _translations = {
     'profile': 'मेरा प्रोफ़ाइल',
     'orders': 'मेरे ऑर्डर',
     'home': 'All',
-    'welcome_orderzapp': 'OrderZApp में स्वागत है',
+    'welcome_numeroapp': 'NumeroApp में स्वागत है',
     'welcome_user': 'स्वागत है, {name}',
-    'welcome_suffix': 'OrderZApp में',
+    'welcome_suffix': 'NumeroApp में',
     'role': 'Role',
     'purchase_history': 'पुराने ऑर्डर',
     'login': 'लॉगिन करें',
@@ -183,5 +243,8 @@ const _translations = {
     'save_failed': 'सेव नहीं हो पाया।',
     'delete_failed': 'डिलीट नहीं हो पाया।',
     'please_wait': 'कृपया प्रतीक्षा करें...',
+    'role_change_msg': 'आपकी अनुमति बदल गई है। ऐप फिर से लोड हो रहा है...',
+    'shop_link_change_msg':
+        'आपका शॉप असाइनमेंट बदल गया है। ऐप फिर से लोड हो रहा है...',
   },
 };

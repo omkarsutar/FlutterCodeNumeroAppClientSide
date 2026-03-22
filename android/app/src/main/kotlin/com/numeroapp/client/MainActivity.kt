@@ -1,4 +1,4 @@
-package com.example.flutter_supabase_order_app_mobile
+package com.numeroapp.client
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,6 +1,6 @@
 {
-    "name": "Orderzapp",
-    "short_name": "Orderzapp",
+    "name": "NumeroApp",
+    "short_name": "NumeroApp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

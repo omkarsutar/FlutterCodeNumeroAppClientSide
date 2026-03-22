@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/product_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/purchase_orders/ui/purchase_order_list_byShopID.dart';
+import 'package:flutter_supabase_order_app_mobile/features/postLogin/purchase_orders/ui/purchase_order_list_page.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,12 +23,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     routes: [
       ...authRoutes,
-      ...ProductsRoutesJson.routes,
       GoRoute(
-        path: '/purchase-orders-by-shop',
-        name: 'purchase-orders-by-shop',
+        path: AppRoute.purchaseOrders,
+        name: AppRoute.purchaseOrdersName,
         builder: (context, state) {
-          return PurchaseOrderListByShopID(
+          return PurchaseOrdersPage(
             entityMeta: EntityMeta(
               entityName: 'Purchase Order',
               entityNamePlural: 'Purchase Orders',
@@ -42,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             viewRouteName: 'purchase-order-view',
             newRouteName: 'purchase-order-new',
             rbacModule: 'purchase_order',
-            searchFields: ['po_shop_id', 'status'],
+            searchFields: ['po_id', 'status'],
           );
         },
       ),
@@ -86,7 +84,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           (isGuest || profile?.preferredRouteId != null);
 
       final isPublicRoute =
-          state.uri.path.startsWith('/products') ||
           state.uri.path.startsWith('/cart');
 
       // --- Pending Order Redirect (High Priority) ---
@@ -102,14 +99,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // Redirect to products page if not logged in and trying to access protected routes
+      // Redirect to cart page if not logged in and trying to access protected routes
       if (!isLoggedIn && !isAuthPage && !isAtRoot && !isPublicRoute) {
-        return state.namedLocation(ProductsRoutesJson.listRouteName);
+        return state.namedLocation(AppRoute.cartName);
       }
 
-      // Redirect to products page if at root and not logged in
+      // Redirect to cart page if at root and not logged in
       if (!isLoggedIn && isAtRoot) {
-        return state.namedLocation(ProductsRoutesJson.listRouteName);
+        return state.namedLocation(AppRoute.cartName);
       }
       if (isLoggedIn && (isAuthPage || isAtRoot)) {
         debugPrint(
@@ -122,7 +119,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
 
         // If RBAC is ready but preferredRouteId is null, and NOT guest, still show loading
-        // (This preserves existing behavior for other roles while fixing it for guests)
         if (rbacService.isInitialized &&
             !isGuest &&
             profile?.preferredRouteId == null) {
@@ -132,13 +128,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         debugPrint('AppRouter: User role is $roleName');
 
-        // Redirect guest to Products
-        if (roleName == 'guest') {
-          debugPrint('AppRouter: Guest user -> Redirecting to Products');
-          return state.namedLocation(ProductsRoutesJson.listRouteName);
-        }
-
-        return state.namedLocation(ProductsRoutesJson.listRouteName);
+        // Redirect to Cart
+        return state.namedLocation(AppRoute.cartName);
       }
 
       // --- RBAC Route Protection ---

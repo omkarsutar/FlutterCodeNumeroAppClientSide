@@ -27,6 +27,9 @@ class AppRoute {
   static const String unauthorizedName = 'unauthorized';
   static const String vacationName = 'vacation';
 
+  static const String purchaseOrders = '/purchase-orders';
+  static const String purchaseOrdersName = 'purchase-orders';
+
   /// ============================================================================
   /// Notes Routes
   /// ============================================================================

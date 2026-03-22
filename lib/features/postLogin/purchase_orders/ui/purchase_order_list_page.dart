@@ -8,13 +8,12 @@ import '../model/purchase_order_model.dart';
 import '../providers/purchase_order_list_controller.dart';
 import '../providers/purchase_order_providers.dart';
 import 'purchase_order_list_tile.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Custom Purchase Order List Page - Riverpod & JSON based
 ///
 /// Single Responsibility: Display purchase orders with search, filtering, and navigation.
 /// Focuses only on presentation and user interaction, delegating state management to Riverpod.
-class PurchaseOrderListByShopID extends ConsumerStatefulWidget {
+class PurchaseOrdersPage extends ConsumerStatefulWidget {
   final EntityMeta entityMeta;
   final String idField;
   final List<FieldConfig> fieldConfigs;
@@ -25,7 +24,7 @@ class PurchaseOrderListByShopID extends ConsumerStatefulWidget {
   final List<String>? searchFields;
   final SortingConfig? initialSorting;
 
-  const PurchaseOrderListByShopID({
+  const PurchaseOrdersPage({
     super.key,
     required this.entityMeta,
     required this.idField,
@@ -39,34 +38,11 @@ class PurchaseOrderListByShopID extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PurchaseOrderListByShopID> createState() =>
-      _PurchaseOrderListByShopIDState();
+  ConsumerState<PurchaseOrdersPage> createState() => _PurchaseOrdersPageState();
 }
 
-class _PurchaseOrderListByShopIDState
-    extends ConsumerState<PurchaseOrderListByShopID> {
+class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
   final TextEditingController _searchController = TextEditingController();
-
-  /// Get retailer shop_id from retailer_shop_link table
-  Future<String?> _getRetailerShopId() async {
-    final currentUser = Supabase.instance.client.auth.currentUser;
-    if (currentUser == null) return null;
-
-    try {
-      final link = await Supabase.instance.client
-          .from('retailer_shop_link')
-          .select('shop_id')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-
-      return link?['shop_id'] as String?;
-    } catch (e) {
-      debugPrint(
-        'PurchaseOrderListByShopID: Error fetching retailer shop_id: $e',
-      );
-      return null;
-    }
-  }
 
   @override
   void initState() {
@@ -110,68 +86,51 @@ class _PurchaseOrderListByShopIDState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Get retailer shop_id dynamically
-    return FutureBuilder<String?>(
-      future: _getRetailerShopId(),
-      builder: (context, snapshot) {
-        final filterShopId = snapshot.data;
+    // Watch controller state (handles loading, errors, filtering)
+    final listState = ref.watch(
+      purchaseOrderListControllerProvider('purchaseOrderList'),
+    );
 
-        // Watch controller state (handles loading, errors, filtering)
-        final listState = ref.watch(
-          purchaseOrderListControllerProvider('purchaseOrderList'),
-        );
+    final displayList = listState.filteredPurchaseOrders;
 
-        final displayList = filterShopId != null
-            ? listState.filteredPurchaseOrders
-                  .where((po) => po.poShopId == filterShopId)
-                  .toList()
-            : listState.filteredPurchaseOrders;
+    // Create a mutable copy and sort by creation date (latest first)
+    final sortedDisplayList = List<ModelPurchaseOrder>.from(displayList);
+    sortedDisplayList.sort((a, b) {
+      if (a.createdAt == null && b.createdAt == null) return 0;
+      if (a.createdAt == null) return 1; // null dates go to bottom
+      if (b.createdAt == null) return -1; // null dates go to bottom
+      return b.createdAt!.compareTo(a.createdAt!); // descending order
+    });
 
-        // Create a mutable copy and sort by creation date (latest first)
-        final sortedDisplayList = List<ModelPurchaseOrder>.from(displayList);
-        sortedDisplayList.sort((a, b) {
-          if (a.createdAt == null && b.createdAt == null) return 0;
-          if (a.createdAt == null) return 1; // null dates go to bottom
-          if (b.createdAt == null) return -1; // null dates go to bottom
-          return b.createdAt!.compareTo(a.createdAt!); // descending order
-        });
-
-        return Scaffold(
-          backgroundColor: theme.colorScheme.surface,
-          appBar: CustomAppBar(
-            title: widget.entityMeta.entityNamePlural,
-            showBack: false, // Show drawer icon instead of back button
-          ),
-          drawer: const CustomDrawer(),
-          /* floatingActionButton: CreateEntityButton(
-            moduleName: ModelPurchaseOrderFields.table,
-            newRouteName: widget.newRouteName,
-            entityLabel: widget.entityMeta.entityName,
-          ), */
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.surface,
-                  theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.25,
-                  ),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: CustomAppBar(
+        title: widget.entityMeta.entityNamePlural,
+        showBack: false, // Show drawer icon instead of back button
+      ),
+      drawer: const CustomDrawer(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.25,
               ),
-            ),
-            child: Column(
-              children: [
-                // Purchase Orders List
-                Expanded(
-                  child: _buildListContent(theme, listState, sortedDisplayList),
-                ),
-              ],
-            ),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-        );
-      },
+        ),
+        child: Column(
+          children: [
+            // Purchase Orders List
+            Expanded(
+              child: _buildListContent(theme, listState, sortedDisplayList),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

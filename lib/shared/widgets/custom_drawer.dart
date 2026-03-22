@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/product_barrel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +10,6 @@ import '../../core/providers/core_providers.dart';
 import '../../core/utils/dialogs.dart';
 import '../../core/providers/localization_provider.dart';
 import '../../router/app_routes.dart';
-import 'read_entity_tile.dart';
 
 class CustomDrawer extends ConsumerStatefulWidget {
   const CustomDrawer({super.key});
@@ -126,7 +124,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                       ),
                     ),
                     Text(
-                      "Orderzapp",
+                      "NumeroApp",
                       style: TextStyle(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -141,7 +139,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                           '{name}',
                           displayName,
                         )
-                      : l10n['welcome_orderzapp'] ?? 'Welcome to Orderzapp',
+                      : l10n['welcome_numeroapp'] ?? 'Welcome to NumeroApp',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w400,
@@ -163,27 +161,18 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
             ),
           ),
 
-          // Products
-          ReadEntityTile(
-            moduleName: ModelProductFields.table, // "products"
-            routeName: ProductsRoutesJson.listRouteName,
-            title: l10n['products'] ?? 'Products',
-            icon: Icons.shopping_bag,
-            allowAnonymous: true,
-          ),
-
           ListTile(
-            leading: const Icon(Icons.shopping_cart), // 🛒 My Cart
+            leading: const Icon(Icons.shopping_cart),
             title: Text(l10n['my_cart'] ?? 'My Cart'),
             onTap: () => context.goNamed(AppRoute.cartName),
           ),
 
           // Purchase Orders by Shop
-          if (isLoggedIn && rbacService.roleName == 'retailer')
+          if (isLoggedIn)
             ListTile(
               leading: const Icon(Icons.receipt_long),
               title: Text(l10n['purchase_history'] ?? 'Purchase History'),
-              onTap: () => context.goNamed('purchase-orders-by-shop'),
+              onTap: () => context.goNamed(AppRoute.purchaseOrdersName),
             ),
 
           if (isLoggedIn)
@@ -193,13 +182,6 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               onTap: () => context.goNamed(AppRoute.profileName),
             ),
 
-          // PO Items
-          /* ReadEntityTile(
-            moduleName: ModelPoItemFields.table, // "po_items"
-            routeName: PoItemsRoutesJson.listRouteName,
-            title: 'PO Items',
-            icon: Icons.list_alt,
-          ), */
           if (!isLoggedIn)
             ListTile(
               leading: const Icon(Icons.login), // 🔑 Login

@@ -201,10 +201,19 @@ class PurchaseOrderServiceImpl
 
     Future<void> fetch() async {
       try {
-        final List<dynamic> data = await client
+        final userId = _ref.read(userProfileStateProvider).profile?.userId;
+        var query = client
             .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-            .select()
-            .order(sortField ?? createdAt, ascending: sortAscending);
+            .select();
+
+        if (userId != null) {
+          query = query.eq(ModelPurchaseOrderFields.createdBy, userId);
+        }
+
+        final List<dynamic> data = await query.order(
+          sortField ?? createdAt,
+          ascending: sortAscending,
+        );
 
         if (!controller.isClosed) {
           controller.add(data.map((e) => mapper.fromMap(e)).toList());
@@ -245,10 +254,19 @@ class PurchaseOrderServiceImpl
 
   @override
   Future<List<ModelPurchaseOrder>> fetchAll() async {
-    final response = await client
+    final userId = _ref.read(userProfileStateProvider).profile?.userId;
+    var query = client
         .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-        .select()
-        .order(sortField ?? createdAt, ascending: sortAscending);
+        .select();
+
+    if (userId != null) {
+      query = query.eq(ModelPurchaseOrderFields.createdBy, userId);
+    }
+
+    final response = await query.order(
+      sortField ?? createdAt,
+      ascending: sortAscending,
+    );
     return (response as List).map((e) => mapper.fromMap(e)).toList();
   }
 

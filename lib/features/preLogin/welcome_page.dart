@@ -73,7 +73,6 @@ class WelcomePage extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-
                   // App Title
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
@@ -82,7 +81,7 @@ class WelcomePage extends StatelessWidget {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        'ORDERZAPP',
+                        'NumeroApp',
                         style: TextStyle(
                           fontSize: titleFontSize,
                           fontWeight: FontWeight.w900,

@@ -10,6 +10,7 @@ class ModelUserFields {
   static const String preferredRouteId = 'preferred_route_id';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
+  static const String userLanguage = 'user_language';
 }
 
 class ModelUser {
@@ -19,6 +20,7 @@ class ModelUser {
   final String? preferredRouteId; // nullable FK
   final DateTime? createdAt; // nullable, DB default
   final DateTime? updatedAt; // nullable, DB default
+  final String? userLanguage; // nullable
   final Map<String, dynamic> _resolvedLabels;
 
   ModelUser({
@@ -28,6 +30,7 @@ class ModelUser {
     this.preferredRouteId,
     this.createdAt,
     this.updatedAt,
+    this.userLanguage,
     Map<String, dynamic>? resolvedLabels,
   }) : _resolvedLabels = resolvedLabels ?? const {};
 
@@ -48,6 +51,7 @@ class ModelUser {
       preferredRouteId: map[ModelUserFields.preferredRouteId],
       createdAt: _parseDate(map[ModelUserFields.createdAt]),
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
+      userLanguage: map[ModelUserFields.userLanguage],
       resolvedLabels: labelEntries,
     );
   }
@@ -63,6 +67,7 @@ class ModelUser {
         ModelUserFields.createdAt: createdAt!.toIso8601String(),
       if (updatedAt != null)
         ModelUserFields.updatedAt: updatedAt!.toIso8601String(),
+      if (userLanguage != null) ModelUserFields.userLanguage: userLanguage,
     };
   }
 
@@ -74,6 +79,7 @@ class ModelUser {
       'preferredRouteId': preferredRouteId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'userLanguage': userLanguage,
       'resolvedLabels': resolvedLabels,
     };
   }
@@ -86,6 +92,7 @@ class ModelUser {
       preferredRouteId: json['preferredRouteId'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
+      userLanguage: json['userLanguage'] as String?,
       resolvedLabels: json['resolvedLabels'] ?? {},
     );
   }

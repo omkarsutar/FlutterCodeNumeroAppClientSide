@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/platform/web_utils.dart';
 import '../providers/user_profile_state_provider.dart';
+import '../providers/localization_provider.dart';
 
 import '../../router/app_router.dart';
 
@@ -162,4 +163,33 @@ class AuthService {
 
   /// Get the current Supabase user
   User? get currentUser => _client.auth.currentUser;
+
+  /// Update the user's language preference in Supabase
+  Future<void> updateUserLanguage(AppLanguage language) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final langCode =
+        language == AppLanguage.hindi
+            ? 'hi'
+            : language == AppLanguage.marathi
+            ? 'mr'
+            : 'en';
+
+    try {
+      await _client
+          .from(ModelUserFields.table)
+          .update({ModelUserFields.userLanguage: langCode}).eq(
+            ModelUserFields.userId,
+            userId,
+          );
+    } catch (e, st) {
+      ErrorHandler.handle(
+        e,
+        st,
+        context: 'Updating user language',
+        showToUser: true,
+      );
+    }
+  }
 }

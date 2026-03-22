@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/cart_order_service.dart';
-import 'cart_providers.dart';
 import 'cart_view_logic.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../../purchase_orders/purchase_order_barrel.dart';
-import '../../po_items/providers/po_item_providers.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/providers/localization_provider.dart';
 
@@ -15,7 +13,6 @@ final cartOrderServiceProvider = Provider(
   (ref) => CartOrderService(
     client: ref.watch(supabaseClientProvider),
     poService: ref.watch(purchaseOrderServiceProvider),
-    poItemService: ref.watch(poItemServiceProvider),
   ),
 );
 
@@ -26,69 +23,14 @@ class CartController {
   CartController(this.ref) : _orderService = ref.read(cartOrderServiceProvider);
 
   Future<void> initPendingOrder(BuildContext context) async {
-    // If already acknowledged, don't show
-    if (ref.read(cartProvider).isPromptAcknowledged) return;
-
-    // Wait for the cart to finish loading its initial state if it's currently loading
-    // This is crucial for post-login redirects where the notifier just started
-    if (ref.read(cartProvider).isLoading) {
-      // Poll briefly for loading to finish (max 2 seconds)
-      for (int i = 0; i < 10; i++) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (!ref.read(cartProvider).isLoading) break;
-      }
-    }
-
-    final cartState = ref.read(cartProvider);
-    if (cartState.items.isEmpty || cartState.isPromptAcknowledged) return;
-
-    // Show dialog after UI has rebuilt and role is determined
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!context.mounted) return;
-
-      // Wait for role to be resolved (up to 3 seconds)
-      String? roleName;
-      for (int i = 0; i < 15; i++) {
-        roleName = ref.read(roleNameProvider);
-        if (roleName != null) break;
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (!context.mounted) return;
-      }
-
-      final normalizedRole = roleName?.toLowerCase();
-      final isGuestOrRetailer =
-          normalizedRole == 'guest' || normalizedRole == 'retailer';
-
-      if (isGuestOrRetailer) {
-        // Re-check acknowledgement just before showing
-        if (!ref.read(cartProvider).isPromptAcknowledged) {
-          final l10n = ref.read(l10nProvider);
-          final confirm = await _showConfirmDialog(
-            context: context,
-            title: l10n['place_pending_order_title'] ?? 'Place Pending Order?',
-            message:
-                l10n['place_pending_order_msg'] ??
-                'You have items in your cart. Do you want to place this order now?',
-            confirmLabel: l10n['place_order'] ?? 'Place Order',
-            confirmColor: Colors.green,
-          );
-
-          if (confirm == true) {
-            final viewData = ref.read(cartViewLogicProvider);
-            await placeOrder(context, viewData, isPending: true);
-          }
-
-          // Mark as acknowledged regardless of action
-          ref.read(cartProvider.notifier).markPromptAsAcknowledged();
-        }
-      }
-    });
+    // No longer needed since there are no cart items
   }
 
   Future<void> handleOrderAction(
     BuildContext context,
-    ProcessedCartData viewData,
-  ) async {
+    ProcessedCartData viewData, {
+    String? birthdate,
+  }) async {
     final l10n = ref.read(l10nProvider);
     final session = ref.read(supabaseClientProvider).auth.currentSession;
     if (session == null) {
@@ -107,27 +49,6 @@ class CartController {
       return;
     }
 
-    final roleName = ref.read(roleNameProvider)?.toLowerCase();
-    final isAuthorized =
-        roleName == 'salesperson' ||
-        roleName == 'guest' ||
-        roleName == 'retailer';
-
-    if (!isAuthorized) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n['only_authorized_order'] ??
-                  'Only guest, salesperson, and retailer can place orders.',
-            ),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      return;
-    }
-
     final confirm = await _showConfirmDialog(
       context: context,
       title: 'Place Order?',
@@ -137,15 +58,11 @@ class CartController {
     );
 
     if (confirm == true) {
-      await placeOrder(context, viewData);
+      await placeOrder(context, birthdate: birthdate);
     }
   }
 
-  Future<void> placeOrder(
-    BuildContext context,
-    ProcessedCartData viewData, {
-    bool isPending = false,
-  }) async {
+  Future<void> placeOrder(BuildContext context, {String? birthdate}) async {
     final l10n = ref.read(l10nProvider);
     // Show loading dialog
     showLoadingDialog(
@@ -158,9 +75,9 @@ class CartController {
       final roleName = ref.read(roleNameProvider);
 
       await _orderService.placeOrder(
-        viewData: viewData,
         userId: userId,
         roleName: roleName,
+        birthdate: birthdate,
       );
 
       if (context.mounted) {
@@ -170,7 +87,6 @@ class CartController {
         // Show premium Thank You dialog
         await _showThankYouDialog(context);
       }
-      ref.read(cartProvider.notifier).clearCart();
     } catch (e) {
       if (context.mounted) {
         // Dismiss loading dialog
@@ -183,20 +99,6 @@ class CartController {
           ),
         );
       }
-    }
-  }
-
-  Future<void> clearCart(BuildContext context) async {
-    final l10n = ref.read(l10nProvider);
-    final confirm = await _showConfirmDialog(
-      context: context,
-      title: l10n['clear_cart_title'] ?? 'Empty Cart?',
-      message: l10n['clear_cart_msg'] ?? 'Remove all items?',
-      confirmLabel: l10n['clear_all'] ?? 'Clear All',
-      confirmColor: Colors.red,
-    );
-    if (confirm == true) {
-      ref.read(cartProvider.notifier).clearCart();
     }
   }
 
@@ -294,7 +196,7 @@ class CartController {
                   child: FilledButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.goNamed('products');
+                      context.goNamed(AppRoute.cartName);
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.green[700],
