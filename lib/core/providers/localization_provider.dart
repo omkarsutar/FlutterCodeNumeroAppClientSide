@@ -124,6 +124,15 @@ const _translations = {
     'role_change_msg': 'Your access permissions have changed. Reloading app...',
     'shop_link_change_msg':
         'Your shop assignments have changed. Reloading app...',
+    'personality_number_label': 'Personality Number',
+    'life_path_number_label': 'Life Path Number',
+    'pinnacle1_number_label': 'Pinnacle 1',
+    'pinnacle2_number_label': 'Pinnacle 2',
+    'pinnacle3_number_label': 'Pinnacle 3',
+    'pinnacle4_number_label': 'Pinnacle 4',
+    'pinnacle_base_label': 'Pinnacle Base',
+    'absent_numbers_label': 'Absent Numbers',
+    'occurrence_label': 'Number Occurrences',
   },
   AppLanguage.marathi: {
     'app_title': 'NumeroApp',
@@ -185,6 +194,15 @@ const _translations = {
     'role_change_msg': 'तुमची परवानगी बदलली आहे. अ‍ॅप पुन्हा लोड होत आहे...',
     'shop_link_change_msg':
         'तुमची शॉप असाइनमेंट बदलली आहे. अ‍ॅप पुन्हा लोड होत आहे...',
+    'personality_number_label': 'व्यक्तिमत्व क्रमांक',
+    'life_path_number_label': 'जीवन पथ क्रमांक',
+    'pinnacle1_number_label': 'शिखर १',
+    'pinnacle2_number_label': 'शिखर २',
+    'pinnacle3_number_label': 'शिखर ३',
+    'pinnacle4_number_label': 'शिखर ४',
+    'pinnacle_base_label': 'शिखर आधार',
+    'absent_numbers_label': 'नसलेले क्रमांक',
+    'occurrence_label': 'अंक वारंवारता',
   },
   AppLanguage.hindi: {
     'app_title': 'NumeroApp',
@@ -246,5 +264,14 @@ const _translations = {
     'role_change_msg': 'आपकी अनुमति बदल गई है। ऐप फिर से लोड हो रहा है...',
     'shop_link_change_msg':
         'आपका शॉप असाइनमेंट बदल गया है। ऐप फिर से लोड हो रहा है...',
+    'personality_number_label': 'व्यक्तित्व संख्या',
+    'life_path_number_label': 'जीवन पथ संख्या',
+    'pinnacle1_number_label': 'शिखर १',
+    'pinnacle2_number_label': 'शिखर २',
+    'pinnacle3_number_label': 'शिखर ३',
+    'pinnacle4_number_label': 'शिखर ४',
+    'pinnacle_base_label': 'शिखर आधार',
+    'absent_numbers_label': 'अनुपस्थित संख्या',
+    'occurrence_label': 'अंकों की आवृत्ति',
   },
 };

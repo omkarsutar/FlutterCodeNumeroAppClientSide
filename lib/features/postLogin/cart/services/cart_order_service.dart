@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/exceptions/app_exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../purchase_orders/purchase_order_barrel.dart';
@@ -11,10 +12,11 @@ class CartOrderService {
 
   CartOrderService({required this.client, required this.poService});
 
-  Future<void> placeOrder({
+  Future<ModelPurchaseOrder> placeOrder({
     required String userId,
     required String? roleName,
-    String? birthdate,
+    required String userName,
+    required DateTime birthdate,
   }) async {
     // Check connectivity before placing order
     if (!await ConnectivityService.isOnline()) {
@@ -68,12 +70,27 @@ class CartOrderService {
       poShopId: null,
       poRouteId: null,
       status: 'confirmed',
-      userComment: birthdate,
+      userComment: DateFormat('dd-MMM-yyyy').format(birthdate),
       adminComment: userComment,
       createdBy: userId,
       updatedBy: userId,
     );
 
-    await poService.create(po);
+    final createdPo = await poService.create(po);
+    final String? poId = createdPo.poId;
+
+    if (poId != null) {
+      final dateStr =
+          "${birthdate.year}-${birthdate.month.toString().padLeft(2, '0')}-${birthdate.day.toString().padLeft(2, '0')}";
+
+      await client.from('birthdates').insert({
+        'user_id': userId,
+        'po_id': poId,
+        'birthdate': dateStr,
+        'full_name': userName,
+      });
+    }
+
+    return createdPo;
   }
 }

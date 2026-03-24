@@ -29,7 +29,7 @@ class CartController {
   Future<void> handleOrderAction(
     BuildContext context,
     ProcessedCartData viewData, {
-    String? birthdate,
+    DateTime? birthdate,
   }) async {
     final l10n = ref.read(l10nProvider);
     final session = ref.read(supabaseClientProvider).auth.currentSession;
@@ -62,7 +62,8 @@ class CartController {
     }
   }
 
-  Future<void> placeOrder(BuildContext context, {String? birthdate}) async {
+  Future<void> placeOrder(BuildContext context, {DateTime? birthdate}) async {
+    if (birthdate == null) return;
     final l10n = ref.read(l10nProvider);
     // Show loading dialog
     showLoadingDialog(
@@ -71,12 +72,18 @@ class CartController {
     );
 
     try {
-      final userId = ref.read(supabaseClientProvider).auth.currentUser!.id;
+      final user = ref.read(supabaseClientProvider).auth.currentUser!;
+      final userId = user.id;
       final roleName = ref.read(roleNameProvider);
+      final userName = user.userMetadata?['full_name'] ??
+          user.userMetadata?['name'] ??
+          user.email?.split('@').first ??
+          'User';
 
       await _orderService.placeOrder(
         userId: userId,
         roleName: roleName,
+        userName: userName,
         birthdate: birthdate,
       );
 
