@@ -131,7 +131,7 @@ const _translations = {
     'pinnacle3_number_label': 'Pinnacle 3',
     'pinnacle4_number_label': 'Pinnacle 4',
     'pinnacle_base_label': 'Pinnacle Base',
-    'absent_numbers_label': 'Absent Numbers',
+    'absent_numbers_label': 'Missing Numbers',
     'occurrence_label': 'Number Occurrences',
   },
   AppLanguage.marathi: {
@@ -201,7 +201,7 @@ const _translations = {
     'pinnacle3_number_label': 'शिखर ३',
     'pinnacle4_number_label': 'शिखर ४',
     'pinnacle_base_label': 'शिखर आधार',
-    'absent_numbers_label': 'नसलेले क्रमांक',
+    'absent_numbers_label': 'अनुपस्थित क्रमांक',
     'occurrence_label': 'अंक वारंवारता',
   },
   AppLanguage.hindi: {

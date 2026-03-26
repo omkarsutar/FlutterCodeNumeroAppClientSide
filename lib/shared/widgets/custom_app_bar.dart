@@ -24,7 +24,11 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: effectivelyShowBack
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.pop(),
+              onPressed: () {
+                if (context.mounted && context.canPop()) {
+                  context.pop();
+                }
+              },
             )
           : null,
       title: Text(title),

@@ -25,7 +25,7 @@ class PermissionGuard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasPermission(moduleId, action);
 
     if (hasPermission) {
@@ -51,7 +51,7 @@ class PermissionGuardAll extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasAllPermissions(moduleId, actions);
 
     return hasPermission ? child : (fallback ?? const SizedBox.shrink());
@@ -74,7 +74,7 @@ class PermissionGuardAny extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasAnyPermission(moduleId, actions);
 
     return hasPermission ? child : (fallback ?? const SizedBox.shrink());
@@ -95,7 +95,7 @@ class PermissionDisable extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasPermission(moduleId, action);
 
     return IgnorePointer(
@@ -123,7 +123,7 @@ class PermissionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasPermission(moduleId, action);
 
     if (!hasPermission) return const SizedBox.shrink();
@@ -150,7 +150,7 @@ class PermissionIconButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final hasPermission = rbacService.hasPermission(moduleId, action);
 
     if (!hasPermission) return const SizedBox.shrink();

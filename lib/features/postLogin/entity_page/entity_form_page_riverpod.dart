@@ -592,7 +592,11 @@ class _EntityFormPageRiverpodState<T>
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               OutlinedButton.icon(
-                                onPressed: () => context.pop(),
+                                  onPressed: () {
+                                    if (context.mounted && context.canPop()) {
+                                      context.pop();
+                                    }
+                                  },
                                 icon: const Icon(Icons.cancel_outlined),
                                 label: const Text('Cancel'),
                                 style: OutlinedButton.styleFrom(

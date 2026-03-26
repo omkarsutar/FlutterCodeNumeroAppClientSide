@@ -13,7 +13,7 @@ class LoadingPage extends ConsumerWidget {
     // Watch both profile and RBAC initialization
     final profile = ref.watch(userProfileStateProvider).profile;
     final isRbacInitialized = ref.watch(rbacInitializationProvider);
-    final rbacService = ref.read(rbacServiceProvider);
+    final rbacService = ref.watch(rbacServiceProvider);
     final roleName = rbacService.roleName?.toLowerCase();
     final isGuest = roleName == 'guest';
 
@@ -22,7 +22,7 @@ class LoadingPage extends ConsumerWidget {
     if (isRbacInitialized && (isGuest || profile?.preferredRouteId != null)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
-        context.goNamed(AppRoute.cartName);
+        context.goNamed(AppRoute.birthdateAnalysisName);
       });
     }
 

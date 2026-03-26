@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/cart_order_service.dart';
-import 'cart_view_logic.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
-import '../../purchase_orders/purchase_order_barrel.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/providers/localization_provider.dart';
+import 'cart_providers.dart';
 
 final cartOrderServiceProvider = Provider(
-  (ref) => CartOrderService(
-    client: ref.watch(supabaseClientProvider),
-    poService: ref.watch(purchaseOrderServiceProvider),
-  ),
+  (ref) => CartOrderService(client: ref.watch(supabaseClientProvider)),
 );
 
 class CartController {
@@ -22,13 +18,8 @@ class CartController {
 
   CartController(this.ref) : _orderService = ref.read(cartOrderServiceProvider);
 
-  Future<void> initPendingOrder(BuildContext context) async {
-    // No longer needed since there are no cart items
-  }
-
   Future<void> handleOrderAction(
-    BuildContext context,
-    ProcessedCartData viewData, {
+    BuildContext context, {
     DateTime? birthdate,
   }) async {
     final l10n = ref.read(l10nProvider);
@@ -62,6 +53,146 @@ class CartController {
     }
   }
 
+  Future<void> handlePaymentAction(
+    BuildContext context,
+    List<String> poIds,
+  ) async {
+    final l10n = ref.read(l10nProvider);
+    final confirm = await _showConfirmDialog(
+      context: context,
+      title: l10n['pay_now'] ?? 'Pay Now',
+      message: 'Are you sure you want to pay for ${poIds.length} orders?',
+      confirmLabel: l10n['pay_now'] ?? 'Pay Now',
+      confirmColor: Colors.green,
+    );
+
+    if (confirm == true) {
+      await processPayments(context, poIds);
+    }
+  }
+
+  Future<void> processPayments(BuildContext context, List<String> poIds) async {
+    final l10n = ref.read(l10nProvider);
+    showLoadingDialog(
+      context: context,
+      message: l10n['processing_payment'] ?? 'Processing order...',
+    );
+
+    try {
+      final client = ref.read(supabaseClientProvider);
+      final user = client.auth.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      // Create the main purchase order
+      final poResponse = await client
+          .from('purchase_order')
+          .insert({
+            'status': 'confirmed',
+            'birthdate_ids': poIds,
+            'created_by': user.id,
+            'updated_by': user.id,
+            'user_comment': 'Birthdate Analysis Order',
+            'po_line_item_count': poIds.length,
+          })
+          .select('po_id')
+          .single();
+
+      final generatedPoId = poResponse['po_id'] as String;
+
+      // Update status and po_id for all selected birthdate records
+      for (final id in poIds) {
+        await client
+            .from('birthdates')
+            .update({'status': 'confirmed', 'po_id': generatedPoId})
+            .eq('id', id);
+      }
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+
+        // Clear selection
+        ref.read(selectedOrdersProvider.notifier).state = {};
+
+        // Invalidate relevant providers to force fresh data fetch
+        ref.invalidate(birthdatesStreamProvider);
+        ref.invalidate(unpaidOrdersProvider);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Order Placed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        debugPrint('[CartController] Error placing order: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to place order: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> deleteBirthdate(BuildContext context, String id) async {
+    final l10n = ref.read(l10nProvider);
+    final confirm = await _showConfirmDialog(
+      context: context,
+      title: 'Delete Order?',
+      message: 'Are you sure you want to delete this specific analysis record?',
+      confirmLabel: 'Delete',
+      confirmColor: Colors.red,
+    );
+
+    if (confirm == true) {
+      showLoadingDialog(
+        context: context,
+        message: l10n['please_wait'] ?? 'Deleting...',
+      );
+
+      try {
+        final client = ref.read(supabaseClientProvider);
+        await client.from('birthdates').delete().eq('id', id);
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+
+          // Remove from selection if deleted
+          final currentSelection = ref.read(selectedOrdersProvider);
+          if (currentSelection.contains(id)) {
+            final newSelection = Set<String>.from(currentSelection)..remove(id);
+            ref.read(selectedOrdersProvider.notifier).state = newSelection;
+          }
+
+          // Invalidate relevant providers to force fresh data fetch
+          ref.invalidate(birthdatesStreamProvider);
+          ref.invalidate(unpaidOrdersProvider);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Record deleted successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete record: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> placeOrder(BuildContext context, {DateTime? birthdate}) async {
     if (birthdate == null) return;
     final l10n = ref.read(l10nProvider);
@@ -75,7 +206,8 @@ class CartController {
       final user = ref.read(supabaseClientProvider).auth.currentUser!;
       final userId = user.id;
       final roleName = ref.read(roleNameProvider);
-      final userName = user.userMetadata?['full_name'] ??
+      final userName =
+          user.userMetadata?['full_name'] ??
           user.userMetadata?['name'] ??
           user.email?.split('@').first ??
           'User';
@@ -90,6 +222,11 @@ class CartController {
       if (context.mounted) {
         // Dismiss loading dialog
         Navigator.of(context).pop();
+
+        // Invalidate relevant providers to force fresh data fetch
+        ref.invalidate(birthdatesStreamProvider);
+        ref.invalidate(unpaidOrdersProvider);
+        ref.invalidate(currentBirthdateRecordProvider);
 
         // Show premium Thank You dialog
         await _showThankYouDialog(context);
@@ -203,7 +340,7 @@ class CartController {
                   child: FilledButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.goNamed(AppRoute.cartName);
+                      context.goNamed(AppRoute.birthdateAnalysisName);
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.green[700],

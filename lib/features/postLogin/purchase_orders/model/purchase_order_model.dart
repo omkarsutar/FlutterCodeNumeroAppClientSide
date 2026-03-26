@@ -20,6 +20,7 @@ class ModelPurchaseOrderFields {
   static const String visitOrder = 'visit_order';
   static const String updatedAt = 'updated_at';
   static const String adminComment = 'admin_comment';
+  static const String birthdateIds = 'birthdate_ids';
 
   static const Map<String, String> labels = {
     poId: 'PO',
@@ -38,6 +39,7 @@ class ModelPurchaseOrderFields {
     updatedAt: 'Updated At',
     visitOrder: 'Visit Order',
     adminComment: 'Admin Comment',
+    birthdateIds: 'Birthdate IDs',
   };
 
   static String getLabel(String field) => labels[field] ?? field;
@@ -60,6 +62,7 @@ class ModelPurchaseOrder {
   final DateTime? updatedAt; // nullable, DB default
   final String? adminComment; // nullable
   final int? visitOrder; // nullable, from view join
+  final List<String>? birthdateIds; // array of uuids
   final Map<String, dynamic> _resolvedLabels;
 
   ModelPurchaseOrder({
@@ -79,6 +82,7 @@ class ModelPurchaseOrder {
     this.updatedAt,
     this.adminComment,
     this.visitOrder,
+    this.birthdateIds,
     Map<String, dynamic>? resolvedLabels,
   }) : _resolvedLabels = resolvedLabels ?? const {};
 
@@ -135,6 +139,9 @@ class ModelPurchaseOrder {
       visitOrder: map[ModelPurchaseOrderFields.visitOrder] != null
           ? int.tryParse(map[ModelPurchaseOrderFields.visitOrder].toString())
           : null,
+      birthdateIds: (map[ModelPurchaseOrderFields.birthdateIds] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
       resolvedLabels: labelEntries,
     );
   }
@@ -166,6 +173,8 @@ class ModelPurchaseOrder {
       map[ModelPurchaseOrderFields.adminComment] = adminComment;
     if (visitOrder != null)
       map[ModelPurchaseOrderFields.visitOrder] = visitOrder;
+    if (birthdateIds != null)
+      map[ModelPurchaseOrderFields.birthdateIds] = birthdateIds;
 
     return map;
   }
@@ -188,6 +197,7 @@ class ModelPurchaseOrder {
       'updatedAt': updatedAt?.toIso8601String(),
       'adminComment': adminComment,
       'visitOrder': visitOrder,
+      'birthdateIds': birthdateIds,
     };
   }
 
@@ -209,6 +219,9 @@ class ModelPurchaseOrder {
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
       adminComment: json['adminComment'] as String?,
       visitOrder: json['visitOrder'] as int?,
+      birthdateIds: (json['birthdateIds'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 }

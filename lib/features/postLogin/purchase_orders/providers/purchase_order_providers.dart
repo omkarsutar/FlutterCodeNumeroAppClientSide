@@ -45,7 +45,7 @@ final purchaseOrderAdapterProvider = Provider<PurchaseOrderAdapter>((ref) {
 /// The stream automatically updates when any purchase order is created, updated, or deleted
 final purchaseOrdersStreamProvider =
     StreamProvider.autoDispose<List<ModelPurchaseOrder>>((ref) {
-      final service = ref.read(purchaseOrderServiceProvider);
+      final service = ref.watch(purchaseOrderServiceProvider);
       return service.streamEntities();
     });
 
@@ -53,7 +53,7 @@ final purchaseOrdersStreamProvider =
 /// Uses FutureProvider.autoDispose.family for efficient caching and cleanup
 final purchaseOrderByIdProvider = FutureProvider.autoDispose
     .family<ModelPurchaseOrder?, String>((ref, poId) async {
-      final service = ref.read(purchaseOrderServiceProvider);
+      final service = ref.watch(purchaseOrderServiceProvider);
       return await service.fetchById(poId);
     });
 

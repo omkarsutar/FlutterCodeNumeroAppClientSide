@@ -162,9 +162,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
           ),
 
           ListTile(
+            leading: const Icon(Icons.auto_awesome_rounded),
+            title: Text(l10n['birthdate_analysis'] ?? 'Birthdate Analysis'),
+            onTap: () {
+              Navigator.pop(context);
+              context.goNamed(AppRoute.birthdateAnalysisName);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.shopping_cart),
             title: Text(l10n['my_cart'] ?? 'My Cart'),
-            onTap: () => context.goNamed(AppRoute.cartName),
+            onTap: () {
+              Navigator.pop(context);
+              context.goNamed(AppRoute.cartName);
+            },
           ),
 
           // Purchase Orders by Shop
@@ -172,21 +183,30 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
             ListTile(
               leading: const Icon(Icons.receipt_long),
               title: Text(l10n['purchase_history'] ?? 'Purchase History'),
-              onTap: () => context.goNamed(AppRoute.purchaseOrdersName),
+              onTap: () {
+                Navigator.pop(context);
+                context.goNamed(AppRoute.purchaseOrdersName);
+              },
             ),
 
           if (isLoggedIn)
             ListTile(
               leading: const Icon(Icons.person), // 👤 Profile
               title: Text(l10n['profile'] ?? 'Profile'),
-              onTap: () => context.goNamed(AppRoute.profileName),
+              onTap: () {
+                Navigator.pop(context);
+                context.goNamed(AppRoute.profileName);
+              },
             ),
 
           if (!isLoggedIn)
             ListTile(
               leading: const Icon(Icons.login), // 🔑 Login
               title: Text(l10n['login'] ?? 'Login'),
-              onTap: () => context.goNamed(AppRoute.loginName),
+              onTap: () {
+                Navigator.pop(context);
+                context.goNamed(AppRoute.loginName);
+              },
             ),
 
           /* if (!isLoggedIn)

@@ -32,14 +32,14 @@ final retailerShopLinkAdapterProvider = Provider<RetailerShopLinkAdapter>((
 /// Fetches all links with automatic disposal
 final retailerShopLinksStreamProvider =
     StreamProvider.autoDispose<List<ModelRetailerShopLink>>((ref) {
-      final service = ref.read(retailerShopLinkServiceProvider);
+      final service = ref.watch(retailerShopLinkServiceProvider);
       return service.streamEntities();
     });
 
 /// Fetches a single link by ID
 final retailerShopLinkByIdProvider = FutureProvider.autoDispose
     .family<ModelRetailerShopLink?, String>((ref, id) async {
-      final service = ref.read(retailerShopLinkServiceProvider);
+      final service = ref.watch(retailerShopLinkServiceProvider);
       return await service.fetchById(id);
     });
 

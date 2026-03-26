@@ -218,6 +218,7 @@ class _EntityListPageRiverpodState<T>
 
                   return RefreshIndicator(
                     onRefresh: () async {
+                      // ignore: unused_result
                       ref.refresh(widget.streamProvider);
                     },
                     child: ListView.builder(

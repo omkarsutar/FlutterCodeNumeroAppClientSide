@@ -158,7 +158,7 @@ class RoleChangeDetector extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    ref.read(l10nProvider)['role_change_msg'] ??
+                    ref.watch(l10nProvider)['role_change_msg'] ??
                         'Your access permissions have changed. Reloading app...',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -232,7 +232,7 @@ class RetailerShopLinkChangeDetector extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    ref.read(l10nProvider)['shop_link_change_msg'] ??
+                    ref.watch(l10nProvider)['shop_link_change_msg'] ??
                         'Your shop assignments have changed. Reloading app...',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),

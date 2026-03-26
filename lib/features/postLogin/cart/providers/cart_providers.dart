@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
 
-import '../../purchase_orders/providers/purchase_order_providers.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
+import '../../birthdate_analysis/model/birthdate_model.dart';
 
 class CartState {
   final bool isLoading;
@@ -50,19 +52,41 @@ final cartProvider = NotifierProvider<CartNotifier, CartState>(() {
 
 final birthdateProvider = StateProvider<DateTime?>((ref) => null);
 
+final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  final user = client.auth.currentUser;
+  if (user == null) return Stream.value([]);
+
+  return client
+      .from('birthdates')
+      .stream(primaryKey: ['id'])
+      .eq('user_id', user.id)
+      .map((data) {
+        debugPrint('[Providers] Raw birthdates data count: ${data.length}');
+        return data.map((map) {
+          try {
+            return ModelBirthdate.fromMap(map);
+          } catch (e, stack) {
+            debugPrint(
+              '[Providers] Error mapping birthdate: $e\n$stack\nData: $map',
+            );
+            rethrow;
+          }
+        }).toList();
+      });
+});
+
 final cartStatusProvider = Provider<String?>((ref) {
   final birthdate = ref.watch(birthdateProvider);
   if (birthdate == null) return null;
 
-  final formattedDate = DateFormat('dd-MMM-yyyy').format(birthdate);
-  final ordersAsync = ref.watch(purchaseOrdersStreamProvider);
+  final formattedDate = DateFormat('yyyy-MM-dd').format(birthdate);
+  final birthdatesAsync = ref.watch(birthdatesStreamProvider);
 
-  return ordersAsync.when(
-    data: (orders) {
-      final match = orders.firstWhereOrNull(
-        (o) =>
-            o.userComment == formattedDate &&
-            o.status?.toLowerCase() == 'confirmed',
+  return birthdatesAsync.when(
+    data: (list) {
+      final match = list.firstWhereOrNull(
+        (b) => DateFormat('yyyy-MM-dd').format(b.birthdate) == formattedDate,
       );
       return match?.status;
     },
@@ -70,6 +94,25 @@ final cartStatusProvider = Provider<String?>((ref) {
     error: (_, __) => null,
   );
 });
+
+final unpaidOrdersProvider = Provider<List<ModelBirthdate>>((ref) {
+  final birthdatesAsync = ref.watch(birthdatesStreamProvider);
+  return birthdatesAsync.when(
+    data: (list) {
+      debugPrint(
+        '[Providers] UnpaidOrders data received: ${list.length} items',
+      );
+      return list.where((b) => b.status.toLowerCase() == 'pending').toList();
+    },
+    loading: () => [],
+    error: (e, stack) {
+      debugPrint('[Providers] Error fetching birthdates: $e\n$stack');
+      return [];
+    },
+  );
+});
+
+final selectedOrdersProvider = StateProvider<Set<String>>((ref) => {});
 
 final ageProvider = Provider<String?>((ref) {
   final birthdate = ref.watch(birthdateProvider);
@@ -98,6 +141,29 @@ final ageProvider = Provider<String?>((ref) {
   final dLabel = l10n['days'] ?? 'days';
 
   return "$years $yLabel $months $mLabel $days $dLabel";
+});
+
+final ageComponentsProvider = Provider<Map<String, int>?>((ref) {
+  final birthdate = ref.watch(birthdateProvider);
+  if (birthdate == null) return null;
+
+  final now = DateTime.now();
+  int years = now.year - birthdate.year;
+  int months = now.month - birthdate.month;
+  int days = now.day - birthdate.day;
+
+  // Adjust for month/day difference
+  if (days < 0) {
+    months--;
+    final prevMonth = DateTime(now.year, now.month, 0);
+    days += prevMonth.day;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return {'years': years, 'months': months, 'days': days};
 });
 
 final birthdateDigitsProvider = Provider<List<String>?>((ref) {
@@ -150,6 +216,173 @@ class NumerologyState {
   });
 }
 
+class PersonalityData {
+  final int personalityNumber;
+  final String? bornOn;
+  final String? lord;
+  final String? qualities;
+  final String? weaknesses;
+  final String? youShould;
+  final String? description;
+
+  PersonalityData({
+    required this.personalityNumber,
+    this.bornOn,
+    this.lord,
+    this.qualities,
+    this.weaknesses,
+    this.youShould,
+    this.description,
+  });
+
+  factory PersonalityData.fromMap(Map<String, dynamic> map) {
+    return PersonalityData(
+      personalityNumber: map['personality_number'] as int,
+      bornOn: map['born_on'] as String?,
+      lord: map['lord'] as String?,
+      qualities: map['qualities'] as String?,
+      weaknesses: map['weaknesses'] as String?,
+      youShould: map['you_should'] as String?,
+      description: map['description'] as String?,
+    );
+  }
+}
+
+class LoshuPlane {
+  final String gridPosition;
+  final String title;
+  final String description;
+
+  LoshuPlane({
+    required this.gridPosition,
+    required this.title,
+    required this.description,
+  });
+
+  factory LoshuPlane.fromMap(Map<String, dynamic> map) {
+    return LoshuPlane(
+      gridPosition: map['grid_position'] as String,
+      title: map['title'] as String,
+      description: map['description'] as String,
+    );
+  }
+}
+
+class NumberOccurrenceDetail {
+  final int number;
+  final int occurrence;
+  final String description;
+
+  NumberOccurrenceDetail({
+    required this.number,
+    required this.occurrence,
+    required this.description,
+  });
+
+  factory NumberOccurrenceDetail.fromMap(Map<String, dynamic> map) {
+    return NumberOccurrenceDetail(
+      number: map['number'] as int,
+      occurrence: map['occurrence'] as int,
+      description: map['description'] as String,
+    );
+  }
+}
+
+final currentBirthdateRecordProvider = StreamProvider<Map<String, dynamic>?>((
+  ref,
+) {
+  final birthdate = ref.watch(birthdateProvider);
+  if (birthdate == null) return Stream.value(null);
+
+  final client = ref.watch(supabaseClientProvider);
+  final user = client.auth.currentUser;
+  if (user == null) return Stream.value(null);
+
+  final formattedDate = DateFormat('yyyy-MM-dd').format(birthdate);
+
+  return client
+      .from('birthdates')
+      .stream(primaryKey: ['id'])
+      .eq('user_id', user.id)
+      .map((data) {
+        final matches = data
+            .where((item) => item['birthdate'] == formattedDate)
+            .toList();
+        return matches.isNotEmpty ? matches.first : null;
+      });
+});
+
+final personalityDataProvider = FutureProvider<PersonalityData?>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return null;
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  // Fetch if saved (status is not null)
+  if (status == null) return null;
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc('get_personality_data', params: {'birthdate_id': birthdateId});
+
+  if (response == null || (response as List).isEmpty) return null;
+
+  return PersonalityData.fromMap(response[0]);
+});
+
+final loshuPlanesProvider = FutureProvider<List<LoshuPlane>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  // Fetch only if status is not null (saved)
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc('get_loshu_planes', params: {'birthdate_id': birthdateId});
+
+  if (response == null || (response as List).isEmpty) return [];
+
+  return response
+      .map((item) => LoshuPlane.fromMap(item as Map<String, dynamic>))
+      .toList();
+});
+
+final numberOccurrenceDetailsProvider =
+    FutureProvider<List<NumberOccurrenceDetail>>((ref) async {
+      final recordAsync = ref.watch(currentBirthdateRecordProvider);
+      final record = recordAsync.valueOrNull;
+      if (record == null) return [];
+
+      final birthdateId = record['id'] as String;
+      final status = ref.watch(cartStatusProvider);
+
+      // Fetch only if status is not null (saved)
+      if (status == null) return [];
+
+      final response = await ref
+          .read(supabaseClientProvider)
+          .rpc(
+            'get_number_occurrence_details',
+            params: {'birthdate_id': birthdateId},
+          );
+
+      if (response == null || (response as List).isEmpty) return [];
+
+      return response
+          .map(
+            (item) =>
+                NumberOccurrenceDetail.fromMap(item as Map<String, dynamic>),
+          )
+          .toList();
+    });
+
 final numerologyProvider = Provider<NumerologyState>((ref) {
   final digits = ref.watch(birthdateDigitsProvider);
   if (digits == null || digits.length < 8) return NumerologyState();
@@ -183,15 +416,33 @@ final numerologyProvider = Provider<NumerologyState>((ref) {
 
   for (final numStr in arr1) {
     switch (numStr) {
-      case '4': loShuGrid[0][0] += '4'; break;
-      case '9': loShuGrid[0][1] += '9'; break;
-      case '2': loShuGrid[0][2] += '2'; break;
-      case '3': loShuGrid[1][0] += '3'; break;
-      case '5': loShuGrid[1][1] += '5'; break;
-      case '7': loShuGrid[1][2] += '7'; break;
-      case '8': loShuGrid[2][0] += '8'; break;
-      case '1': loShuGrid[2][1] += '1'; break;
-      case '6': loShuGrid[2][2] += '6'; break;
+      case '4':
+        loShuGrid[0][0] += '4';
+        break;
+      case '9':
+        loShuGrid[0][1] += '9';
+        break;
+      case '2':
+        loShuGrid[0][2] += '2';
+        break;
+      case '3':
+        loShuGrid[1][0] += '3';
+        break;
+      case '5':
+        loShuGrid[1][1] += '5';
+        break;
+      case '7':
+        loShuGrid[1][2] += '7';
+        break;
+      case '8':
+        loShuGrid[2][0] += '8';
+        break;
+      case '1':
+        loShuGrid[2][1] += '1';
+        break;
+      case '6':
+        loShuGrid[2][2] += '6';
+        break;
     }
   }
 

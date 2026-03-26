@@ -14,12 +14,20 @@ import '../features/postLogin/loading_page/loading_page.dart';
 import '../features/preLogin/welcome_page.dart';
 import '../features/auth/auth_page.dart';
 import '../features/postLogin/cart/cart_barrel.dart';
+import '../features/postLogin/birthdate_analysis/ui/birthdate_analysis_page.dart';
 import '../shared/widgets/shared_widget_barrel.dart';
 import '../features/postLogin/vacation_mode/vacation_mode_screen.dart';
 import '../core/routing/module_route_generator.dart';
 import '../core/services/rbac_service.dart';
+import '../core/models/route_permission.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  // Register permissions for non-generic modules
+  ModuleRouteRegistry.registerRoutePermission(
+    AppRoute.birthdateAnalysisName,
+    RoutePermission(moduleId: 'birthdate_analysis', action: RbacAction.read),
+  );
+
   return GoRouter(
     routes: [
       ...authRoutes,
@@ -99,14 +107,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // Redirect to cart page if not logged in and trying to access protected routes
+      // Redirect to birthdate analysis page if not logged in and trying to access protected routes
       if (!isLoggedIn && !isAuthPage && !isAtRoot && !isPublicRoute) {
-        return state.namedLocation(AppRoute.cartName);
+        return state.namedLocation(AppRoute.birthdateAnalysisName);
       }
 
-      // Redirect to cart page if at root and not logged in
+      // Redirect to birthdate analysis page if at root and not logged in
       if (!isLoggedIn && isAtRoot) {
-        return state.namedLocation(AppRoute.cartName);
+        return state.namedLocation(AppRoute.birthdateAnalysisName);
       }
       if (isLoggedIn && (isAuthPage || isAtRoot)) {
         debugPrint(
@@ -128,8 +136,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         debugPrint('AppRouter: User role is $roleName');
 
-        // Redirect to Cart
-        return state.namedLocation(AppRoute.cartName);
+        // Redirect to Birthdate Analysis
+        return state.namedLocation(AppRoute.birthdateAnalysisName);
       }
 
       // --- RBAC Route Protection ---
@@ -201,6 +209,11 @@ final authRoutes = [
     name: AppRoute.cartName,
     path: AppRoute.cart,
     builder: (context, state) => const CartPage(),
+  ),
+  GoRoute(
+    name: AppRoute.birthdateAnalysisName,
+    path: AppRoute.birthdateAnalysis,
+    builder: (context, state) => const BirthdateAnalysisPage(),
   ),
   GoRoute(
     name: AppRoute.unauthorizedName,

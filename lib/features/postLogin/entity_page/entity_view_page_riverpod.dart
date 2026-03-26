@@ -341,7 +341,9 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
         SnackbarUtils.showSuccess(
           '${entityMeta.entityName} deleted successfully!',
         );
-        context.pop();
+        if (context.mounted && context.canPop()) {
+          context.pop();
+        }
       } else if (next.error != null && !next.isLoading) {
         SnackbarUtils.showError('Failed to delete: ${next.error}');
       }
