@@ -1,16 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/utils/platform/web_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'app/app_orchestrators.dart';
 import 'core/config/supabase_config.dart';
 import 'core/globals.dart';
-import 'core/providers/auth_providers.dart';
-import 'core/providers/localization_provider.dart';
-import 'core/services/connectivity_service.dart';
+import 'core/utils/platform/web_utils.dart';
 import 'router/app_router.dart';
 
 void main() async {
@@ -22,7 +19,6 @@ void main() async {
     authOptions: const FlutterAuthClientOptions(autoRefreshToken: true),
   );
 
-  // Extract and store utm_source from URL parameters on web
   if (kIsWeb) {
     try {
       final translatedUtmSource = webUtils.getUtmSource();
@@ -32,7 +28,6 @@ void main() async {
         debugPrint('UTM Source translated and saved: $translatedUtmSource');
       }
 
-      // Memory Diagnostic Logger
       Stream.periodic(const Duration(seconds: 10)).listen((_) {
         webUtils.logMemoryDiagnostics();
       });
@@ -41,343 +36,63 @@ void main() async {
     }
   }
 
-  // Make error messages selectable on web
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return SelectableText(
       details.exceptionAsString(),
-      style: const TextStyle(color: const Color(0xFFE53935), fontSize: 14),
+      style: const TextStyle(color: Color(0xFFE53935), fontSize: 14),
     );
   };
 
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends ConsumerStatefulWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  ConsumerState<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends ConsumerState<MainApp> {
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialize auth listener using the provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authServiceProvider).initializeAuthListener();
-
-      // Load profile if session is already active
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        ref.read(authServiceProvider).loadAndStoreUserProfile();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
-    return ConnectivityToastListener(
-      child: RoleChangeDetector(
-        child: RetailerShopLinkChangeDetector(
-          child: MaterialApp.router(
-            title: 'NumeroApp',
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            routerConfig: router,
-            theme: ThemeData(
-              useMaterial3: true,
-              fontFamily: 'Roboto',
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF673AB7), // Deep Purple
-                brightness: Brightness.light,
-              ),
-              cardTheme: CardThemeData(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                color: const Color(0xFFF3E5F5), // Soft Lilac background
-              ),
-              inputDecorationTheme: InputDecorationTheme(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF3E5F5), // Subtle lilac fill
-              ),
-              appBarTheme: const AppBarTheme(
-                centerTitle: false,
-                elevation: 0,
-                backgroundColor: Color(0xFF673AB7), // Deep Purple AppBar
-                foregroundColor: Colors.white, // White text/icons
-              ),
-              floatingActionButtonTheme: FloatingActionButtonThemeData(
-                backgroundColor: const Color(0xFFFFC107), // Amber FAB
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+    return AppOrchestratorScope(
+      child: MaterialApp.router(
+        title: 'NumeroApp',
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        routerConfig: router,
+        theme: ThemeData(
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF673AB7),
+            brightness: Brightness.light,
+          ),
+          cardTheme: CardThemeData(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: const Color(0xFFF3E5F5),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF3E5F5),
+          ),
+          appBarTheme: const AppBarTheme(
+            centerTitle: false,
+            elevation: 0,
+            backgroundColor: Color(0xFF673AB7),
+            foregroundColor: Colors.white,
+          ),
+          floatingActionButtonTheme: FloatingActionButtonThemeData(
+            backgroundColor: const Color(0xFFFFC107),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-/// A widget that listens for real-time changes to the user's role
-/// and automatically refreshes the app state and RBAC permissions.
-class RoleChangeDetector extends ConsumerWidget {
-  final Widget child;
-  const RoleChangeDetector({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<AsyncValue<ModelUser?>>(userProfileProvider, (previous, next) {
-      if (previous == null || previous.value == null) return;
-      if (next.value == null) return;
-
-      final oldRoleId = previous.value?.roleId;
-      final newRoleId = next.value?.roleId;
-
-      if (oldRoleId != null && newRoleId != null && oldRoleId != newRoleId) {
-        debugPrint(
-          'RoleChangeDetector: Role change detected from $oldRoleId to $newRoleId',
-        );
-
-        // Show notification to user
-        scaffoldMessengerKey.currentState?.clearSnackBars();
-        scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.security, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    ref.watch(l10nProvider)['role_change_msg'] ??
-                        'Your access permissions have changed. Reloading app...',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.orange.shade800,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-
-        // Re-initialize RBAC system and refresh routing
-        Future.delayed(const Duration(milliseconds: 500), () async {
-          try {
-            // 1. Force reload profile and RBAC permissions
-            await ref.read(authServiceProvider).loadAndStoreUserProfile();
-
-            // 2. Refresh router to re-evaluate redirects and home page
-            ref.read(routerProvider).refresh();
-
-            debugPrint(
-              'RoleChangeDetector: App successfully reloaded with new role',
-            );
-          } catch (e) {
-            debugPrint('RoleChangeDetector: Error during role reload: $e');
-          }
-        });
-      }
-    });
-
-    return child;
-  }
-}
-
-/// A widget that listens for real-time changes to retailer_shop_links
-/// and automatically refreshes the app state when links are created or updated for the current user.
-class RetailerShopLinkChangeDetector extends ConsumerWidget {
-  final Widget child;
-  const RetailerShopLinkChangeDetector({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<
-      AsyncValue<List<ModelRetailerShopLink>>
-    >(retailerShopLinksStreamProvider, (previous, next) {
-      // Only proceed if next has data
-      if (!next.hasValue) return;
-      if (previous == null || !previous.hasValue) return;
-
-      final previousLinks = previous.value!;
-      final currentLinks = next.value!;
-
-      // Check if there are changes (additions, updates, or deletions)
-      if (previousLinks.length != currentLinks.length ||
-          _hasLinkChanges(previousLinks, currentLinks)) {
-        debugPrint(
-          'RetailerShopLinkChangeDetector: Retailer shop link changes detected',
-        );
-
-        // Show notification to user
-        scaffoldMessengerKey.currentState?.clearSnackBars();
-        scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.link, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    ref.watch(l10nProvider)['shop_link_change_msg'] ??
-                        'Your shop assignments have changed. Reloading app...',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.blue.shade800,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-
-        // Refresh app state
-        Future.delayed(const Duration(milliseconds: 500), () async {
-          try {
-            // 1. Force reload profile and RBAC permissions
-            await ref.read(authServiceProvider).loadAndStoreUserProfile();
-
-            // 2. Refresh router to re-evaluate redirects and home page
-            ref.read(routerProvider).refresh();
-
-            debugPrint(
-              'RetailerShopLinkChangeDetector: App successfully reloaded with new shop links',
-            );
-          } catch (e) {
-            debugPrint(
-              'RetailerShopLinkChangeDetector: Error during reload: $e',
-            );
-          }
-        });
-      }
-    });
-
-    return child;
-  }
-
-  /// Check if there are actual changes in the retailer shop links
-  bool _hasLinkChanges(
-    List<ModelRetailerShopLink> previousLinks,
-    List<ModelRetailerShopLink> currentLinks,
-  ) {
-    // Create maps for easier comparison
-    final previousMap = {for (var link in previousLinks) link.linkId: link};
-    final currentMap = {for (var link in currentLinks) link.linkId: link};
-
-    // Check for changes in existing links
-    for (final entry in previousMap.entries) {
-      final linkId = entry.key;
-      final previousLink = entry.value;
-      final currentLink = currentMap[linkId];
-
-      if (currentLink == null) {
-        // Link was deleted
-        return true;
-      }
-
-      // Check if link data changed (userId or shopId)
-      if (previousLink.userId != currentLink.userId ||
-          previousLink.shopId != currentLink.shopId) {
-        return true;
-      }
-    }
-
-    // Check for new links
-    for (final linkId in currentMap.keys) {
-      if (!previousMap.containsKey(linkId)) {
-        // New link was added
-        return true;
-      }
-    }
-
-    return false;
-  }
-}
-
-/// A widget that listens for internet connectivity changes
-/// and shows localized toast notifications immediately.
-class ConnectivityToastListener extends ConsumerStatefulWidget {
-  final Widget child;
-  const ConnectivityToastListener({super.key, required this.child});
-
-  @override
-  ConsumerState<ConnectivityToastListener> createState() =>
-      _ConnectivityToastListenerState();
-}
-
-class _ConnectivityToastListenerState
-    extends ConsumerState<ConnectivityToastListener> {
-  bool? _previousStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen<AsyncValue<bool>>(connectivityStatusProvider, (previous, next) {
-      final isOnline = next.valueOrNull;
-      if (isOnline == null) return;
-
-      // Skip the very first emission to avoid showing toast on app start
-      if (_previousStatus == null) {
-        _previousStatus = isOnline;
-        return;
-      }
-
-      // Only show toast when status actually changes
-      if (_previousStatus == isOnline) return;
-      _previousStatus = isOnline;
-
-      final l10n = ref.read(l10nProvider);
-
-      scaffoldMessengerKey.currentState?.clearSnackBars();
-      scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(isOnline ? Icons.wifi : Icons.wifi_off, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isOnline
-                      ? (l10n['internet_connected'] ?? 'Back online!')
-                      : (l10n['internet_disconnected'] ??
-                            'You are offline. Some features may not work.'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: isOnline
-              ? Colors.green.shade700
-              : Colors.red.shade700,
-          duration: Duration(seconds: isOnline ? 3 : 5),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-
-      debugPrint(
-        'ConnectivityToastListener: ${isOnline ? "Connected" : "Disconnected"}',
-      );
-    });
-
-    return widget.child;
   }
 }

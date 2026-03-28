@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../cart/providers/cart_controller.dart';
+import '../model/numerology_models.dart';
+import '../providers/numerology_content_providers.dart';
+import '../providers/numerology_providers.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../router/app_routes.dart';
 
@@ -17,9 +20,10 @@ class BirthdateAnalysisPage extends ConsumerStatefulWidget {
 }
 
 class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   void _navigateToCartAndSelect(DateTime birthdate) async {
-    final recordAsync = ref.read(currentBirthdateRecordProvider);
-    final record = recordAsync.valueOrNull;
+    final record = ref.read(currentBirthdateRecordProvider);
 
     if (record != null && record['id'] != null) {
       final birthdateId = record['id'] as String;
@@ -40,61 +44,118 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final birthdate = ref.watch(birthdateProvider);
-    final ageStr = ref.watch(ageProvider);
     final cartStatus = ref.watch(cartStatusProvider);
+    final currentLang = ref.watch(languageProvider);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
-        showBack: false,
-      ),
+      key: _scaffoldKey,
       drawer: const CustomDrawer(),
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildBirthdatePickerTile(context, birthdate, ageStr, l10n),
-                  _buildNumerologyAnalysisSection(context, ref),
-                  _buildPersonalityDetails(context, ref),
-                  _buildLoshuPlanesSection(context, ref, l10n),
-                  _buildNumberOccurrenceDetailsSection(context, ref, l10n),
-                  _buildPinnacleSection(
-                    context,
-                    ref,
-                    l10n,
-                    pinnacleData1Provider,
-                    "1st Pinnacle stage of Life",
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  toolbarHeight: 64,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                   ),
-                  _buildPinnacleSection(
-                    context,
-                    ref,
-                    l10n,
-                    pinnacleData2Provider,
-                    "2nd Pinnacle stage of Life",
+                  title: Text(
+                    l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
                   ),
-                  _buildPinnacleSection(
-                    context,
-                    ref,
-                    l10n,
-                    pinnacleData3Provider,
-                    "3rd Pinnacle stage of Life",
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: TextButton(
+                        onPressed: () => ref
+                            .read(languageProvider.notifier)
+                            .toggleLanguage(),
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withValues(alpha: 0.3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: Text(
+                          currentLang == AppLanguage.english
+                              ? 'EN'
+                              : currentLang == AppLanguage.hindi
+                                  ? '\u0939\u093f'
+                                  : '\u092e',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _BirthdateHeaderDelegate(
+                    child: _buildBirthdatePickerTile(
+                      context,
+                      birthdate,
+                      l10n,
+                      integrated: true,
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
-                  _buildPinnacleSection(
-                    context,
-                    ref,
-                    l10n,
-                    pinnacleData4Provider,
-                    "4th Pinnacle stage of Life",
+                ),
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      _buildAgeIndicatorTile(context, birthdate, l10n),
+                      _buildNumerologyAnalysisSection(context, ref),
+                      _buildPersonalityDetails(context, ref),
+                      _buildLoshuPlanesSection(context, ref, l10n),
+                      _buildNumberOccurrenceDetailsSection(context, ref, l10n),
+                      _buildPinnacleSection(
+                        context,
+                        ref,
+                        l10n,
+                        pinnacleData1Provider,
+                        "1st Pinnacle stage of Life",
+                      ),
+                      _buildPinnacleSection(
+                        context,
+                        ref,
+                        l10n,
+                        pinnacleData2Provider,
+                        "2nd Pinnacle stage of Life",
+                      ),
+                      _buildPinnacleSection(
+                        context,
+                        ref,
+                        l10n,
+                        pinnacleData3Provider,
+                        "3rd Pinnacle stage of Life",
+                      ),
+                      _buildPinnacleSection(
+                        context,
+                        ref,
+                        l10n,
+                        pinnacleData4Provider,
+                        "4th Pinnacle stage of Life",
+                      ),
+                      _buildLifePathSection(context, ref, l10n),
+                      _buildCareerSection(context, ref, l10n),
+                      _buildBoostingPersonalitySection(context, ref, l10n),
+                      _buildCombinationSection(context, ref, l10n),
+                      const SizedBox(height: 32),
+                    ],
                   ),
-                  _buildLifePathSection(context, ref, l10n),
-                  _buildCareerSection(context, ref, l10n),
-                  _buildBoostingPersonalitySection(context, ref, l10n),
-                  _buildCombinationSection(context, ref, l10n),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           _buildActionFooter(context, l10n, birthdate, cartStatus),
@@ -178,50 +239,64 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   Widget _buildBirthdatePickerTile(
     BuildContext context,
     DateTime? birthdate,
-    String? ageStr,
     Map<String, String> l10n,
+    {bool integrated = false}
   ) {
     final theme = Theme.of(context);
     final dateDisplay = birthdate != null
         ? DateFormat('dd-MMM-yyyy').format(birthdate)
         : '';
-    final ageComponents = ref.watch(ageComponentsProvider);
 
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      elevation: 4,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    return Material(
+      color: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(integrated ? 20 : 24),
           gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-              theme.colorScheme.surface,
-            ],
+            colors: integrated
+                ? [
+                    Colors.white.withValues(alpha: 0.18),
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.28),
+                  ]
+                : [
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    theme.colorScheme.surface,
+                  ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: integrated
+                ? Colors.white.withValues(alpha: 0.18)
+                : theme.colorScheme.primary.withValues(alpha: 0.1),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: integrated
+                  ? Colors.black.withValues(alpha: 0.14)
+                  : theme.colorScheme.primary.withValues(alpha: 0.2),
+              blurRadius: integrated ? 18 : 12,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
-            vertical: 12,
+            vertical: 4,
           ),
           leading: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              color: integrated
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : theme.colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.auto_awesome_rounded,
-              color: theme.colorScheme.primary,
+              color: integrated ? Colors.white : theme.colorScheme.primary,
               size: 28,
             ),
           ),
@@ -229,39 +304,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+              color: integrated ? Colors.white : theme.colorScheme.primary,
             ),
           ),
-          subtitle: ageComponents != null
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${l10n['age_prefix'] ?? 'Your todays age is'}",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${ageComponents['years']} ${l10n['years'] ?? 'years'} ${ageComponents['months']} ${l10n['months'] ?? 'months'} ${ageComponents['days']} ${l10n['days'] ?? 'days'}",
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : null,
           trailing: Icon(
             Icons.calendar_month_rounded,
-            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+            color: integrated
+                ? Colors.white.withValues(alpha: 0.92)
+                : theme.colorScheme.primary.withValues(alpha: 0.6),
           ),
           onTap: () async {
             final picked = await showDatePicker(
@@ -285,6 +335,184 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             }
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAgeIndicatorTile(
+    BuildContext context,
+    DateTime? birthdate,
+    Map<String, String> l10n,
+  ) {
+    if (birthdate == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final ageText = ref.watch(ageProvider);
+    final ageComponents = ref.watch(ageComponentsProvider);
+    if (ageComponents == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.secondaryContainer.withValues(alpha: 0.85),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.65),
+            theme.colorScheme.surface,
+          ],
+        ),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.hourglass_top_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Age Snapshot',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n['age_prefix'] ?? 'Your age today is',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.78),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Text(
+              ageText ?? '',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildAgeMetricChip(
+                  context,
+                  value: ageComponents['years']!,
+                  label: l10n['years'] ?? 'years',
+                  icon: Icons.workspace_premium_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildAgeMetricChip(
+                  context,
+                  value: ageComponents['months']!,
+                  label: l10n['months'] ?? 'months',
+                  icon: Icons.calendar_view_month_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildAgeMetricChip(
+                  context,
+                  value: ageComponents['days']!,
+                  label: l10n['days'] ?? 'days',
+                  icon: Icons.today_rounded,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgeMetricChip(
+    BuildContext context, {
+    required int value,
+    required String label,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(height: 8),
+          Text(
+            '$value',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1778,5 +2006,41 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         ),
       ],
     );
+  }
+}
+
+class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final Color backgroundColor;
+
+  _BirthdateHeaderDelegate({
+    required this.child,
+    required this.backgroundColor,
+  });
+
+  @override
+  double get minExtent => 76;
+
+  @override
+  double get maxExtent => 76;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: backgroundColor,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _BirthdateHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }
