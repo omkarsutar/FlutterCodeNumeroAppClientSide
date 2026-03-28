@@ -288,6 +288,109 @@ class NumberOccurrenceDetail {
   }
 }
 
+class PinnacleData {
+  final String lifePeriodRange;
+  final int pinnacleno;
+  final int lifeperiod;
+  final String description;
+
+  PinnacleData({
+    required this.lifePeriodRange,
+    required this.pinnacleno,
+    required this.lifeperiod,
+    required this.description,
+  });
+
+  factory PinnacleData.fromMap(Map<String, dynamic> map) {
+    // The key for the life period range string varies by RPC function
+    // but the value we want is always the first string field.
+    String range = '';
+    if (map.containsKey('life_period1'))
+      range = map['life_period1'] as String;
+    else if (map.containsKey('life_period2'))
+      range = map['life_period2'] as String;
+    else if (map.containsKey('life_period3'))
+      range = map['life_period3'] as String;
+    else if (map.containsKey('life_period4'))
+      range = map['life_period4'] as String;
+
+    return PinnacleData(
+      lifePeriodRange: range,
+      pinnacleno: map['pinnacleno'] as int,
+      lifeperiod: map['lifeperiod'] as int,
+      description: map['description'] as String,
+    );
+  }
+}
+
+class LifePathData {
+  final int lifePathNumber;
+  final String description;
+
+  LifePathData({required this.lifePathNumber, required this.description});
+
+  factory LifePathData.fromMap(Map<String, dynamic> map) {
+    return LifePathData(
+      lifePathNumber: map['life_path_number'] as int,
+      description: map['description'] as String,
+    );
+  }
+}
+
+class CareerData {
+  final int lifePathNumber;
+  final String careerDescription;
+
+  CareerData({required this.lifePathNumber, required this.careerDescription});
+
+  factory CareerData.fromMap(Map<String, dynamic> map) {
+    return CareerData(
+      lifePathNumber: map['life_path_number'] as int,
+      careerDescription: map['career_description'] as String,
+    );
+  }
+}
+
+class BoostingPersonalityData {
+  final int personalityNumber;
+  final String boostingDescription;
+
+  BoostingPersonalityData({
+    required this.personalityNumber,
+    required this.boostingDescription,
+  });
+
+  factory BoostingPersonalityData.fromMap(Map<String, dynamic> map) {
+    return BoostingPersonalityData(
+      personalityNumber: map['personality_number'] as int,
+      boostingDescription: map['boosting_description'] as String,
+    );
+  }
+}
+
+class CombinationData {
+  final int personalityNumber;
+  final int lifePathNumber;
+  final String description;
+  final String example;
+
+  CombinationData({
+    required this.personalityNumber,
+    required this.lifePathNumber,
+    required this.description,
+    required this.example,
+  });
+
+  factory CombinationData.fromMap(Map<String, dynamic> map) {
+    return CombinationData(
+      personalityNumber: map['personality_number'] as int,
+      lifePathNumber: map['life_path_number'] as int,
+      description: map['description'] as String,
+      example: map['example'] as String,
+    );
+  }
+}
+
 final currentBirthdateRecordProvider = StreamProvider<Map<String, dynamic>?>((
   ref,
 ) {
@@ -305,9 +408,20 @@ final currentBirthdateRecordProvider = StreamProvider<Map<String, dynamic>?>((
       .stream(primaryKey: ['id'])
       .eq('user_id', user.id)
       .map((data) {
-        final matches = data
-            .where((item) => item['birthdate'] == formattedDate)
-            .toList();
+        final matches = data.where((item) {
+          final dbDateStr = item['birthdate'] as String;
+          // Try exact match first
+          if (dbDateStr == formattedDate) return true;
+          // Try parsing and comparing to handle potential format variations
+          try {
+            final dbDate = DateTime.parse(dbDateStr);
+            return dbDate.year == birthdate.year &&
+                dbDate.month == birthdate.month &&
+                dbDate.day == birthdate.day;
+          } catch (_) {
+            return false;
+          }
+        }).toList();
         return matches.isNotEmpty ? matches.first : null;
       });
 });
@@ -382,6 +496,246 @@ final numberOccurrenceDetailsProvider =
           )
           .toList();
     });
+
+final pinnacleData1Provider = FutureProvider<List<PinnacleData>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc(
+        'get_pinnacle_data_for_lifeperiod1',
+        params: {'birthdate_id': birthdateId},
+      );
+
+  if (response == null) return [];
+
+  if (response is List) {
+    if (response.isEmpty) return [];
+    return response
+        .map((item) => PinnacleData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [PinnacleData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final pinnacleData2Provider = FutureProvider<List<PinnacleData>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc(
+        'get_pinnacle_data_for_lifeperiod2',
+        params: {'birthdate_id': birthdateId},
+      );
+
+  if (response == null) return [];
+
+  if (response is List) {
+    if (response.isEmpty) return [];
+    return response
+        .map((item) => PinnacleData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [PinnacleData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final pinnacleData3Provider = FutureProvider<List<PinnacleData>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc(
+        'get_pinnacle_data_for_lifeperiod3',
+        params: {'birthdate_id': birthdateId},
+      );
+
+  if (response == null) return [];
+
+  if (response is List) {
+    if (response.isEmpty) return [];
+    return response
+        .map((item) => PinnacleData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [PinnacleData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final pinnacleData4Provider = FutureProvider<List<PinnacleData>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc(
+        'get_pinnacle_data_for_lifeperiod4',
+        params: {'birthdate_id': birthdateId},
+      );
+
+  if (response == null) return [];
+
+  if (response is List) {
+    if (response.isEmpty) return [];
+    return response
+        .map((item) => PinnacleData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [PinnacleData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final lifePathNumberDataProvider = FutureProvider<List<LifePathData>>((
+  ref,
+) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc('get_life_path_number_data', params: {'birthdate_id': birthdateId});
+
+  if (response == null) return [];
+
+  if (response is List) {
+    return response
+        .map((item) => LifePathData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [LifePathData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final careerDataProvider = FutureProvider<List<CareerData>>((ref) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc('get_career_by_destiny', params: {'birthdate_id': birthdateId});
+
+  if (response == null) return [];
+
+  if (response is List) {
+    return response
+        .map((item) => CareerData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [CareerData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
+
+final boostingPersonalityDataProvider =
+    FutureProvider<List<BoostingPersonalityData>>((ref) async {
+      final recordAsync = ref.watch(currentBirthdateRecordProvider);
+      final record = recordAsync.valueOrNull;
+      if (record == null) return [];
+
+      final birthdateId = record['id'] as String;
+      final status = ref.watch(cartStatusProvider);
+
+      if (status == null) return [];
+
+      final response = await ref
+          .read(supabaseClientProvider)
+          .rpc(
+            'get_boosting_personality_data',
+            params: {'birthdate_id': birthdateId},
+          );
+
+      if (response == null) return [];
+
+      if (response is List) {
+        return response
+            .map(
+              (item) =>
+                  BoostingPersonalityData.fromMap(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else if (response is Map) {
+        return [
+          BoostingPersonalityData.fromMap(response as Map<String, dynamic>),
+        ];
+      }
+      return [];
+    });
+
+final combinationDataProvider = FutureProvider<List<CombinationData>>((
+  ref,
+) async {
+  final recordAsync = ref.watch(currentBirthdateRecordProvider);
+  final record = recordAsync.valueOrNull;
+  if (record == null) return [];
+
+  final birthdateId = record['id'] as String;
+  final status = ref.watch(cartStatusProvider);
+
+  if (status == null) return [];
+
+  final response = await ref
+      .read(supabaseClientProvider)
+      .rpc(
+        'get_combination_personality_lifepath',
+        params: {'birthdate_id': birthdateId},
+      );
+
+  if (response == null) return [];
+
+  if (response is List) {
+    return response
+        .map((item) => CombinationData.fromMap(item as Map<String, dynamic>))
+        .toList();
+  } else if (response is Map) {
+    return [CombinationData.fromMap(response as Map<String, dynamic>)];
+  }
+  return [];
+});
 
 final numerologyProvider = Provider<NumerologyState>((ref) {
   final digits = ref.watch(birthdateDigitsProvider);
