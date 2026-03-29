@@ -209,6 +209,37 @@ class RemedyValues {
   }
 }
 
+class MissingNumberRemedy {
+  final int missingNumber;
+  final String description;
+
+  MissingNumberRemedy({
+    required this.missingNumber,
+    required this.description,
+  });
+
+  factory MissingNumberRemedy.fromMap(Map<String, dynamic> map) {
+    return MissingNumberRemedy(
+      missingNumber: (map['missing_number'] as num).toInt(),
+      description: map['description'] as String,
+    );
+  }
+}
+
+class NumbersNotForRemedyInfo {
+  final List<int> numbers;
+
+  NumbersNotForRemedyInfo({required this.numbers});
+
+  factory NumbersNotForRemedyInfo.fromMap(Map<String, dynamic> map) {
+    return NumbersNotForRemedyInfo(
+      numbers: (map['get_numbers_not_for_remedy'] as List<dynamic>? ?? [])
+          .map((item) => (item as num).toInt())
+          .toList(),
+    );
+  }
+}
+
 class PinnacleData {
   final String lifePeriodRange;
   final int pinnacleno;

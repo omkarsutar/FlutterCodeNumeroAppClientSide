@@ -167,6 +167,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         _buildImportantPointsSection(context, ref),
                         _buildStockMarketInfoSection(context, ref),
                         _buildRemedyValuesSection(context, ref),
+                        _buildMissingNumberRemediesSection(context, ref),
                         _buildMissingNumberTellsSection(context, ref, l10n),
                         _buildPersonalityDetails(context, ref),
                         _buildLoshuPlanesSection(context, ref, l10n),
@@ -1366,6 +1367,176 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
+  Widget _buildMissingNumberRemediesSection(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final remediesAsync = ref.watch(missingNumberRemediesProvider);
+    final numbersNotForRemedyAsync = ref.watch(numbersNotForRemedyProvider);
+    final theme = Theme.of(context);
+
+    return remediesAsync.when(
+      data: (remedies) {
+        return numbersNotForRemedyAsync.when(
+          data: (numbersNotForRemedy) {
+            if (remedies.isEmpty && numbersNotForRemedy.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer
+                              .withValues(alpha: 0.24),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.healing_rounded,
+                          color: theme.colorScheme.secondary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Missing Number Remedies',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    height: 24,
+                  ),
+                  if (remedies.isNotEmpty) ...[
+                    ...remedies.map(
+                      (remedy) => Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.secondaryContainer
+                                  .withValues(alpha: 0.16),
+                              theme.colorScheme.surface,
+                            ],
+                          ),
+                          border: Border.all(
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.14,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Remedy for number ${remedy.missingNumber}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              remedy.description,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (numbersNotForRemedy.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer.withValues(
+                          alpha: 0.22,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.error.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: Text(
+                        'No remedy to number ${_formatNumberList(numbersNotForRemedy)} as ${numbersNotForRemedy.length == 1 ? 'this is' : 'they are'} enemy to you',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w600,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Text(
+                    '[Multiple remedies are given for each number, do any 1 remedy for 1 number as per your convenience]',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (err, stack) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  String _formatNumberList(List<int> numbers) {
+    return numbers.map((number) => number.toString()).join(', ');
+  }
+
   Widget _buildMissingNumberTellsSection(
     BuildContext context,
     WidgetRef ref,
@@ -1643,6 +1814,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   ) {
     final detailsAsync = ref.watch(numberOccurrenceDetailsProvider);
     final theme = Theme.of(context);
+    String occurrenceLabel(int count) {
+      if (count == 1) return 'once';
+      if (count == 2) return 'twice';
+      if (count == 3) return 'three times';
+      return '$count times';
+    }
 
     return detailsAsync.when(
       data: (details) {
@@ -1684,12 +1861,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    l10n['number_occurrence_details_label'] ??
-                        "Number Occurrence D",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                  Expanded(
+                    child: Text(
+                      l10n['number_occurrence_details_label'] ??
+                          "Number Occurrence Details",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -1703,10 +1884,20 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final detail = details[index];
+                  final occLabel = occurrenceLabel(detail.occurrence);
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.16,
+                          ),
+                          theme.colorScheme.surface,
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -1727,78 +1918,49 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.1,
+                                  alpha: 0.12,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                shape: BoxShape.circle,
                                 border: Border.all(
                                   color: theme.colorScheme.primary.withValues(
                                     alpha: 0.2,
                                   ),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    "Number",
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                              child: Center(
+                                child: Text(
+                                  detail.number.toString(),
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    detail.number.toString(),
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.secondary.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.secondary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Occurrence",
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.secondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    detail.occurrence.toString(),
+                                    'Number ${detail.number} appears $occLabel',
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(
-                                          color: theme.colorScheme.secondary,
-                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onSurface,
+                                          fontWeight: FontWeight.w800,
                                         ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Repeats ${detail.occurrence} ${detail.occurrence == 1 ? 'time' : 'times'}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.secondary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2835,6 +2997,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       ],
     );
   }
+
 }
 
 class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -2872,3 +3035,5 @@ class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
         backgroundColor != oldDelegate.backgroundColor;
   }
 }
+
+

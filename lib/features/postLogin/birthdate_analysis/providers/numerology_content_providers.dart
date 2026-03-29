@@ -125,6 +125,47 @@ final remedyValuesProvider = FutureProvider<List<RemedyValues>>((ref) async {
   return response.map(RemedyValues.fromMap).toList();
 });
 
+final missingNumberRemediesProvider =
+    FutureProvider<List<MissingNumberRemedy>>((ref) async {
+      final birthdateId = ref.watch(activeBirthdateIdProvider);
+      if (birthdateId == null) return [];
+
+      final response = await ref
+          .watch(numerologyRpcServiceProvider)
+          .fetchList('get_remedies_for_birthdate', birthdateId: birthdateId);
+      return response.map(MissingNumberRemedy.fromMap).toList();
+    });
+
+final numbersNotForRemedyProvider = FutureProvider<List<int>>((ref) async {
+  final birthdateId = ref.watch(activeBirthdateIdProvider);
+  if (birthdateId == null) return [];
+
+  final response = await ref
+      .watch(numerologyRpcServiceProvider)
+      .fetchScalar('get_numbers_not_for_remedy', birthdateId: birthdateId);
+
+  if (response == null) return [];
+
+  if (response is List) {
+    if (response.isEmpty) return [];
+    if (response.first is num) {
+      return response.map((item) => (item as num).toInt()).toList();
+    }
+    return response
+        .map((item) => NumbersNotForRemedyInfo.fromMap(
+              item as Map<String, dynamic>,
+            ))
+        .expand((item) => item.numbers)
+        .toList();
+  }
+
+  if (response is Map<String, dynamic>) {
+    return NumbersNotForRemedyInfo.fromMap(response).numbers;
+  }
+
+  return [];
+});
+
 Future<List<PinnacleData>> _fetchPinnacleData(
   Ref ref,
   String functionName,
@@ -204,3 +245,5 @@ final combinationDataProvider = FutureProvider<List<CombinationData>>((
       );
   return response.map(CombinationData.fromMap).toList();
 });
+
+
