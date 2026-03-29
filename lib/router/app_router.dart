@@ -49,13 +49,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     initialLocation: AppRoute.welcome,
-    redirect: (context, state) async {
-      return ref.read(routeGuardServiceProvider).handleRedirect(ref, state);
-    },
+    redirect: (context, state) =>
+        ref.read(routeGuardServiceProvider).handleRedirect(ref, state),
   );
 });
 
-final authRoutes = [
+final List<RouteBase> authRoutes = [
   GoRoute(
     path: AppRoute.loading,
     builder: (context, state) => const LoadingPage(),

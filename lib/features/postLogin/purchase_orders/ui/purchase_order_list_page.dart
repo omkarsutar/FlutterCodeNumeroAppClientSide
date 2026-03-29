@@ -46,6 +46,11 @@ class PurchaseOrdersPage extends ConsumerStatefulWidget {
 }
 
 class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
+  Future<void> _refreshPurchaseHistory() async {
+    ref.invalidate(birthdatesStreamProvider);
+    await ref.refresh(birthdatesStreamProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -55,7 +60,7 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
       backgroundColor: theme.colorScheme.surface,
       appBar: const CustomAppBar(
         title: 'Purchase History',
-        showBack: false, // Show drawer icon instead of back button
+        showBack: false,
       ),
       drawer: const CustomDrawer(),
       body: Container(
@@ -71,7 +76,6 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
         ),
         child: birthdatesAsync.when(
           data: (birthdates) {
-            // Filter only to records that are 'confirmed' or 'paid'
             final confirmedList = birthdates
                 .where(
                   (b) =>
@@ -80,7 +84,6 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
                 )
                 .toList();
 
-            // Sort by latest first
             confirmedList.sort((a, b) {
               if (a.createdAt == null && b.createdAt == null) return 0;
               if (a.createdAt == null) return 1;
@@ -89,22 +92,35 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
             });
 
             if (confirmedList.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              return RefreshIndicator(
+                onRefresh: _refreshPurchaseHistory,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
                   children: [
-                    Icon(
-                      Icons.inbox_outlined,
-                      size: 64,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No purchase history found',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.6,
-                        ),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No purchase history found',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -112,130 +128,138 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
               );
             }
 
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: confirmedList.length,
-              itemBuilder: (context, index) {
-                final record = confirmedList[index];
-                final dateDisplay = DateFormat(
-                  'dd-MMM-yyyy',
-                ).format(record.birthdate);
-                final status = record.status.toLowerCase();
-                final statusColor = status == 'confirmed'
-                    ? Colors.green[700]!
-                    : status == 'paid'
-                    ? Colors.blue[700]!
-                    : theme.colorScheme.primary;
+            return RefreshIndicator(
+              onRefresh: _refreshPurchaseHistory,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: confirmedList.length,
+                itemBuilder: (context, index) {
+                  final record = confirmedList[index];
+                  final dateDisplay = DateFormat('dd-MMM-yyyy').format(
+                    record.birthdate,
+                  );
+                  final status = record.status.toLowerCase();
+                  final statusColor = status == 'confirmed'
+                      ? Colors.green[700]!
+                      : status == 'paid'
+                          ? Colors.blue[700]!
+                          : theme.colorScheme.primary;
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      width: 1.5,
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      ref.read(birthdateProvider.notifier).state =
-                          record.birthdate;
-                      context.pushNamed(AppRoute.birthdateAnalysisName);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.surface,
-                            theme.colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.3),
-                          ],
-                        ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        width: 1.5,
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.auto_awesome,
-                              color: theme.colorScheme.primary,
-                              size: 20,
-                            ),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        ref.read(birthdateProvider.notifier).state =
+                            record.birthdate;
+                        context.pushNamed(AppRoute.birthdateAnalysisName);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.surface,
+                              theme.colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.auto_awesome,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    dateDisplay,
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onSurface,
+                                          letterSpacing: 0.5,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Birthdate • ${record.fullName}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  dateDisplay ?? 'Numerology Analysis',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSurface,
-                                    letterSpacing: 0.5,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Birthdate • ${record.fullName}",
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: statusColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    status.toUpperCase(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: statusColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: statusColor,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  status.toUpperCase(),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),

@@ -8,19 +8,26 @@ import 'package:flutter_supabase_order_app_mobile/core/providers/localization_pr
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 
 final birthdateProvider = StateProvider<DateTime?>((ref) => null);
+final cachedBirthdateRecordsProvider =
+    StateProvider<List<ModelBirthdate>>((ref) => []);
 
 final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   final client = ref.watch(supabaseClientProvider);
   final user = client.auth.currentUser;
-  if (user == null) return Stream.value([]);
+  if (user == null) {
+    ref.read(cachedBirthdateRecordsProvider.notifier).state = [];
+    return Stream.value([]);
+  }
 
   return client
       .from('birthdates')
       .stream(primaryKey: ['id'])
       .eq('user_id', user.id)
       .map((data) {
-        debugPrint('[BirthdateRecords] Raw birthdates data count: ${data.length}');
-        return data.map((map) {
+        debugPrint(
+          '[BirthdateRecords] Raw birthdates data count: ${data.length}',
+        );
+        final records = data.map((map) {
           try {
             return ModelBirthdate.fromMap(map);
           } catch (e, stack) {
@@ -30,7 +37,24 @@ final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
             rethrow;
           }
         }).toList();
+
+        ref.read(cachedBirthdateRecordsProvider.notifier).state = records;
+        return records;
       });
+});
+
+final effectiveBirthdateRecordsProvider = Provider<List<ModelBirthdate>>((ref) {
+  final birthdatesAsync = ref.watch(birthdatesStreamProvider);
+  final cachedRecords = ref.watch(cachedBirthdateRecordsProvider);
+
+  return birthdatesAsync.when(
+    data: (records) => records,
+    loading: () => cachedRecords,
+    error: (error, stack) {
+      debugPrint('[BirthdateRecords] Falling back to cached records: $error');
+      return cachedRecords;
+    },
+  );
 });
 
 final currentBirthdateProvider = Provider<ModelBirthdate?>((ref) {
@@ -38,14 +62,11 @@ final currentBirthdateProvider = Provider<ModelBirthdate?>((ref) {
   if (birthdate == null) return null;
 
   final formattedDate = DateFormat('yyyy-MM-dd').format(birthdate);
-  final birthdatesAsync = ref.watch(birthdatesStreamProvider);
+  final records = ref.watch(effectiveBirthdateRecordsProvider);
 
-  return birthdatesAsync.when(
-    data: (records) => records.firstWhereOrNull(
-      (record) => DateFormat('yyyy-MM-dd').format(record.birthdate) == formattedDate,
-    ),
-    loading: () => null,
-    error: (_, __) => null,
+  return records.firstWhereOrNull(
+    (record) =>
+        DateFormat('yyyy-MM-dd').format(record.birthdate) == formattedDate,
   );
 });
 
@@ -59,15 +80,8 @@ final cartStatusProvider = Provider<String?>((ref) {
 });
 
 final unpaidOrdersProvider = Provider<List<ModelBirthdate>>((ref) {
-  final birthdatesAsync = ref.watch(birthdatesStreamProvider);
-  return birthdatesAsync.when(
-    data: (list) => list.where((b) => b.status.toLowerCase() == 'pending').toList(),
-    loading: () => [],
-    error: (e, stack) {
-      debugPrint('[BirthdateRecords] Error fetching birthdates: $e\n$stack');
-      return [];
-    },
-  );
+  final records = ref.watch(effectiveBirthdateRecordsProvider);
+  return records.where((b) => b.status.toLowerCase() == 'pending').toList();
 });
 
 final ageProvider = Provider<String?>((ref) {

@@ -32,6 +32,37 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     super.dispose();
   }
 
+  Future<void> _refreshAnalysisData() async {
+    ref.invalidate(currentBirthdateRecordProvider);
+    ref.invalidate(birthdatesStreamProvider);
+
+    final birthdate = ref.read(birthdateProvider);
+    if (birthdate == null) {
+      await ref.refresh(birthdatesStreamProvider.future);
+      return;
+    }
+
+    await Future.wait([
+      ref.refresh(birthdatesStreamProvider.future),
+      ref.refresh(personalityDataProvider.future),
+      ref.refresh(loshuPlanesProvider.future),
+      ref.refresh(numberOccurrenceDetailsProvider.future),
+      ref.refresh(missingNumberTellsProvider.future),
+      ref.refresh(staticTestimonialsProvider.future),
+      ref.refresh(importantPointsProvider.future),
+      ref.refresh(stockMarketInfoProvider.future),
+      ref.refresh(remedyValuesProvider.future),
+      ref.refresh(pinnacleData1Provider.future),
+      ref.refresh(pinnacleData2Provider.future),
+      ref.refresh(pinnacleData3Provider.future),
+      ref.refresh(pinnacleData4Provider.future),
+      ref.refresh(lifePathNumberDataProvider.future),
+      ref.refresh(careerDataProvider.future),
+      ref.refresh(boostingPersonalityDataProvider.future),
+      ref.refresh(combinationDataProvider.future),
+    ]);
+  }
+
   void _navigateToCartAndSelect(DateTime birthdate) async {
     final record = ref.read(currentBirthdateRecordProvider);
 
@@ -63,114 +94,125 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       body: Column(
         children: [
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  toolbarHeight: 64,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  leading: IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                  ),
-                  title: Text(
-                    l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
-                  ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: TextButton(
-                        onPressed: () => ref
-                            .read(languageProvider.notifier)
-                            .toggleLanguage(),
-                        style: TextButton.styleFrom(
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer
-                              .withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
-                        child: Text(
-                          currentLang == AppLanguage.english
-                              ? 'EN'
-                              : currentLang == AppLanguage.hindi
-                                  ? '\u0939\u093f'
-                                  : '\u092e',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
+            child: RefreshIndicator(
+              onRefresh: _refreshAnalysisData,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _BirthdateHeaderDelegate(
-                    child: _buildBirthdatePickerTile(
-                      context,
-                      birthdate,
-                      l10n,
-                      integrated: true,
-                    ),
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    toolbarHeight: 64,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      _buildAgeIndicatorTile(context, birthdate, l10n),
-                      _buildTestimonialsSection(context),
-                      _buildNumerologyAnalysisSection(context, ref),
-                      _buildImportantPointsSection(context, ref),
-                      _buildStockMarketInfoSection(context, ref),
-                      _buildRemedyValuesSection(context, ref),
-                      _buildMissingNumberTellsSection(context, ref, l10n),
-                      _buildPersonalityDetails(context, ref),
-                      _buildLoshuPlanesSection(context, ref, l10n),
-                      _buildNumberOccurrenceDetailsSection(context, ref, l10n),
-                      _buildPinnacleSection(
-                        context,
-                        ref,
-                        l10n,
-                        pinnacleData1Provider,
-                        "1st Pinnacle stage of Life",
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    ),
+                    title: Text(
+                      l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
+                    ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: TextButton(
+                          onPressed: () => ref
+                              .read(languageProvider.notifier)
+                              .toggleLanguage(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primaryContainer
+                                .withValues(alpha: 0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: Text(
+                            currentLang == AppLanguage.english
+                                ? 'EN'
+                                : currentLang == AppLanguage.hindi
+                                    ? '\u0939\u093f'
+                                    : '\u092e',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ),
-                      _buildPinnacleSection(
-                        context,
-                        ref,
-                        l10n,
-                        pinnacleData2Provider,
-                        "2nd Pinnacle stage of Life",
-                      ),
-                      _buildPinnacleSection(
-                        context,
-                        ref,
-                        l10n,
-                        pinnacleData3Provider,
-                        "3rd Pinnacle stage of Life",
-                      ),
-                      _buildPinnacleSection(
-                        context,
-                        ref,
-                        l10n,
-                        pinnacleData4Provider,
-                        "4th Pinnacle stage of Life",
-                      ),
-                      _buildLifePathSection(context, ref, l10n),
-                      _buildCareerSection(context, ref, l10n),
-                      _buildBoostingPersonalitySection(context, ref, l10n),
-                      _buildCombinationSection(context, ref, l10n),
-                      const SizedBox(height: 32),
                     ],
                   ),
-                ),
-              ],
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _BirthdateHeaderDelegate(
+                      child: _buildBirthdatePickerTile(
+                        context,
+                        birthdate,
+                        l10n,
+                        integrated: true,
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        _buildAgeIndicatorTile(context, birthdate, l10n),
+                        _buildTestimonialsSection(context),
+                        _buildNumerologyAnalysisSection(context, ref),
+                        _buildImportantPointsSection(context, ref),
+                        _buildStockMarketInfoSection(context, ref),
+                        _buildRemedyValuesSection(context, ref),
+                        _buildMissingNumberTellsSection(context, ref, l10n),
+                        _buildPersonalityDetails(context, ref),
+                        _buildLoshuPlanesSection(context, ref, l10n),
+                        _buildNumberOccurrenceDetailsSection(
+                          context,
+                          ref,
+                          l10n,
+                        ),
+                        _buildPinnacleSection(
+                          context,
+                          ref,
+                          l10n,
+                          pinnacleData1Provider,
+                          "1st Pinnacle stage of Life",
+                        ),
+                        _buildPinnacleSection(
+                          context,
+                          ref,
+                          l10n,
+                          pinnacleData2Provider,
+                          "2nd Pinnacle stage of Life",
+                        ),
+                        _buildPinnacleSection(
+                          context,
+                          ref,
+                          l10n,
+                          pinnacleData3Provider,
+                          "3rd Pinnacle stage of Life",
+                        ),
+                        _buildPinnacleSection(
+                          context,
+                          ref,
+                          l10n,
+                          pinnacleData4Provider,
+                          "4th Pinnacle stage of Life",
+                        ),
+                        _buildLifePathSection(context, ref, l10n),
+                        _buildCareerSection(context, ref, l10n),
+                        _buildBoostingPersonalitySection(context, ref, l10n),
+                        _buildCombinationSection(context, ref, l10n),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           _buildActionFooter(context, l10n, birthdate, cartStatus),

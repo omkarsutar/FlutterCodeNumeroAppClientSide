@@ -1,3 +1,4 @@
+import 'package:async/async.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,8 +19,17 @@ class ConnectivityService {
 /// Emits immediately with the current state, then on every change.
 final connectivityStatusProvider = StreamProvider<bool>((ref) {
   final connectivity = Connectivity();
-
-  return connectivity.onConnectivityChanged.map(
+  final connectivityChanges = connectivity.onConnectivityChanged.map(
     (results) => !results.contains(ConnectivityResult.none),
   );
+  final periodicChecks = Stream.periodic(
+    const Duration(seconds: 3),
+  ).asyncMap((_) => ConnectivityService.isOnline());
+  final initialCheck = Stream.fromFuture(ConnectivityService.isOnline());
+
+  return StreamGroup.merge<bool>([
+    initialCheck,
+    connectivityChanges,
+    periodicChecks,
+  ]).distinct();
 });

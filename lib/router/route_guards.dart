@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:flutter_supabase_order_app_mobile/core/models/route_permission.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/app_config_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/user_profile_state_provider.dart';
