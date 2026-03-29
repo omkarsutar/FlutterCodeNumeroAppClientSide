@@ -21,6 +21,16 @@ class BirthdateAnalysisPage extends ConsumerStatefulWidget {
 
 class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final PageController _testimonialController = PageController(
+    viewportFraction: 0.88,
+  );
+  int _testimonialPage = 0;
+
+  @override
+  void dispose() {
+    _testimonialController.dispose();
+    super.dispose();
+  }
 
   void _navigateToCartAndSelect(DateTime birthdate) async {
     final record = ref.read(currentBirthdateRecordProvider);
@@ -115,7 +125,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   child: Column(
                     children: [
                       _buildAgeIndicatorTile(context, birthdate, l10n),
+                      _buildTestimonialsSection(context),
                       _buildNumerologyAnalysisSection(context, ref),
+                      _buildImportantPointsSection(context, ref),
+                      _buildStockMarketInfoSection(context, ref),
+                      _buildRemedyValuesSection(context, ref),
+                      _buildMissingNumberTellsSection(context, ref, l10n),
                       _buildPersonalityDetails(context, ref),
                       _buildLoshuPlanesSection(context, ref, l10n),
                       _buildNumberOccurrenceDetailsSection(context, ref, l10n),
@@ -674,6 +689,777 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildTestimonialsSection(BuildContext context) {
+    final testimonialsAsync = ref.watch(staticTestimonialsProvider);
+    final theme = Theme.of(context);
+
+    return testimonialsAsync.when(
+      data: (testimonials) {
+        if (testimonials.isEmpty) return const SizedBox.shrink();
+
+        final activePage = _testimonialPage.clamp(0, testimonials.length - 1);
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(0, 20, 0, 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.forum_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Success Stories',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 280,
+                child: PageView.builder(
+                  controller: _testimonialController,
+                  itemCount: testimonials.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _testimonialPage = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final testimonial = testimonials[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.primaryContainer.withValues(
+                                alpha: 0.22,
+                              ),
+                              theme.colorScheme.surface,
+                            ],
+                          ),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: Image.network(
+                                      testimonial.image,
+                                      width: 64,
+                                      height: 64,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                                width: 64,
+                                                height: 64,
+                                                decoration: BoxDecoration(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .primaryContainer,
+                                                  borderRadius:
+                                                      BorderRadius.circular(18),
+                                                ),
+                                                child: Icon(
+                                                  Icons.person_rounded,
+                                                  color:
+                                                      theme.colorScheme.primary,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(
+                                      testimonial.personName,
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              Icon(
+                                Icons.format_quote_rounded,
+                                size: 28,
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  physics:
+                                      const NeverScrollableScrollPhysics(),
+                                  child: Text(
+                                    testimonial.description,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant,
+                                      height: 1.55,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(testimonials.length, (index) {
+                  final isActive = index == activePage;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 22 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildImportantPointsSection(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final importantPointsAsync = ref.watch(importantPointsProvider);
+    final theme = Theme.of(context);
+
+    return importantPointsAsync.when(
+      data: (points) {
+        if (points.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer.withValues(
+                        alpha: 0.28,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.tips_and_updates_rounded,
+                      color: theme.colorScheme.secondary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Important Points',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ...points.map(
+                (point) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.16),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.secondaryContainer.withValues(
+                          alpha: 0.18,
+                        ),
+                        theme.colorScheme.surface,
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: point.includedNumbers
+                            .map(
+                              (number) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondary
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  number,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    color: theme.colorScheme.secondary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        point.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildStockMarketInfoSection(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final stockMarketInfoAsync = ref.watch(stockMarketInfoProvider);
+    final theme = Theme.of(context);
+
+    return stockMarketInfoAsync.when(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.green,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Stock Market Insight',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ...items.map(
+                (item) => Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.green.withValues(alpha: 0.08),
+                        theme.colorScheme.surface,
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.16),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.auto_graph_rounded,
+                          color: Colors.green,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          item.insight,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.55,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildRemedyValuesSection(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final remedyValuesAsync = ref.watch(remedyValuesProvider);
+    final theme = Theme.of(context);
+
+    return remedyValuesAsync.when(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        final remedy = items.first;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiaryContainer.withValues(
+                        alpha: 0.28,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.auto_fix_high_rounded,
+                      color: theme.colorScheme.tertiary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Remedy Values',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildRemedyGroup(
+                context,
+                title: 'Lucky Numbers',
+                values: remedy.luckyNumbers.map((e) => e.toString()).toList(),
+                color: Colors.green,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Unlucky Numbers',
+                values: remedy.unluckyNumbers.map((e) => e.toString()).toList(),
+                color: Colors.red,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Lucky Colors',
+                values: remedy.luckyColors,
+                color: Colors.blue,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Unlucky Colors',
+                values: remedy.unluckyColors,
+                color: Colors.orange,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Lucky Days',
+                values: remedy.luckyDays,
+                color: theme.colorScheme.secondary,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Numbers For Remedy',
+                values: remedy.numbersForRemedy
+                    .map((e) => e.toString())
+                    .toList(),
+                color: theme.colorScheme.primary,
+              ),
+              _buildRemedyGroup(
+                context,
+                title: 'Numbers Not For Remedy',
+                values: remedy.numbersNotForRemedy
+                    .map((e) => e.toString())
+                    .toList(),
+                color: theme.colorScheme.error,
+                isLast: true,
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildRemedyGroup(
+    BuildContext context, {
+    required String title,
+    required List<String> values,
+    required Color color,
+    bool isLast = false,
+  }) {
+    final theme = Theme.of(context);
+    if (values.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: values
+                .map(
+                  (value) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: color.withValues(alpha: 0.18)),
+                    ),
+                    child: Text(
+                      value,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMissingNumberTellsSection(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, String> l10n,
+  ) {
+    final missingNumberTellsAsync = ref.watch(missingNumberTellsProvider);
+    final theme = Theme.of(context);
+
+    return missingNumberTellsAsync.when(
+      data: (tells) {
+        if (tells.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withValues(
+                        alpha: 0.18,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.remove_circle_outline_rounded,
+                      color: theme.colorScheme.error,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Missing Number Tells',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ...tells.map(
+                (tell) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withValues(alpha: 0.14),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.errorContainer.withValues(alpha: 0.12),
+                        theme.colorScheme.surface,
+                      ],
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          '${tell.missingNumber}',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: theme.colorScheme.error,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Missing Number ${tell.missingNumber}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              tell.description,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => const SizedBox.shrink(),
     );
   }
 

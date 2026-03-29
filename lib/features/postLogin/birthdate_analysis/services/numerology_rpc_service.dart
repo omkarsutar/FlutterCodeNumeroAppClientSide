@@ -23,4 +23,14 @@ class NumerologyRpcService {
     }
     return [];
   }
+
+  Future<dynamic> fetchScalar(
+    String functionName, {
+    required String birthdateId,
+  }) async {
+    return _client.rpc(
+      functionName,
+      params: {'birthdate_id': birthdateId},
+    );
+  }
 }

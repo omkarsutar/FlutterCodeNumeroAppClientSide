@@ -51,6 +51,80 @@ final numberOccurrenceDetailsProvider =
       return response.map(NumberOccurrenceDetail.fromMap).toList();
     });
 
+final missingNumberTellsProvider = FutureProvider<List<MissingNumberTell>>((
+  ref,
+) async {
+  final birthdateId = ref.watch(activeBirthdateIdProvider);
+  if (birthdateId == null) return [];
+
+  final response = await ref
+      .watch(numerologyRpcServiceProvider)
+      .fetchList('get_missing_number_tells', birthdateId: birthdateId);
+  return response.map(MissingNumberTell.fromMap).toList();
+});
+
+final staticTestimonialsProvider = FutureProvider<List<StaticTestimonial>>((
+  ref,
+) async {
+  final client = ref.watch(supabaseClientProvider);
+  final response = await client
+      .from('static_testimonials')
+      .select()
+      .eq('is_active', true)
+      .order('id');
+
+  return (response as List)
+      .map((item) => StaticTestimonial.fromMap(item as Map<String, dynamic>))
+      .toList();
+});
+
+final importantPointsProvider = FutureProvider<List<ImportantPoint>>((
+  ref,
+) async {
+  final birthdateId = ref.watch(activeBirthdateIdProvider);
+  if (birthdateId == null) return [];
+
+  final response = await ref
+      .watch(numerologyRpcServiceProvider)
+      .fetchList('get_some_imp_points', birthdateId: birthdateId);
+  return response.map(ImportantPoint.fromMap).toList();
+});
+
+final stockMarketInfoProvider = FutureProvider<List<StockMarketInfo>>((
+  ref,
+) async {
+  final birthdateId = ref.watch(activeBirthdateIdProvider);
+  if (birthdateId == null) return [];
+
+  final response = await ref
+      .watch(numerologyRpcServiceProvider)
+      .fetchScalar('get_stock_market_info', birthdateId: birthdateId);
+
+  if (response == null) return [];
+  if (response is String) {
+    return [StockMarketInfo(insight: response)];
+  }
+  if (response is Map<String, dynamic>) {
+    return [StockMarketInfo.fromMap(response)];
+  }
+  if (response is List) {
+    return response
+        .map((item) => StockMarketInfo.fromMap(item as Map<String, dynamic>))
+        .toList();
+  }
+  return [];
+});
+
+final remedyValuesProvider = FutureProvider<List<RemedyValues>>((ref) async {
+  final birthdateId = ref.watch(activeBirthdateIdProvider);
+  if (birthdateId == null) return [];
+
+  final response = await ref
+      .watch(numerologyRpcServiceProvider)
+      .fetchList('get_remedy_values', birthdateId: birthdateId);
+  return response.map(RemedyValues.fromMap).toList();
+});
+
 Future<List<PinnacleData>> _fetchPinnacleData(
   Ref ref,
   String functionName,

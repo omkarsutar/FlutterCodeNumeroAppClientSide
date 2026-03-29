@@ -96,6 +96,119 @@ class NumberOccurrenceDetail {
   }
 }
 
+class MissingNumberTell {
+  final int missingNumber;
+  final String description;
+
+  MissingNumberTell({
+    required this.missingNumber,
+    required this.description,
+  });
+
+  factory MissingNumberTell.fromMap(Map<String, dynamic> map) {
+    return MissingNumberTell(
+      missingNumber: map['missing_number'] as int,
+      description: map['description'] as String,
+    );
+  }
+}
+
+class StaticTestimonial {
+  final int id;
+  final String personName;
+  final String description;
+  final String image;
+  final bool isActive;
+
+  StaticTestimonial({
+    required this.id,
+    required this.personName,
+    required this.description,
+    required this.image,
+    required this.isActive,
+  });
+
+  factory StaticTestimonial.fromMap(Map<String, dynamic> map) {
+    return StaticTestimonial(
+      id: map['id'] as int,
+      personName: map['person_name'] as String,
+      description: map['description'] as String,
+      image: map['image'] as String,
+      isActive: map['is_active'] as bool? ?? true,
+    );
+  }
+}
+
+class ImportantPoint {
+  final List<String> includedNumbers;
+  final String description;
+
+  ImportantPoint({
+    required this.includedNumbers,
+    required this.description,
+  });
+
+  factory ImportantPoint.fromMap(Map<String, dynamic> map) {
+    return ImportantPoint(
+      includedNumbers: (map['included_numbers'] as List<dynamic>)
+          .map((item) => item.toString())
+          .toList(),
+      description: map['description'] as String,
+    );
+  }
+}
+
+class StockMarketInfo {
+  final String insight;
+
+  StockMarketInfo({required this.insight});
+
+  factory StockMarketInfo.fromMap(Map<String, dynamic> map) {
+    return StockMarketInfo(
+      insight: map['get_stock_market_info'] as String,
+    );
+  }
+}
+
+class RemedyValues {
+  final List<int> unluckyNumbers;
+  final List<String> unluckyColors;
+  final List<int> luckyNumbers;
+  final List<String> luckyColors;
+  final List<String> luckyDays;
+  final List<int> numbersForRemedy;
+  final List<int> numbersNotForRemedy;
+
+  RemedyValues({
+    required this.unluckyNumbers,
+    required this.unluckyColors,
+    required this.luckyNumbers,
+    required this.luckyColors,
+    required this.luckyDays,
+    required this.numbersForRemedy,
+    required this.numbersNotForRemedy,
+  });
+
+  factory RemedyValues.fromMap(Map<String, dynamic> map) {
+    List<int> intList(String key) =>
+        (map[key] as List<dynamic>? ?? []).map((item) => item as int).toList();
+    List<String> stringList(String key) =>
+        (map[key] as List<dynamic>? ?? [])
+            .map((item) => item.toString())
+            .toList();
+
+    return RemedyValues(
+      unluckyNumbers: intList('unlucky_numbers'),
+      unluckyColors: stringList('unlucky_colors'),
+      luckyNumbers: intList('lucky_numbers'),
+      luckyColors: stringList('lucky_colors'),
+      luckyDays: stringList('lucky_days'),
+      numbersForRemedy: intList('numbers_for_remedy'),
+      numbersNotForRemedy: intList('numbers_not_for_remedy'),
+    );
+  }
+}
+
 class PinnacleData {
   final String lifePeriodRange;
   final int pinnacleno;
