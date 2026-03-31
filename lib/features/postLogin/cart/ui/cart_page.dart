@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../providers/cart_controller.dart';
-import '../../../../core/providers/localization_provider.dart';
+import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
 
 class CartPage extends ConsumerStatefulWidget {
@@ -25,7 +25,7 @@ class _CartPageState extends ConsumerState<CartPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(appL10nProvider);
     final unpaidOrders = ref.watch(unpaidOrdersProvider);
     final selectedIds = ref.watch(selectedOrdersProvider);
     final theme = Theme.of(context);
@@ -107,7 +107,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                                 } else {
                                   current.remove(recordId);
                                 }
-                                ref.read(selectedOrdersProvider.notifier).state =
+                                ref
+                                        .read(selectedOrdersProvider.notifier)
+                                        .state =
                                     current;
                               },
                             ),
@@ -195,10 +197,9 @@ class _CartPageState extends ConsumerState<CartPage> {
           child: ElevatedButton.icon(
             onPressed: count == 0
                 ? null
-                : () => ref.read(cartControllerProvider).handlePaymentAction(
-                      context,
-                      selectedIds.toList(),
-                    ),
+                : () => ref
+                      .read(cartControllerProvider)
+                      .handlePaymentAction(context, selectedIds.toList()),
             icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
             label: Text(
               "${l10n['place_order'] ?? 'Place Order'} ($count)",

@@ -5,7 +5,7 @@ import '../services/cart_order_service.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../../../../core/utils/dialogs.dart';
-import '../../../../core/providers/localization_provider.dart';
+import '../../../../core/providers/app_localization_provider.dart';
 import 'cart_providers.dart';
 
 final cartOrderServiceProvider = Provider(
@@ -22,7 +22,7 @@ class CartController {
     BuildContext context, {
     DateTime? birthdate,
   }) async {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     final session = ref.read(supabaseClientProvider).auth.currentSession;
     if (session == null) {
       if (context.mounted) {
@@ -57,7 +57,7 @@ class CartController {
     BuildContext context,
     List<String> poIds,
   ) async {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     final confirm = await _showConfirmDialog(
       context: context,
       title: l10n['pay_now'] ?? 'Pay Now',
@@ -72,7 +72,7 @@ class CartController {
   }
 
   Future<void> processPayments(BuildContext context, List<String> poIds) async {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     showLoadingDialog(
       context: context,
       message: l10n['processing_payment'] ?? 'Processing order...',
@@ -139,7 +139,7 @@ class CartController {
   }
 
   Future<void> deleteBirthdate(BuildContext context, String id) async {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     final confirm = await _showConfirmDialog(
       context: context,
       title: 'Delete Order?',
@@ -195,7 +195,7 @@ class CartController {
 
   Future<void> placeOrder(BuildContext context, {DateTime? birthdate}) async {
     if (birthdate == null) return;
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     // Show loading dialog
     showLoadingDialog(
       context: context,
@@ -277,7 +277,7 @@ class CartController {
   }
 
   Future<void> _showThankYouDialog(BuildContext context) {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
     return showDialog<void>(
       context: context,
       barrierDismissible: false,

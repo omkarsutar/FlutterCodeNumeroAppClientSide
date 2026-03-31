@@ -9,6 +9,7 @@ import '../model/numerology_models.dart';
 import '../providers/numerology_content_providers.dart';
 import '../providers/numerology_providers.dart';
 import '../../../../core/providers/localization_provider.dart';
+import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../router/app_routes.dart';
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
@@ -83,7 +84,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(birthdateL10nProvider);
     final birthdate = ref.watch(birthdateProvider);
     final cartStatus = ref.watch(cartStatusProvider);
     final currentLang = ref.watch(languageProvider);
@@ -138,8 +139,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             currentLang == AppLanguage.english
                                 ? 'EN'
                                 : currentLang == AppLanguage.hindi
-                                    ? '\u0939\u093f'
-                                    : '\u092e',
+                                ? '\u0939\u093f'
+                                : '\u092e',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -162,20 +163,20 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     child: Column(
                       children: [
                         _buildAgeIndicatorTile(context, birthdate, l10n),
-                        _buildTestimonialsSection(context),
-                        _buildNumerologyAnalysisSection(context, ref),
-                        _buildImportantPointsSection(context, ref),
-                        _buildStockMarketInfoSection(context, ref),
-                        _buildRemedyValuesSection(context, ref),
-                        _buildMissingNumberRemediesSection(context, ref),
-                        _buildMissingNumberTellsSection(context, ref, l10n),
+                        _buildNumerologyCoreDetailsTile(context, ref),
                         _buildPersonalityDetails(context, ref),
+                        _buildNumerologyAnalysisSection(context, ref),
                         _buildLoshuPlanesSection(context, ref, l10n),
+                        _buildRemedyValuesSection(context, ref),
+                        _buildMissingNumberTellsSection(context, ref, l10n),
+                        _buildMissingNumberRemediesSection(context, ref),
                         _buildNumberOccurrenceDetailsSection(
                           context,
                           ref,
                           l10n,
                         ),
+                        _buildImportantPointsSection(context, ref),
+                        _buildStockMarketInfoSection(context, ref),
                         _buildPinnacleSection(
                           context,
                           ref,
@@ -208,6 +209,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         _buildCareerSection(context, ref, l10n),
                         _buildBoostingPersonalitySection(context, ref, l10n),
                         _buildCombinationSection(context, ref, l10n),
+                        _buildTestimonialsSection(context),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -297,9 +299,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   Widget _buildBirthdatePickerTile(
     BuildContext context,
     DateTime? birthdate,
-    Map<String, String> l10n,
-    {bool integrated = false}
-  ) {
+    Map<String, String> l10n, {
+    bool integrated = false,
+  }) {
     final theme = Theme.of(context);
     final dateDisplay = birthdate != null
         ? DateFormat('dd-MMM-yyyy').format(birthdate)
@@ -575,9 +577,40 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
+  Widget _buildNumerologyCoreDetailsTile(BuildContext context, WidgetRef ref) {
+    final numerology = ref.watch(numerologyProvider);
+    final l10n = ref.watch(birthdateL10nProvider);
+    final theme = Theme.of(context);
+
+    // Don't show anything if no birthdate selected
+    if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          width: 1.5,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+            theme.colorScheme.surface,
+          ],
+        ),
+      ),
+      child: _buildNumerologyGrid(context, numerology, l10n),
+    );
+  }
+
   Widget _buildNumerologyAnalysisSection(BuildContext context, WidgetRef ref) {
     final numerology = ref.watch(numerologyProvider);
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
 
     // Don't show anything if no birthdate selected
@@ -604,8 +637,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       ),
       child: Column(
         children: [
-          _buildNumerologyGrid(context, numerology, l10n),
-
           if (numerology.loShuGrid != null) ...[
             const SizedBox(height: 24),
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
@@ -627,7 +658,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
             const SizedBox(height: 16),
             Text(
-              l10n['absent_numbers_label'] ?? "Missing Numbers",
+              l10n['absent_numbers_label'] ??
+                  "Missing Numbers (from Lo Shu Grid)",
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -887,13 +919,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               const SizedBox(height: 8),
                               Expanded(
                                 child: SingleChildScrollView(
-                                  physics:
-                                      const NeverScrollableScrollPhysics(),
+                                  physics: const NeverScrollableScrollPhysics(),
                                   child: Text(
                                     testimonial.description,
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
+                                      color: theme.colorScheme.onSurfaceVariant,
                                       height: 1.55,
                                     ),
                                   ),
@@ -938,10 +968,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildImportantPointsSection(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildImportantPointsSection(BuildContext context, WidgetRef ref) {
     final importantPointsAsync = ref.watch(importantPointsProvider);
     final theme = Theme.of(context);
 
@@ -988,12 +1015,25 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Important Points',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Important Points',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Based on present numbers in your Lo Shu Grid',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1007,7 +1047,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.16),
+                      color: theme.colorScheme.secondary.withValues(
+                        alpha: 0.16,
+                      ),
                     ),
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -1034,8 +1076,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.secondary
-                                      .withValues(alpha: 0.12),
+                                  color: theme.colorScheme.secondary.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -1073,10 +1116,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildStockMarketInfoSection(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildStockMarketInfoSection(BuildContext context, WidgetRef ref) {
     final stockMarketInfoAsync = ref.watch(stockMarketInfoProvider);
     final theme = Theme.of(context);
 
@@ -1192,10 +1232,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildRemedyValuesSection(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildRemedyValuesSection(BuildContext context, WidgetRef ref) {
     final remedyValuesAsync = ref.watch(remedyValuesProvider);
     final theme = Theme.of(context);
 
@@ -1244,7 +1281,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Remedy Values',
+                      'Lucky - Unlucky',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
@@ -1447,8 +1484,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              theme.colorScheme.secondaryContainer
-                                  .withValues(alpha: 0.16),
+                              theme.colorScheme.secondaryContainer.withValues(
+                                alpha: 0.16,
+                              ),
                               theme.colorScheme.surface,
                             ],
                           ),
@@ -1491,7 +1529,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: theme.colorScheme.error.withValues(alpha: 0.16),
+                          color: theme.colorScheme.error.withValues(
+                            alpha: 0.16,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -1588,12 +1628,25 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Missing Number Tells',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Missing Number Tells',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Based on absent numbers in your Lo Shu Grid',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1613,7 +1666,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        theme.colorScheme.errorContainer.withValues(alpha: 0.12),
+                        theme.colorScheme.errorContainer.withValues(
+                          alpha: 0.12,
+                        ),
                         theme.colorScheme.surface,
                       ],
                     ),
@@ -1862,15 +1917,28 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      l10n['number_occurrence_details_label'] ??
-                          "Number Occurrence Details",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n['number_occurrence_details_label'] ??
+                              "Number Occurrence Details",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Based on repeated numbers in your Lo Shu Grid',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1947,7 +2015,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Number ${detail.number} appears $occLabel',
+                                    'Number ${detail.number}',
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(
                                           color: theme.colorScheme.onSurface,
@@ -2728,7 +2796,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         'label': l10n['life_path_number_label'] ?? 'Life Path',
         'val': data.lifePath,
       },
-      {
+      /* {
         'label': l10n['pinnacle1_number_label'] ?? 'Pinnacle 1',
         'val': data.pinnacle1,
       },
@@ -2747,7 +2815,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       {
         'label': l10n['pinnacle_base_label'] ?? 'Pinnacle Base',
         'val': data.pinnacleBase,
-      },
+      }, */
     ];
 
     return Wrap(
@@ -2803,7 +2871,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
   Widget _buildPersonalityDetails(BuildContext context, WidgetRef ref) {
     final personalityAsync = ref.watch(personalityDataProvider);
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
 
     return personalityAsync.when(
@@ -2997,7 +3065,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       ],
     );
   }
-
 }
 
 class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -3035,5 +3102,3 @@ class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
         backgroundColor != oldDelegate.backgroundColor;
   }
 }
-
-

@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:flutter_supabase_order_app_mobile/core/globals.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/auth_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/app_localization_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/services/connectivity_service.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/cart/providers/cart_providers.dart';
@@ -87,7 +87,7 @@ class RoleChangeOrchestrator extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  ref.read(l10nProvider)['role_change_msg'] ??
+                  ref.read(appL10nProvider)['role_change_msg'] ??
                       'Your access permissions have changed. Reloading app...',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -97,7 +97,9 @@ class RoleChangeOrchestrator extends ConsumerWidget {
           backgroundColor: Colors.orange.shade800,
           duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
 
@@ -114,10 +116,7 @@ class RoleChangeOrchestrator extends ConsumerWidget {
 class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
   final Widget child;
 
-  const RetailerShopLinkChangeOrchestrator({
-    super.key,
-    required this.child,
-  });
+  const RetailerShopLinkChangeOrchestrator({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,7 +138,7 @@ class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    ref.read(l10nProvider)['shop_link_change_msg'] ??
+                    ref.read(appL10nProvider)['shop_link_change_msg'] ??
                         'Your shop assignments have changed. Reloading app...',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -149,7 +148,9 @@ class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
             backgroundColor: Colors.blue.shade800,
             duration: const Duration(seconds: 4),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
 
@@ -230,14 +231,14 @@ class _ConnectivityToastOrchestratorState
       },
     );
 
-    ref.listen<AsyncValue<List<ModelBirthdate>>>(
-      birthdatesStreamProvider,
-      (previous, next) {
-        if (next.hasError) {
-          _handleRealtimeError(next.error);
-        }
-      },
-    );
+    ref.listen<AsyncValue<List<ModelBirthdate>>>(birthdatesStreamProvider, (
+      previous,
+      next,
+    ) {
+      if (next.hasError) {
+        _handleRealtimeError(next.error);
+      }
+    });
 
     return widget.child;
   }
@@ -256,7 +257,7 @@ class _ConnectivityToastOrchestratorState
   }
 
   void _showConnectivitySnack(bool isOnline) {
-    final l10n = ref.read(l10nProvider);
+    final l10n = ref.read(appL10nProvider);
 
     scaffoldMessengerKey.currentState?.clearSnackBars();
     scaffoldMessengerKey.currentState?.showSnackBar(
@@ -270,7 +271,7 @@ class _ConnectivityToastOrchestratorState
                 isOnline
                     ? (l10n['internet_connected'] ?? 'Back online!')
                     : (l10n['internet_disconnected'] ??
-                        'You are offline. Some features may not work.'),
+                          'You are offline. Some features may not work.'),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -284,5 +285,3 @@ class _ConnectivityToastOrchestratorState
     );
   }
 }
-
-

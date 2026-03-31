@@ -7,7 +7,7 @@ import '../../../core/config/module_config.dart';
 import '../../../core/models/entity_meta.dart';
 import '../../../core/services/entity_service.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/app_localization_provider.dart';
 import 'entity_card.dart';
 import 'providers/generic_list_controller.dart';
 import 'providers/generic_list_logic.dart';
@@ -102,7 +102,7 @@ class _EntityListPageRiverpodState<T>
     final service = ref.watch(widget.serviceProvider);
 
     final entitiesAsync = ref.watch(widget.streamProvider);
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(appL10nProvider);
 
     // Use entityName as unique key for the controller family
     final controllerKey = widget.entityMeta.entityName;

@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/birthdate_localization_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 
 final birthdateProvider = StateProvider<DateTime?>((ref) => null);
-final cachedBirthdateRecordsProvider =
-    StateProvider<List<ModelBirthdate>>((ref) => []);
+final cachedBirthdateRecordsProvider = StateProvider<List<ModelBirthdate>>(
+  (ref) => [],
+);
 
 final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   final client = ref.watch(supabaseClientProvider);
@@ -88,7 +89,7 @@ final ageProvider = Provider<String?>((ref) {
   final birthdate = ref.watch(birthdateProvider);
   if (birthdate == null) return null;
 
-  final l10n = ref.watch(l10nProvider);
+  final l10n = ref.watch(birthdateL10nProvider);
   final components = _calculateAgeComponents(birthdate);
 
   final yLabel = l10n['years'] ?? 'years';

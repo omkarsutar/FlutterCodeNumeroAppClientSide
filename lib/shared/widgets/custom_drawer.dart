@@ -8,7 +8,7 @@ import '../../core/providers/auth_providers.dart';
 import '../../core/providers/core_providers.dart';
 
 import '../../core/utils/dialogs.dart';
-import '../../core/providers/localization_provider.dart';
+import '../../core/providers/app_localization_provider.dart';
 import '../../router/app_routes.dart';
 
 class CustomDrawer extends ConsumerStatefulWidget {
@@ -45,7 +45,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
     final avatarUrl = ref.watch(userAvatarUrlProvider);
     final displayName = _userDisplayName();
     final theme = Theme.of(context);
-    final l10n = ref.watch(l10nProvider);
+    final l10n = ref.watch(appL10nProvider);
     final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
 
     final initials = displayName != null && displayName.isNotEmpty
