@@ -70,5 +70,17 @@ final userAvatarUrlProvider = Provider<String?>((ref) {
   if (user == null) return null;
 
   final metadata = user.userMetadata;
-  return metadata?['avatar_url'] as String?;
+  final avatarUrl = metadata?['avatar_url'] as String?;
+  if (avatarUrl == null || avatarUrl.isEmpty) return null;
+
+  final uri = Uri.tryParse(avatarUrl);
+  final host = uri?.host.toLowerCase() ?? '';
+
+  // Google-hosted avatar URLs can start returning 429s in-app.
+  // Prefer the initials fallback instead of repeatedly requesting them.
+  if (host.contains('googleusercontent.com')) {
+    return null;
+  }
+
+  return avatarUrl;
 });

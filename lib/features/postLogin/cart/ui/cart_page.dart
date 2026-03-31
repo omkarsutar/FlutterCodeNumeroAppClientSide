@@ -37,6 +37,7 @@ class _CartPageState extends ConsumerState<CartPage> {
           ? RefreshIndicator(
               onRefresh: _refreshCartData,
               child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
@@ -63,6 +64,8 @@ class _CartPageState extends ConsumerState<CartPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _buildPromoFooter(context),
                 ],
               ),
             )
@@ -176,9 +179,11 @@ class _CartPageState extends ConsumerState<CartPage> {
   ) {
     final theme = Theme.of(context);
     final count = selectedIds.length;
+    final isTwoBirthdatesSelected = count >= 2;
+    final offerPrice = isTwoBirthdatesSelected ? '499' : '299';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         boxShadow: [
@@ -192,28 +197,206 @@ class _CartPageState extends ConsumerState<CartPage> {
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: count == 0
-                ? null
-                : () => ref
-                      .read(cartControllerProvider)
-                      .handlePaymentAction(context, selectedIds.toList()),
-            icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
-            label: Text(
-              "${l10n['place_order'] ?? 'Place Order'} ($count)",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildPromoCard(
+              context,
+              headline: 'Unlock your birthdate insights today',
+              offerPrice: offerPrice,
+              showCheckoutAction: true,
+              checkoutLabel: "${l10n['place_order'] ?? 'Place Order'} ($count)",
+              onCheckout: count == 0
+                  ? null
+                  : () => ref
+                        .read(cartControllerProvider)
+                        .handlePaymentAction(context, selectedIds.toList()),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPromoFooter(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: _buildPromoCard(
+        context,
+        headline: 'Get your personalized birthdate analysis',
+        offerPrice: '299',
+        showCheckoutAction: false,
+      ),
+    );
+  }
+
+  Widget _buildPromoCard(
+    BuildContext context, {
+    required String headline,
+    required String offerPrice,
+    required bool showCheckoutAction,
+    String? checkoutLabel,
+    VoidCallback? onCheckout,
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primaryContainer,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            headline,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.onPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'For 1 birthdate analysis',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onPrimary.withValues(alpha: 0.86),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildCompactPriceButton(
+                  context,
+                  label: '999',
+                  isStriked: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildCompactPriceButton(
+                  context,
+                  label: offerPrice,
+                  isHighlighted: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'For 2 birthdates or to add a new one',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onPrimary.withValues(alpha: 0.86),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildCompactPriceButton(
+                  context,
+                  label: '499',
+                  suffix: ' x2',
+                  isHighlighted: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.pushNamed(AppRoute.birthdateAnalysisName),
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                  label: const Text('Add a Birthdate'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    side: BorderSide(
+                      color: theme.colorScheme.onPrimary.withValues(alpha: 0.45),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (showCheckoutAction) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onCheckout,
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                label: Text(checkoutLabel ?? 'Place Order'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.onPrimary,
+                  foregroundColor: theme.colorScheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactPriceButton(
+    BuildContext context, {
+    required String label,
+    bool isStriked = false,
+    bool isHighlighted = false,
+    String suffix = '',
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? theme.colorScheme.onPrimary
+            : Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          '\u20B9$label$suffix',
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: isHighlighted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.w900,
+            decoration:
+                isStriked ? TextDecoration.lineThrough : TextDecoration.none,
+            decorationColor: isHighlighted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onPrimary,
+            decorationThickness: 2,
           ),
         ),
       ),
