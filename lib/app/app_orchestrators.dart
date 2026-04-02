@@ -50,7 +50,12 @@ class _AuthBootstrapOrchestratorState
 
       final session = Supabase.instance.client.auth.currentSession;
       if (session != null) {
+        debugPrint(
+          '[AuthBootstrap] Session found for user: ${session.user.id}. Loading profile...',
+        );
         ref.read(authServiceProvider).loadAndStoreUserProfile();
+      } else {
+        debugPrint('[AuthBootstrap] No active session found.');
       }
     });
   }

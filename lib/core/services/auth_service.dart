@@ -88,6 +88,7 @@ class AuthService {
         throw NoInternetException();
       }
       final userId = _client.auth.currentUser?.id;
+      debugPrint('[AuthService] Loading profile for userId: $userId');
       if (userId == null) throw Exception('User not logged in');
 
       final userData = await _client
@@ -96,22 +97,26 @@ class AuthService {
           .eq(ModelUserFields.userId, userId)
           .single();
 
+      debugPrint('[AuthService] Profile data fetched successfully');
       final profile = ModelUser.fromMap(userData);
 
+      debugPrint('[AuthService] Initializing RBAC for userId: $userId');
       // Initialize RBAC for the logged-in user BEFORE marking profile as ready
       await _rbacService.initializeRbac(userId);
+      debugPrint('[AuthService] RBAC initialized successfully');
 
       _ref.read(userProfileStateProvider.notifier).setProfile(profile);
+      debugPrint('[AuthService] Profile state updated');
     } catch (e, st) {
       ErrorHandler.handle(
         e,
         st,
         context: 'Loading user profile',
-        showToUser: e is! NoInternetException, // Don't show redundant offline toast
-        logLevel:
-            e is NoInternetException
-                ? ErrorLogLevel.warning
-                : ErrorLogLevel.error,
+        showToUser:
+            e is! NoInternetException, // Don't show redundant offline toast
+        logLevel: e is NoInternetException
+            ? ErrorLogLevel.warning
+            : ErrorLogLevel.error,
       );
       // We don't rethrow here to prevent crashing the global initialization flow
     }
@@ -139,10 +144,12 @@ class AuthService {
             }
           },
           onError: (error, stackTrace) {
-            _ref.read(loggerServiceProvider).error(
-              'Error in userProfileStream (AuthService): $error',
-              stackTrace is StackTrace ? stackTrace : null,
-            );
+            _ref
+                .read(loggerServiceProvider)
+                .error(
+                  'Error in userProfileStream (AuthService): $error',
+                  stackTrace is StackTrace ? stackTrace : null,
+                );
           },
         );
   }
@@ -169,20 +176,17 @@ class AuthService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
 
-    final langCode =
-        language == AppLanguage.hindi
-            ? 'hi'
-            : language == AppLanguage.marathi
-            ? 'mr'
-            : 'en';
+    final langCode = language == AppLanguage.hindi
+        ? 'hi'
+        : language == AppLanguage.marathi
+        ? 'mr'
+        : 'en';
 
     try {
       await _client
           .from(ModelUserFields.table)
-          .update({ModelUserFields.userLanguage: langCode}).eq(
-            ModelUserFields.userId,
-            userId,
-          );
+          .update({ModelUserFields.userLanguage: langCode})
+          .eq(ModelUserFields.userId, userId);
     } catch (e, st) {
       ErrorHandler.handle(
         e,

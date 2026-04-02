@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:flutter_supabase_order_app_mobile/core/providers/app_config_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/user_profile_state_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/core/routing/module_route_generator.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 
@@ -53,7 +52,9 @@ class RouteGuardService {
     final appConfig = ref.read(appConfigProvider).valueOrNull;
     if (appConfig != null && appConfig.vacationMode) {
       if (state.uri.path != AppRoute.vacation) {
-        debugPrint('AppRouter: Vacation Mode active -> Redirecting to Vacation Screen');
+        debugPrint(
+          'AppRouter: Vacation Mode active -> Redirecting to Vacation Screen',
+        );
         return AppRoute.vacation;
       }
       return null;
@@ -76,7 +77,9 @@ class RouteGuardService {
 
     final prefs = await SharedPreferences.getInstance();
     final hasPendingOrder = prefs.containsKey('pending_order');
-    debugPrint('[AppRouter] Checking for pending order in router: $hasPendingOrder');
+    debugPrint(
+      '[AppRouter] Checking for pending order in router: $hasPendingOrder',
+    );
     if (hasPendingOrder) {
       debugPrint('AppRouter: Pending order found -> Redirecting to Cart');
       return state.namedLocation(AppRoute.cartName);
@@ -93,11 +96,7 @@ class RouteGuardService {
     required Ref ref,
   }) {
     final rbacService = ref.read(rbacServiceProvider);
-    final profile = ref.read(userProfileStateProvider).profile;
     final roleName = rbacService.roleName?.toLowerCase();
-    final isGuest = roleName == 'guest';
-    final isProfileReady =
-        rbacService.isInitialized && (isGuest || profile?.preferredRouteId != null);
 
     debugPrint(
       'AppRouter: Redirect Check | LoggedIn: $isLoggedIn | Role: $roleName | Path: ${state.uri.path}',
@@ -112,15 +111,12 @@ class RouteGuardService {
     }
 
     if (isLoggedIn && (isAuthPage || isAtRoot)) {
-      debugPrint('AppRouter: Handling Root/Auth Page Redirect for LoggedIn User');
+      debugPrint(
+        'AppRouter: Handling Root/Auth Page Redirect for LoggedIn User',
+      );
 
-      if (!isProfileReady && !rbacService.isInitialized) {
-        debugPrint('AppRouter: Profile/RBAC not ready -> Loading');
-        return AppRoute.loading;
-      }
-
-      if (rbacService.isInitialized && !isGuest && profile?.preferredRouteId == null) {
-        debugPrint('AppRouter: Profile missing preferredRouteId -> Loading');
+      if (!rbacService.isInitialized) {
+        debugPrint('AppRouter: RBAC not ready -> Loading');
         return AppRoute.loading;
       }
 
@@ -162,7 +158,9 @@ class RouteGuardService {
     );
 
     if (!hasAccess) {
-      debugPrint('AppRouter: Access denied for route $routeName -> Redirecting to unauthorized');
+      debugPrint(
+        'AppRouter: Access denied for route $routeName -> Redirecting to unauthorized',
+      );
       return AppRoute.unauthorized;
     }
 

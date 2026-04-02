@@ -45,11 +45,14 @@ class RbacService {
   /// Initialize the RBAC system by loading user's role and permissions
   /// Should be called when user is authenticated
   Future<void> initializeRbac(String userId) async {
+    debugPrint('[RbacService] Initializing RBAC for userId: $userId');
     if (!await ConnectivityService.isOnline()) {
+      debugPrint('[RbacService] Offline, skipping RBAC initialization');
       throw NoInternetException();
     }
     try {
       // Get user's role
+      debugPrint('[RbacService] Fetching user role...');
       final userData = await _client
           .from(ModelUserFields.table)
           .select('${ModelUserFields.roleId}, rbac_roles(role_name)')
@@ -58,17 +61,26 @@ class RbacService {
 
       _cachedRoleId = userData[ModelUserFields.roleId] as String?;
       _cachedRoleName = userData['rbac_roles']?['role_name'] as String?;
+      debugPrint(
+        '[RbacService] Role fetched: $_cachedRoleName ($_cachedRoleId)',
+      );
 
       if (_cachedRoleId == null) {
         throw Exception('User has no assigned role');
       }
 
       // Load all permissions for this role
+      debugPrint(
+        '[RbacService] Loading permissions for roleId: $_cachedRoleId',
+      );
       await _loadUserPermissions(_cachedRoleId!);
+      debugPrint('[RbacService] Permissions loaded successfully');
 
       // Notify listeners that RBAC is ready
       initializationNotifier.value = true;
+      debugPrint('[RbacService] RBAC Initialization complete');
     } catch (e, stackTrace) {
+      debugPrint('[RbacService] Initialization failed: $e');
       if (e is NoInternetException) {
         // Log warning but don't crash the app
         ErrorHandler.handle(
