@@ -3,7 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_providers.dart';
 import 'user_profile_state_provider.dart';
 import '../services/logger_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/error_handler.dart';
 import '../services/rbac_service.dart';
+import '../interfaces/connectivity_service_interface.dart';
 
 /// Provides the global Supabase client instance
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -15,10 +18,24 @@ final loggerServiceProvider = Provider<LoggerService>((ref) {
   return LoggerServiceImpl();
 });
 
+/// Provides the error handler service
+final errorHandlerProvider = Provider<ErrorHandler>((ref) {
+  final logger = ref.watch(loggerServiceProvider);
+  return ErrorHandler(logger);
+});
+
+/// Provides the instance of [IConnectivityService].
+final connectivityServiceProvider = Provider<IConnectivityService>((ref) {
+  return ConnectivityServiceImpl();
+});
+
 /// Provides the RBAC service instance
 final rbacServiceProvider = Provider<RbacService>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  return RbacService(client);
+  final connectivityService = ref.watch(connectivityServiceProvider);
+  final errorHandler = ref.watch(errorHandlerProvider);
+
+  return RbacService(client, connectivityService, errorHandler);
 });
 
 /// Provides the initialization state of the RBAC system

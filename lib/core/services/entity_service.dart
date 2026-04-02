@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/field_config.dart';
 import '../exceptions/app_exceptions.dart';
-import 'connectivity_service.dart';
+import '../interfaces/connectivity_service_interface.dart';
 import 'logger_service.dart';
 
 /// Generic entity service interface for all CRUD operations
@@ -82,8 +82,9 @@ abstract class EntityAdapter<T> {
 abstract class ForeignKeyAwareService<T> implements EntityService<T> {
   final SupabaseClient client;
   final LoggerService logger;
+  final IConnectivityService connectivityService;
 
-  ForeignKeyAwareService(this.client, this.logger);
+  ForeignKeyAwareService(this.client, this.logger, this.connectivityService);
 
   String get tableName;
   String? get viewName => null;
@@ -104,7 +105,7 @@ abstract class ForeignKeyAwareService<T> implements EntityService<T> {
 
   // --- Connectivity guard ---
   Future<void> _ensureConnected() async {
-    if (!await ConnectivityService.isOnline()) {
+    if (!await connectivityService.isOnline()) {
       throw NoInternetException();
     }
   }

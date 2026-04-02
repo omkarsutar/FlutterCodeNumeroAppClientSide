@@ -1,10 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/field_config.dart';
 import '../../../../core/exceptions/app_exceptions.dart';
-import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/services/entity_service.dart';
 
 class GenericFormState {
@@ -47,7 +46,8 @@ class GenericFormController
   }
 
   Future<void> loadDropdownOptions(List<FieldConfig> fieldConfigs) async {
-    if (!await ConnectivityService.isOnline()) {
+    final isOnline = await ref.read(connectivityServiceProvider).isOnline();
+    if (!isOnline) {
       throw NoInternetException();
     }
 
@@ -61,7 +61,8 @@ class GenericFormController
 
       try {
         final source = field.dropdownSource!;
-        final data = await Supabase.instance.client
+        final data = await ref
+            .read(supabaseClientProvider)
             .from(source.table)
             .select()
             .order(source.labelKey, ascending: true);

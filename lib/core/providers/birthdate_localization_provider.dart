@@ -52,6 +52,7 @@ const _birthdateTranslations = {
     'appears_twice': 'appears twice',
     'appears_thrice': 'appears thrice',
     'missing_numbers_from_loshu_grid': 'Missing Numbers (from Lo Shu Grid)',
+    'save_birthdate': 'Reveal My Birthdate Secrets',
   },
   AppLanguage.marathi: {
     'birthdate_label': 'जन्म तारीख',
@@ -97,6 +98,7 @@ const _birthdateTranslations = {
     'appears_twice': 'दोनदा दिसते',
     'appears_thrice': 'तीनदा दिसते',
     'missing_numbers_from_loshu_grid': 'अनुपस्थित क्रमांक (लो शू ग्रिडपासून)',
+    'save_birthdate': 'माझे जन्मदिनाचे रहस्य उलगडा',
   },
   AppLanguage.hindi: {
     'birthdate_label': 'जन्म तिथि',
@@ -142,5 +144,6 @@ const _birthdateTranslations = {
     'appears_twice': 'दो बार दिखता है',
     'appears_thrice': 'तीन बार दिखता है',
     'missing_numbers_from_loshu_grid': 'अनुपस्थित संख्या (लो शू ग्रिड से)',
+    'save_birthdate': 'मेरे जन्मदिन के रहस्य उजागर करें',
   },
 };

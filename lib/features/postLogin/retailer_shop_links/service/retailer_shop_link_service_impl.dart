@@ -13,7 +13,8 @@ class RetailerShopLinkServiceImpl
     this._mapper,
     SupabaseClient client,
     LoggerService logger,
-  ) : super(client, logger);
+    IConnectivityService connectivityService,
+  ) : super(client, logger, connectivityService);
 
   @override
   EntityMapper<ModelRetailerShopLink> get mapper => _mapper;

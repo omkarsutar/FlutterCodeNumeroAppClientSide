@@ -6,23 +6,29 @@ import '../utils/platform/web_utils.dart';
 import '../providers/user_profile_state_provider.dart';
 import '../providers/localization_provider.dart';
 
-import '../../router/app_router.dart';
-
 import '../providers/core_providers.dart';
 import '../../features/postLogin/users/user_barrel.dart';
 import '../constants/app_constants.dart';
 import '../exceptions/app_exceptions.dart';
-import 'connectivity_service.dart';
+import '../interfaces/connectivity_service_interface.dart';
 import 'rbac_service.dart';
 import 'error_handler.dart';
 
 class AuthService {
   final SupabaseClient _client;
   final RbacService _rbacService;
+  final IConnectivityService _connectivityService;
+  final ErrorHandler _errorHandler;
   final Ref _ref;
   StreamSubscription<List<Map<String, dynamic>>>? _profileSubscription;
 
-  AuthService(this._client, this._rbacService, this._ref);
+  AuthService(
+    this._client,
+    this._rbacService,
+    this._connectivityService,
+    this._errorHandler,
+    this._ref,
+  );
 
   /// Sign in with Google and load user profile
   Future<void> signInWithGoogle() async {
@@ -36,7 +42,7 @@ class AuthService {
     }
 
     try {
-      if (!await ConnectivityService.isOnline()) {
+      if (!await _connectivityService.isOnline()) {
         throw NoInternetException();
       }
       await _client.auth.signInWithOAuth(
@@ -44,7 +50,7 @@ class AuthService {
         redirectTo: redirectUri,
       );
     } catch (e, stackTrace) {
-      ErrorHandler.handle(
+      _errorHandler.handle(
         e,
         stackTrace,
         context: 'Google Sign-In',
@@ -68,7 +74,6 @@ class AuthService {
         case AuthChangeEvent.signedOut:
           disposeProfileStream();
           _ref.read(userProfileStateProvider.notifier).clearProfile();
-          _ref.read(routerProvider).go('/'); // Navigate to welcome page
           break;
         case AuthChangeEvent.tokenRefreshed:
         case AuthChangeEvent.userUpdated:
@@ -84,7 +89,7 @@ class AuthService {
   /// Load user profile from Supabase and store globally, then initialize RBAC
   Future<void> loadAndStoreUserProfile() async {
     try {
-      if (!await ConnectivityService.isOnline()) {
+      if (!await _connectivityService.isOnline()) {
         throw NoInternetException();
       }
       final userId = _client.auth.currentUser?.id;
@@ -108,7 +113,7 @@ class AuthService {
       _ref.read(userProfileStateProvider.notifier).setProfile(profile);
       debugPrint('[AuthService] Profile state updated');
     } catch (e, st) {
-      ErrorHandler.handle(
+      _errorHandler.handle(
         e,
         st,
         context: 'Loading user profile',
@@ -118,7 +123,6 @@ class AuthService {
             ? ErrorLogLevel.warning
             : ErrorLogLevel.error,
       );
-      // We don't rethrow here to prevent crashing the global initialization flow
     }
   }
 
@@ -188,7 +192,7 @@ class AuthService {
           .update({ModelUserFields.userLanguage: langCode})
           .eq(ModelUserFields.userId, userId);
     } catch (e, st) {
-      ErrorHandler.handle(
+      _errorHandler.handle(
         e,
         st,
         context: 'Updating user language',

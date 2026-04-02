@@ -1,31 +1,38 @@
 import 'package:async/async.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../interfaces/connectivity_service_interface.dart';
 
-/// Service that monitors internet connectivity status.
-/// Uses connectivity_plus to detect network changes in real-time.
-class ConnectivityService {
-  static final Connectivity _connectivity = Connectivity();
+/// Implementation of [IConnectivityService] using the `connectivity_plus` package.
+class ConnectivityServiceImpl implements IConnectivityService {
+  final Connectivity _connectivity = Connectivity();
 
-  /// One-shot async check: returns true if device has any network connection.
-  /// Used inside service layer methods to guard API calls.
-  static Future<bool> isOnline() async {
+  @override
+  Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return !results.contains(ConnectivityResult.none);
   }
+
+  @override
+  Stream<bool> get onConnectivityChanged => _connectivity.onConnectivityChanged
+      .map((results) => !results.contains(ConnectivityResult.none));
 }
 
 /// Streams the current connectivity status as a boolean (true = online).
 /// Emits immediately with the current state, then on every change.
 final connectivityStatusProvider = StreamProvider<bool>((ref) {
-  final connectivity = Connectivity();
-  final connectivityChanges = connectivity.onConnectivityChanged.map(
-    (results) => !results.contains(ConnectivityResult.none),
-  );
+  // Use the name 'ref' to watch the provider from core_providers.dart
+  // Note: Since this file is exported by the barrel, it should be fine.
+  // However, specifically for this provider, we might need a direct import
+  // if circular dependency occurs.
+  final service =
+      ConnectivityServiceImpl(); // Fallback to local instance if needed
+
+  final connectivityChanges = service.onConnectivityChanged;
   final periodicChecks = Stream.periodic(
     const Duration(seconds: 3),
-  ).asyncMap((_) => ConnectivityService.isOnline());
-  final initialCheck = Stream.fromFuture(ConnectivityService.isOnline());
+  ).asyncMap((_) => service.isOnline());
+  final initialCheck = Stream.fromFuture(service.isOnline());
 
   return StreamGroup.merge<bool>([
     initialCheck,

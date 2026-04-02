@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/auth_providers.dart';
-import '../../core/services/error_handler.dart';
+import '../../core/providers/core_providers.dart';
 import 'package:go_router/go_router.dart';
 import '../../router/app_routes.dart';
 
@@ -143,12 +143,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                                     .read(authServiceProvider)
                                     .signInWithGoogle();
                               } catch (e, stackTrace) {
-                                ErrorHandler.handle(
-                                  e,
-                                  stackTrace,
-                                  context: 'Google Sign-In',
-                                  showToUser: true,
-                                );
+                                ref
+                                    .read(errorHandlerProvider)
+                                    .handle(
+                                      e,
+                                      stackTrace,
+                                      context: 'Google Sign-In',
+                                      showToUser: true,
+                                    );
                                 setState(() {
                                   _error = 'Sign in failed: $e';
                                 });

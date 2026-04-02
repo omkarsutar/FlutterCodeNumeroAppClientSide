@@ -1,5 +1,5 @@
 import '../exceptions/app_exceptions.dart';
-import 'connectivity_service.dart';
+import '../interfaces/connectivity_service_interface.dart';
 import 'entity_service.dart';
 import 'logger_service.dart';
 
@@ -7,8 +7,9 @@ import 'logger_service.dart';
 /// All implementing classes automatically get logging without writing log statements
 abstract class LoggingEntityService<T> implements EntityService<T> {
   final LoggerService logger;
+  final IConnectivityService connectivityService;
 
-  LoggingEntityService(this.logger);
+  LoggingEntityService(this.logger, this.connectivityService);
 
   /// Get the entity type name for logging (e.g., "ModelNote", "ModelShop")
   String get entityTypeName;
@@ -32,7 +33,7 @@ abstract class LoggingEntityService<T> implements EntityService<T> {
 
   /// Throws [NoInternetException] if the device has no network connection.
   Future<void> _ensureConnected() async {
-    if (!await ConnectivityService.isOnline()) {
+    if (!await connectivityService.isOnline()) {
       throw NoInternetException();
     }
   }
@@ -127,7 +128,9 @@ abstract class LoggingEntityService<T> implements EntityService<T> {
       }
     } catch (e, st) {
       if (e is NoInternetException) {
-        logger.warning('Offline while trying to start stream for $entityTypeName');
+        logger.warning(
+          'Offline while trying to start stream for $entityTypeName',
+        );
         // We yield an empty list instead of rethrowing to allow the UI to render an offline state
         // rather than a blank screen/crash.
         yield [];

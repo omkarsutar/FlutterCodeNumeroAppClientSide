@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,9 @@ import '../providers/numerology_content_providers.dart';
 import '../providers/numerology_providers.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../router/app_routes.dart';
+import '../../../../core/utils/dialogs.dart';
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
@@ -264,9 +267,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       _navigateToCartAndSelect(birthdate);
                     } else {
                       // Save new birthdate
-                      ref
-                          .read(cartControllerProvider)
-                          .handleOrderAction(context, birthdate: birthdate);
+                      _handleOrderAction(birthdate);
                     }
                   },
             icon: Icon(
@@ -478,16 +479,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         if (birthdateId != null)
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
-                            onPressed:
-                                () => ref
-                                    .read(cartControllerProvider)
-                                    .updateBirthdateName(
-                                      context,
-                                      birthdateId,
-                                      fullName == 'Age Snapshot'
-                                          ? ''
-                                          : fullName,
-                                    ),
+                            onPressed: () => _updateBirthdateName(
+                              birthdateId,
+                              fullName == 'Age Snapshot' ? '' : fullName,
+                            ),
                             tooltip: 'Edit Name',
                             color: theme.colorScheme.primary.withValues(
                               alpha: 0.7,
@@ -3094,6 +3089,228 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _handleOrderAction(DateTime birthdate) async {
+    final l10n = ref.read(birthdateL10nProvider);
+    final session = ref.read(supabaseClientProvider).auth.currentSession;
+    if (session == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n['cart_saved_login'] ??
+                  'Cart saved. Please login to complete your order.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        context.pushNamed(AppRoute.loginName);
+      }
+      return;
+    }
+
+    final confirm = await showConfirmationDialog(
+      context: context,
+      title: 'Place Order?',
+      content: 'Are you sure you want to place this order?',
+      confirmLabel: l10n['confirm'] ?? 'Confirm',
+    );
+
+    if (confirm == true) {
+      if (!mounted) return;
+      showLoadingDialog(
+        context: context,
+        message: l10n['please_wait'] ?? 'Placing order...',
+      );
+
+      try {
+        await ref.read(cartControllerProvider).placeOrder(birthdate: birthdate);
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          await _showThankYouDialog();
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to place order: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _updateBirthdateName(String id, String currentName) async {
+    final l10n = ref.read(birthdateL10nProvider);
+    final theme = Theme.of(context);
+    final controller = TextEditingController(text: currentName);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          l10n['edit_name'] ?? 'Edit Name',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: l10n['full_name'] ?? 'Full Name',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            prefixIcon: const Icon(Icons.person_outline),
+          ),
+          textCapitalization: TextCapitalization.words,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n['cancel'] ?? 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(l10n['save'] ?? 'Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty && newName != currentName) {
+      if (!mounted) return;
+      showLoadingDialog(
+        context: context,
+        message: l10n['please_wait'] ?? 'Updating...',
+      );
+
+      try {
+        await ref.read(cartControllerProvider).updateBirthdateName(id, newName);
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n['name_updated_success'] ?? 'Name updated successfully!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update name: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _showThankYouDialog() {
+    final l10n = ref.read(birthdateL10nProvider);
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green[700],
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n['thank_you'] ?? 'Thank You!',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n['order_success'] ??
+                      'Your order has been placed successfully.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.goNamed(AppRoute.birthdateAnalysisName);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n['continue_shopping'] ?? 'Continue Shopping',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

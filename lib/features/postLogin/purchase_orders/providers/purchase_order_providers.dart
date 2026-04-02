@@ -29,6 +29,7 @@ final purchaseOrderServiceProvider = Provider<PurchaseOrderServiceImpl>((ref) {
     ref.watch(purchaseOrderMapperProvider),
     ref.watch(supabaseClientProvider),
     ref.watch(loggerServiceProvider),
+    ref.watch(connectivityServiceProvider),
     ref,
     initialSorting: initialSorting,
   );

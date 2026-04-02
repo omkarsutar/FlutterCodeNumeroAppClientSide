@@ -9,3 +9,4 @@ export 'logger_service.dart';
 export 'logging_entity_service.dart';
 export 'rbac_service.dart';
 export 'supabase_entity_service.dart';
+export '../interfaces/connectivity_service_interface.dart';

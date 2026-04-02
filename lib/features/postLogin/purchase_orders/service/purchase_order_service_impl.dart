@@ -11,6 +11,7 @@ import '../../../../core/services/entity_service.dart';
 import '../model/purchase_order_model.dart';
 
 import '../../../../core/config/module_config.dart';
+import '../../../../core/interfaces/connectivity_service_interface.dart';
 
 class PurchaseOrderServiceImpl
     extends ForeignKeyAwareService<ModelPurchaseOrder> {
@@ -21,9 +22,10 @@ class PurchaseOrderServiceImpl
     this._mapper,
     SupabaseClient client,
     LoggerService logger,
+    IConnectivityService connectivityService,
     this._ref, {
     SortingConfig? initialSorting,
-  }) : super(client, logger) {
+  }) : super(client, logger, connectivityService) {
     if (initialSorting != null) {
       sortField = initialSorting.field;
       sortAscending = initialSorting.sortAscending;

@@ -7,6 +7,7 @@ import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../providers/cart_controller.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
+import '../../../../core/utils/dialogs.dart';
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -150,9 +151,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                                   ),
                                   color: theme.colorScheme.error,
                                   tooltip: 'Delete this record',
-                                  onPressed: () => ref
-                                      .read(cartControllerProvider)
-                                      .deleteBirthdate(context, recordId),
+                                  onPressed: () => _deleteBirthdate(recordId),
                                 ),
                               ],
                             ),
@@ -171,6 +170,90 @@ class _CartPageState extends ConsumerState<CartPage> {
               ],
             ),
     );
+  }
+
+  Future<void> _deleteBirthdate(String id) async {
+    final l10n = ref.read(appL10nProvider);
+    final confirm = await showConfirmationDialog(
+      context: context,
+      title: 'Delete Order?',
+      content: 'Are you sure you want to delete this specific analysis record?',
+      confirmLabel: 'Delete',
+    );
+
+    if (confirm == true) {
+      if (!mounted) return;
+      showLoadingDialog(
+        context: context,
+        message: l10n['please_wait'] ?? 'Deleting...',
+      );
+
+      try {
+        await ref.read(cartControllerProvider).deleteBirthdate(id);
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Record deleted successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete record: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handlePaymentAction(List<String> poIds) async {
+    final l10n = ref.read(appL10nProvider);
+    final confirm = await showConfirmationDialog(
+      context: context,
+      title: l10n['pay_now'] ?? 'Pay Now',
+      content: 'Are you sure you want to pay for ${poIds.length} orders?',
+      confirmLabel: l10n['pay_now'] ?? 'Pay Now',
+    );
+
+    if (confirm == true) {
+      if (!mounted) return;
+      showLoadingDialog(
+        context: context,
+        message: l10n['processing_payment'] ?? 'Processing order...',
+      );
+
+      try {
+        await ref.read(cartControllerProvider).processPayments(poIds);
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order Placed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to place order: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildPaymentFooter(
@@ -289,9 +372,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                 ElevatedButton(
                   onPressed: count == 0
                       ? null
-                      : () => ref
-                            .read(cartControllerProvider)
-                            .handlePaymentAction(context, selectedIds.toList()),
+                      : () => _handlePaymentAction(selectedIds.toList()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,

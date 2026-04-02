@@ -6,11 +6,11 @@ import '../../../core/config/field_config.dart';
 import '../../../core/models/entity_meta.dart';
 import '../../../core/services/entity_service.dart';
 import '../../../core/utils/snackbar_utils.dart';
-import '../../../core/services/error_handler.dart';
 import '../../../shared/widgets/custom_app_bar.dart';
 import '../../../core/providers/core_providers.dart';
 import 'providers/entity_form_logic.dart';
 import 'providers/generic_form_controller.dart';
+import 'widgets/form_fields.dart';
 
 /// Generic Riverpod version of Entity Form Page
 /// Can be used for any entity type (Role, Note, etc.)
@@ -216,266 +216,51 @@ class _EntityFormPageRiverpodState<T>
   }) {
     switch (field.type) {
       case FieldType.switchField:
-        return _buildSwitchField(field);
+        return EntitySwitchField(
+          field: field,
+          value: _switchValues[field.name] ?? false,
+          onChanged: (value) =>
+              setState(() => _switchValues[field.name] = value),
+        );
       case FieldType.dropdown:
-        return _buildDropdownField(field, dropdownOptions);
+        return EntityDropdownField(
+          field: field,
+          currentValue: _dropdownValues[field.name],
+          options: dropdownOptions[field.name] ?? [],
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _dropdownValues[field.name] = value);
+            }
+          },
+        );
       case FieldType.selector:
-        return _buildSelectorField(field);
+        return EntitySelectorField(
+          field: field,
+          currentValue: _dropdownValues[field.name],
+          currentLabel: _selectorLabels[field.name] ?? 'Select ${field.label}',
+          onSelected: (id, label) {
+            setState(() {
+              _dropdownValues[field.name] = id;
+              _selectorLabels[field.name] = label;
+            });
+          },
+        );
       case FieldType.textarea:
-        return _buildTextAreaField(field, isFirst: isFirst);
+        return EntityTextAreaField(
+          field: field,
+          controller: _controllers[field.name],
+          focusNode: isFirst ? _firstFocusNode : null,
+          isFirst: isFirst,
+        );
       case FieldType.text:
       default:
-        return _buildTextField(field, isFirst: isFirst);
-    }
-  }
-
-  Widget _buildTextField(FieldConfig field, {bool isFirst = false}) {
-    return TextFormField(
-      controller: _controllers[field.name],
-      focusNode: isFirst ? _firstFocusNode : null,
-      autofocus: isFirst && !field.readOnly,
-      enabled: !field.readOnly,
-      maxLength: field.maxLength,
-      decoration: InputDecoration(
-        labelText: field.label,
-        border: const OutlineInputBorder(),
-        counterText: '',
-        helperText: field.readOnly ? 'Read-only' : null,
-      ),
-      validator: EntityFormLogic.buildValidator(field),
-    );
-  }
-
-  Widget _buildTextAreaField(FieldConfig field, {bool isFirst = false}) {
-    return TextFormField(
-      controller: _controllers[field.name],
-      focusNode: isFirst ? _firstFocusNode : null,
-      autofocus: isFirst && !field.readOnly,
-      enabled: !field.readOnly,
-      maxLines: 5,
-      maxLength: field.maxLength,
-      keyboardType: TextInputType.multiline,
-      decoration: InputDecoration(
-        labelText: field.label,
-        border: const OutlineInputBorder(),
-        counterText: '',
-        helperText: field.readOnly ? 'Read-only' : null,
-      ),
-      validator: EntityFormLogic.buildValidator(field),
-    );
-  }
-
-  Widget _buildSwitchField(FieldConfig field) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(field.label, style: Theme.of(context).textTheme.titleMedium),
-              if (field.readOnly)
-                Text('Read-only', style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ),
-        Switch(
-          value: _switchValues[field.name] ?? false,
-          onChanged: field.readOnly
-              ? null
-              : (value) {
-                  setState(() {
-                    _switchValues[field.name] = value;
-                  });
-                },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSelectorField(FieldConfig field) {
-    final theme = Theme.of(context);
-    final currentValue = _dropdownValues[field.name];
-    final currentLabel = _selectorLabels[field.name] ?? 'Select ${field.label}';
-
-    return FormField<String>(
-      initialValue: currentValue,
-      validator: (value) =>
-          EntityFormLogic.buildValidator(field)?.call(currentValue),
-      builder: (FormFieldState<String> state) {
-        return InkWell(
-          onTap: field.readOnly
-              ? null
-              : () async {
-                  final routeName = field.dropdownSource?.routeName;
-                  if (routeName == null) {
-                    SnackbarUtils.showError(
-                      'No routeName defined for selector',
-                    );
-                    return;
-                  }
-
-                  final result = await context.pushNamed(
-                    routeName,
-                    queryParameters: {'selection': 'true'},
-                  );
-
-                  if (result != null && mounted) {
-                    // We assume result is an entity object
-                    // We need to extract the ID and Label using dropdownSource config
-                    final valueKey = field.dropdownSource?.valueKey ?? 'id';
-                    final labelKey = field.dropdownSource?.labelKey ?? 'name';
-
-                    // Try to extract from result (could be a Map or Model object)
-                    String? selectedId;
-                    String? selectedLabel;
-
-                    try {
-                      // If it's a map or has a dynamic getter
-                      if (result is Map) {
-                        selectedId = result[valueKey]?.toString();
-                        selectedLabel = result[labelKey]?.toString();
-                      } else {
-                        // Try to use reflection-like access or just assume it's a model
-                        // For now, we'll try to use the adapter if we can find it
-                        // But we don't know the type of the result here easily
-                        // Let's assume the result is the entity and we can try to use its toMap or similar
-                        // Most of our models have toMap()
-                        final map = (result as dynamic).toMap();
-                        selectedId = map[valueKey]?.toString();
-                        selectedLabel = map[labelKey]?.toString();
-                      }
-                    } catch (e) {
-                      debugPrint(
-                        'Failed to extract values from selector result: $e',
-                      );
-                      // Fallback to string representation if extraction fails
-                      selectedId = result.toString();
-                      selectedLabel = result.toString();
-                    }
-
-                    if (selectedId != null) {
-                      setState(() {
-                        _dropdownValues[field.name] = selectedId;
-                        _selectorLabels[field.name] =
-                            selectedLabel ?? selectedId!;
-                      });
-                      state.didChange(selectedId);
-                    }
-                  }
-                },
-          child: InputDecorator(
-            decoration: InputDecoration(
-              labelText: field.label,
-              border: const OutlineInputBorder(),
-              errorText: state.errorText,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              suffixIcon: const Icon(Icons.search),
-              helperText: field.readOnly ? 'Read-only' : null,
-            ),
-            child: Text(
-              currentLabel,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: currentValue == null
-                    ? theme.hintColor
-                    : theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-          ),
+        return EntityTextField(
+          field: field,
+          controller: _controllers[field.name],
+          focusNode: isFirst ? _firstFocusNode : null,
+          isFirst: isFirst,
         );
-      },
-    );
-  }
-
-  Widget _buildDropdownField(
-    FieldConfig field,
-    Map<String, List<Map<String, dynamic>>> dropdownOptions,
-  ) {
-    // Handle static dropdown options
-    if (field.dropdownOptions != null) {
-      final items = field.dropdownOptions!.map((option) {
-        return DropdownMenuItem<String>(value: option, child: Text(option));
-      }).toList();
-
-      return DropdownButtonFormField<String>(
-        value: _dropdownValues[field.name] ?? items.firstOrNull?.value,
-        decoration: InputDecoration(
-          labelText: field.label,
-          border: const OutlineInputBorder(),
-        ),
-        items: items,
-        onChanged: (value) {
-          if (value != null) {
-            setState(() {
-              _dropdownValues[field.name] = value;
-            });
-          }
-        },
-        validator: EntityFormLogic.buildValidator(field),
-      );
     }
-
-    // Dynamic Options from Controller State
-    final options = dropdownOptions[field.name] ?? [];
-    final currentValue = _dropdownValues[field.name];
-
-    // If we have a current value but no options yet, show a disabled field with the current value
-    if (currentValue != null && options.isEmpty) {
-      return TextFormField(
-        initialValue: currentValue,
-        enabled: false,
-        decoration: InputDecoration(
-          labelText: field.label,
-          border: const OutlineInputBorder(),
-          helperText: 'Loading options...',
-        ),
-      );
-    }
-
-    // Decide which keys to use for value/label
-    final valueKey = field.dropdownSource?.valueKey ?? 'id';
-    final labelKey = field.dropdownSource?.labelKey ?? 'name';
-
-    // Format options for DropdownMenuItem
-    final items = options.map<DropdownMenuItem<String>>((opt) {
-      final value = opt[valueKey]?.toString() ?? '';
-      final label = opt[labelKey]?.toString() ?? 'Unnamed';
-      return DropdownMenuItem<String>(value: value, child: Text(label));
-    }).toList();
-
-    // Ensure the currentValue exists in items
-    String? safeCurrentValue = currentValue;
-    if (safeCurrentValue != null && items.isNotEmpty) {
-      final valueExists = items.any((item) => item.value == safeCurrentValue);
-      if (!valueExists) {
-        safeCurrentValue = null;
-      }
-    }
-
-    return DropdownButtonFormField<String>(
-      value: safeCurrentValue,
-      decoration: InputDecoration(
-        labelText: field.label,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        helperText: field.readOnly ? 'Read-only' : null,
-      ),
-      items: items,
-      onChanged: field.readOnly
-          ? null
-          : (value) {
-              if (value != null) {
-                setState(() {
-                  _dropdownValues[field.name] = value;
-                });
-              }
-            },
-      validator: EntityFormLogic.buildValidator(field),
-      isExpanded: true,
-    );
   }
 
   @override
@@ -513,12 +298,14 @@ class _EntityFormPageRiverpodState<T>
         );
         context.goNamed(widget.listRouteName);
       } else if (next.error != null && !next.isLoading) {
-        ErrorHandler.handle(
-          Exception(next.error),
-          StackTrace.current,
-          context: 'Saving ${widget.entityMeta.entityName}',
-          showToUser: true,
-        );
+        ref
+            .read(errorHandlerProvider)
+            .handle(
+              Exception(next.error),
+              StackTrace.current,
+              context: 'Saving ${widget.entityMeta.entityName}',
+              showToUser: true,
+            );
       }
     });
 
@@ -592,11 +379,11 @@ class _EntityFormPageRiverpodState<T>
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               OutlinedButton.icon(
-                                  onPressed: () {
-                                    if (context.mounted && context.canPop()) {
-                                      context.pop();
-                                    }
-                                  },
+                                onPressed: () {
+                                  if (context.mounted && context.canPop()) {
+                                    context.pop();
+                                  }
+                                },
                                 icon: const Icon(Icons.cancel_outlined),
                                 label: const Text('Cancel'),
                                 style: OutlinedButton.styleFrom(

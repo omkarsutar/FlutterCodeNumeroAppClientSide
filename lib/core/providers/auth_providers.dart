@@ -9,7 +9,16 @@ import 'user_profile_state_provider.dart';
 final authServiceProvider = Provider<AuthService>((ref) {
   final client = ref.watch(supabaseClientProvider);
   final rbacService = ref.watch(rbacServiceProvider);
-  return AuthService(client, rbacService, ref);
+  final connectivityService = ref.watch(connectivityServiceProvider);
+  final errorHandler = ref.watch(errorHandlerProvider);
+
+  return AuthService(
+    client,
+    rbacService,
+    connectivityService,
+    errorHandler,
+    ref,
+  );
 });
 
 /// Stream of authentication state changes
@@ -31,12 +40,12 @@ final userProfileProvider = StreamProvider<ModelUser?>((ref) {
       .stream(primaryKey: [ModelUserFields.userId])
       .eq(ModelUserFields.userId, user.id)
       .handleError((error, stackTrace) {
-        ref.read(loggerServiceProvider).error(
-          'Error in userProfileProvider stream: $error',
-          stackTrace is StackTrace ? stackTrace : null,
-        );
-        // On error, we could retry or just let the stream stay empty/prev-state
-        // For now, logging satisfies the "stop crashing" requirement
+        ref
+            .read(loggerServiceProvider)
+            .error(
+              'Error in userProfileProvider stream: $error',
+              stackTrace is StackTrace ? stackTrace : null,
+            );
       })
       .map((snapshot) {
         if (snapshot.isEmpty) return null;

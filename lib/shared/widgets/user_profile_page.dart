@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/exceptions/app_exceptions.dart';
 import '../../core/providers/auth_providers.dart';
-import '../../core/services/connectivity_service.dart';
+import '../../core/providers/core_providers.dart';
 import '../../core/utils/snackbar_utils.dart';
 import '../../core/validators/form_validators.dart';
 import 'shared_widget_barrel.dart';
@@ -44,7 +44,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
         ModelUserFields.preferredRouteId: _routeController.text,
       };
 
-      if (!await ConnectivityService.isOnline()) {
+      if (!await ref.read(connectivityServiceProvider).isOnline()) {
         throw NoInternetException();
       }
 

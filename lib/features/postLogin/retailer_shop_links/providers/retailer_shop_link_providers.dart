@@ -19,6 +19,7 @@ final retailerShopLinkServiceProvider = Provider<RetailerShopLinkServiceImpl>((
     ref.watch(retailerShopLinkMapperProvider),
     ref.watch(supabaseClientProvider),
     ref.watch(loggerServiceProvider),
+    ref.watch(connectivityServiceProvider),
   );
 });
 

@@ -3,11 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import '../../core/services/rbac_service.dart';
 
-/// Provide a singleton RbacService via Riverpod
-final rbacServiceProvider = Provider<RbacService>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  return RbacService(client);
-});
+// Use the centralized rbacServiceProvider from core_providers.dart
 
 class PermissionGuard extends ConsumerWidget {
   final String moduleId;

@@ -3,7 +3,7 @@ import 'package:flutter_supabase_order_app_mobile/features/postLogin/rbac_permis
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../exceptions/app_exceptions.dart';
-import 'connectivity_service.dart';
+import '../interfaces/connectivity_service_interface.dart';
 import 'error_handler.dart';
 
 /// Enum representing the 4 permission actions in RBAC
@@ -27,8 +27,10 @@ extension RbacActionExt on RbacAction {
 /// Service to manage RBAC permission checks
 class RbacService {
   final SupabaseClient _client;
+  final IConnectivityService _connectivityService;
+  final ErrorHandler _errorHandler;
 
-  RbacService(this._client);
+  RbacService(this._client, this._connectivityService, this._errorHandler);
 
   // Cache for current user's permissions
   // Format: {moduleId: {action: hasPermission}}
@@ -46,7 +48,7 @@ class RbacService {
   /// Should be called when user is authenticated
   Future<void> initializeRbac(String userId) async {
     debugPrint('[RbacService] Initializing RBAC for userId: $userId');
-    if (!await ConnectivityService.isOnline()) {
+    if (!await _connectivityService.isOnline()) {
       debugPrint('[RbacService] Offline, skipping RBAC initialization');
       throw NoInternetException();
     }
@@ -83,7 +85,7 @@ class RbacService {
       debugPrint('[RbacService] Initialization failed: $e');
       if (e is NoInternetException) {
         // Log warning but don't crash the app
-        ErrorHandler.handle(
+        _errorHandler.handle(
           e,
           stackTrace,
           context: 'Initializing RBAC for user $userId',
@@ -91,7 +93,7 @@ class RbacService {
           logLevel: ErrorLogLevel.warning,
         );
       } else {
-        ErrorHandler.handle(
+        _errorHandler.handle(
           e,
           stackTrace,
           context: 'Initializing RBAC for user $userId',
@@ -129,19 +131,8 @@ class RbacService {
           RbacAction.delete: permission.canDelete,
         };
       }
-      /* for (final permData in permissions) {
-        final permission = ModelRbacPermission.fromMap(permData);
-        final moduleId = permission.moduleId;
-
-        _permissionCache[moduleId] = {
-          RbacAction.read: permission.canRead,
-          RbacAction.create: permission.canCreate,
-          RbacAction.update: permission.canUpdate,
-          RbacAction.delete: permission.canDelete,
-        };
-      } */
     } catch (e, stackTrace) {
-      ErrorHandler.handle(
+      _errorHandler.handle(
         e,
         stackTrace,
         context: 'Loading user permissions for role $roleId',
@@ -195,7 +186,7 @@ class RbacService {
     if (_cachedRoleId == null) {
       throw Exception('No role ID cached. Initialize RBAC first.');
     }
-    if (!await ConnectivityService.isOnline()) {
+    if (!await _connectivityService.isOnline()) {
       throw NoInternetException();
     }
     await _loadUserPermissions(_cachedRoleId!);

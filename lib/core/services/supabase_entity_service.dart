@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../interfaces/connectivity_service_interface.dart';
 import 'entity_service.dart';
 import 'logging_entity_service.dart';
 import 'logger_service.dart';
@@ -9,7 +10,11 @@ import 'logger_service.dart';
 abstract class SupabaseEntityService<T> extends LoggingEntityService<T> {
   final SupabaseClient client;
 
-  SupabaseEntityService(this.client, LoggerService logger) : super(logger);
+  SupabaseEntityService(
+    this.client,
+    LoggerService logger,
+    IConnectivityService connectivityService,
+  ) : super(logger, connectivityService);
 
   /// Table name in Supabase
   String get tableName;
