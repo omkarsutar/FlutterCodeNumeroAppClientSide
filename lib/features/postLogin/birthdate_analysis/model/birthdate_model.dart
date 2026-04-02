@@ -38,7 +38,6 @@ class ModelBirthdate {
     this.numberOccurrences,
     this.status = 'pending',
     this.createdAt,
-    this.updatedBy,
     this.updatedAt,
   });
 
@@ -57,11 +56,19 @@ class ModelBirthdate {
       pinnacle4: map['pinnacle4'] as int?,
       pinnacleBase: map['pinnacle_base'] as int?,
       loShuGrid: map['lo_shu_grid'] as List<dynamic>?,
-      absentNumbers: (map['absent_numbers'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      absentNumbers: (map['absent_numbers'] as List<dynamic>?)
+          ?.map((e) => e as int)
+          .toList(),
       numberOccurrences: map['number_occurrences'] as Map<String, dynamic>?,
       status: map['status'] as String? ?? 'pending',
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'].toString()) : null,
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'].toString()) : null,
+      createdAt:
+          map['created_at'] != null
+              ? DateTime.parse(map['created_at'].toString())
+              : null,
+      updatedAt:
+          map['updated_at'] != null
+              ? DateTime.parse(map['updated_at'].toString())
+              : null,
     );
   }
 
@@ -86,5 +93,45 @@ class ModelBirthdate {
     };
   }
 
-  final String? updatedBy;
+  ModelBirthdate copyWith({
+    String? id,
+    String? userId,
+    String? poId,
+    String? fullName,
+    DateTime? birthdate,
+    int? personalityNumber,
+    int? lifePathNumber,
+    int? pinnacle1,
+    int? pinnacle2,
+    int? pinnacle3,
+    int? pinnacle4,
+    int? pinnacleBase,
+    List<dynamic>? loShuGrid,
+    List<int>? absentNumbers,
+    Map<String, dynamic>? numberOccurrences,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return ModelBirthdate(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      poId: poId ?? this.poId,
+      fullName: fullName ?? this.fullName,
+      birthdate: birthdate ?? this.birthdate,
+      personalityNumber: personalityNumber ?? this.personalityNumber,
+      lifePathNumber: lifePathNumber ?? this.lifePathNumber,
+      pinnacle1: pinnacle1 ?? this.pinnacle1,
+      pinnacle2: pinnacle2 ?? this.pinnacle2,
+      pinnacle3: pinnacle3 ?? this.pinnacle3,
+      pinnacle4: pinnacle4 ?? this.pinnacle4,
+      pinnacleBase: pinnacleBase ?? this.pinnacleBase,
+      loShuGrid: loShuGrid ?? this.loShuGrid,
+      absentNumbers: absentNumbers ?? this.absentNumbers,
+      numberOccurrences: numberOccurrences ?? this.numberOccurrences,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

@@ -411,6 +411,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final ageComponents = ref.watch(ageComponentsProvider);
     if (ageComponents == null) return const SizedBox.shrink();
 
+    final birthdateRecord = ref.watch(currentBirthdateRecordProvider);
+    final fullName = birthdateRecord?['full_name'] as String? ?? 'Age Snapshot';
+    final birthdateId = birthdateRecord?['id'] as String?;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       padding: const EdgeInsets.all(20),
@@ -459,12 +463,39 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Age Snapshot',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.primary,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            fullName,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: theme.colorScheme.primary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (birthdateId != null)
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed:
+                                () => ref
+                                    .read(cartControllerProvider)
+                                    .updateBirthdateName(
+                                      context,
+                                      birthdateId,
+                                      fullName == 'Age Snapshot'
+                                          ? ''
+                                          : fullName,
+                                    ),
+                            tooltip: 'Edit Name',
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.7,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(

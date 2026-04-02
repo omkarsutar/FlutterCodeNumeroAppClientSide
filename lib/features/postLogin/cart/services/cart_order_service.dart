@@ -36,4 +36,15 @@ class CartOrderService {
       'status': 'pending',
     });
   }
+
+  Future<void> updateBirthdateName({
+    required String id,
+    required String newName,
+  }) async {
+    if (!await ConnectivityService.isOnline()) {
+      throw NoInternetException();
+    }
+
+    await client.from('birthdates').update({'full_name': newName}).eq('id', id);
+  }
 }

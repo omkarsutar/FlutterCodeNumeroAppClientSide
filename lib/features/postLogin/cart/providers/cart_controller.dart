@@ -193,6 +193,97 @@ class CartController {
     }
   }
 
+  Future<void> updateBirthdateName(
+    BuildContext context,
+    String id,
+    String currentName,
+  ) async {
+    final l10n = ref.read(appL10nProvider);
+    final theme = Theme.of(context);
+    final controller = TextEditingController(text: currentName);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Text(
+              l10n['edit_name'] ?? 'Edit Name',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: l10n['full_name'] ?? 'Full Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.person_outline),
+              ),
+              textCapitalization: TextCapitalization.words,
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n['cancel'] ?? 'Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, controller.text.trim()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(l10n['save'] ?? 'Save'),
+              ),
+            ],
+          ),
+    );
+
+    if (newName != null && newName.isNotEmpty && newName != currentName) {
+      showLoadingDialog(
+        context: context,
+        message: l10n['please_wait'] ?? 'Updating...',
+      );
+
+      try {
+        await _orderService.updateBirthdateName(id: id, newName: newName);
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+
+          // Invalidate relevant providers to force fresh data fetch
+          ref.invalidate(birthdatesStreamProvider);
+          ref.invalidate(currentBirthdateRecordProvider);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n['name_updated_success'] ?? 'Name updated successfully!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update name: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> placeOrder(BuildContext context, {DateTime? birthdate}) async {
     if (birthdate == null) return;
     final l10n = ref.read(appL10nProvider);
