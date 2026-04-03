@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../providers/cart_controller.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
 
 class CartPage extends ConsumerStatefulWidget {
@@ -17,11 +19,108 @@ class CartPage extends ConsumerStatefulWidget {
 }
 
 class _CartPageState extends ConsumerState<CartPage> {
-  Future<void> _refreshCartData() async {
-    ref.invalidate(currentBirthdateRecordProvider);
+  late final CartController _cartController;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartController = ref.read(cartControllerProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cartController.initRazorpay(
+        onPaymentSuccess: _onPaymentSuccess,
+        onPaymentError: _onPaymentError,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _cartController.disposeRazorpay();
+    super.dispose();
+  }
+
+  void _onPaymentSuccess(String poId) {
+    if (mounted) {
+      // Defensively pop only if we are currently showing a loading dialog
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      
+      _showSuccessDialog(poId);
+    }
+  }
+
+  void _showSuccessDialog(String poId) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Analysis Unlocked!',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Your payment was successful and your birthdate analysis is now unlocked! You can find it in your History or by clicking the button below.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.goNamed(AppRoute.birthdateAnalysisName);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('View Analysis', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _onPaymentError(String error) {
+    if (mounted) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment Failed: $error'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _handleRefresh() async {
     ref.invalidate(unpaidOrdersProvider);
     ref.invalidate(birthdatesStreamProvider);
-    await ref.refresh(birthdatesStreamProvider.future);
+    final _ = await ref.refresh(birthdatesStreamProvider.future);
   }
 
   @override
@@ -36,7 +135,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       drawer: const CustomDrawer(),
       body: unpaidOrders.isEmpty
           ? RefreshIndicator(
-              onRefresh: _refreshCartData,
+              onRefresh: _handleRefresh,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 physics: const AlwaysScrollableScrollPhysics(
@@ -75,7 +174,7 @@ class _CartPageState extends ConsumerState<CartPage> {
               children: [
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: _refreshCartData,
+                    onRefresh: _handleRefresh,
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
@@ -216,38 +315,72 @@ class _CartPageState extends ConsumerState<CartPage> {
 
   Future<void> _handlePaymentAction(List<String> poIds) async {
     final l10n = ref.read(appL10nProvider);
+    final user = ref.read(supabaseClientProvider).auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to continue.')),
+      );
+      return;
+    }
+
+    final count = poIds.length;
+    final totalAmount = count == 1 ? 299 : count * 249;
+
     final confirm = await showConfirmationDialog(
       context: context,
       title: l10n['pay_now'] ?? 'Pay Now',
-      content: 'Are you sure you want to pay for ${poIds.length} orders?',
+      content:
+          'Are you sure you want to pay \u20B9$totalAmount for $count ${count == 1 ? "order" : "orders"}?',
       confirmLabel: l10n['pay_now'] ?? 'Pay Now',
     );
 
     if (confirm == true) {
-      if (!mounted) return;
-      showLoadingDialog(
-        context: context,
-        message: l10n['processing_payment'] ?? 'Processing order...',
-      );
-
-      try {
-        await ref.read(cartControllerProvider).processPayments(poIds);
-
+      if (kIsWeb) {
         if (mounted) {
-          Navigator.of(context).pop(); // Dismiss loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order Placed successfully!'),
-              backgroundColor: Colors.green,
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              title: const Text('Mobile App Required',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              content: const Text(
+                  'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Got it'),
+                ),
+              ],
             ),
           );
         }
+        return;
+      }
+
+      if (!mounted) return;
+      showLoadingDialog(
+        context: context,
+        message: 'Redirecting to Payment Gateway...',
+      );
+
+      try {
+        final email = user.email ?? '';
+        final contact = user.userMetadata?['phone'] ?? '';
+
+        await ref.read(cartControllerProvider).startPaymentFlow(
+          poIds: poIds,
+          totalAmount: totalAmount.toDouble(),
+          email: email,
+          contact: contact,
+        );
       } catch (e) {
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to place order: $e'),
+              content: Text('Failed to initiate payment: $e'),
               backgroundColor: Colors.red,
             ),
           );

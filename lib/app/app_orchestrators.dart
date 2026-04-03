@@ -204,6 +204,18 @@ class ConnectivityToastOrchestrator extends ConsumerStatefulWidget {
 class _ConnectivityToastOrchestratorState
     extends ConsumerState<ConnectivityToastOrchestrator> {
   bool? _previousStatus;
+  bool _isInitializing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Allow 2 seconds for the app and platform to stabilize before showing snacks
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() => _isInitializing = false);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,6 +274,8 @@ class _ConnectivityToastOrchestratorState
   }
 
   void _showConnectivitySnack(bool isOnline) {
+    if (_isInitializing) return; // Skip initial blips
+
     final l10n = ref.read(appL10nProvider);
 
     scaffoldMessengerKey.currentState?.clearSnackBars();

@@ -96,7 +96,7 @@ Future<void> showLoadingDialog({
           children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 24),
-            Text(message),
+            Expanded(child: Text(message)),
           ],
         ),
       ),

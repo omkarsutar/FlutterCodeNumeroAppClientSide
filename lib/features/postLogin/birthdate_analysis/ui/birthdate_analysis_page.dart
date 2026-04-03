@@ -3111,22 +3111,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       return;
     }
 
-    final confirm = await showConfirmationDialog(
+    if (!mounted) return;
+    showLoadingDialog(
       context: context,
-      title: 'Place Order?',
-      content: 'Are you sure you want to place this order?',
-      confirmLabel: l10n['confirm'] ?? 'Confirm',
+      message: l10n['please_wait'] ?? 'Placing order...',
     );
 
-    if (confirm == true) {
-      if (!mounted) return;
-      showLoadingDialog(
-        context: context,
-        message: l10n['please_wait'] ?? 'Placing order...',
-      );
-
-      try {
-        await ref.read(cartControllerProvider).placeOrder(birthdate: birthdate);
+    try {
+      await ref.read(cartControllerProvider).placeOrder(birthdate: birthdate);
 
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
@@ -3143,7 +3135,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           );
         }
       }
-    }
   }
 
   Future<void> _updateBirthdateName(String id, String currentName) async {
@@ -3225,7 +3216,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }
 
   Future<void> _showThankYouDialog() {
-    final l10n = ref.read(birthdateL10nProvider);
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -3267,7 +3257,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  l10n['thank_you'] ?? 'Thank You!',
+                  'Analysis Unlocked!',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
@@ -3275,8 +3265,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  l10n['order_success'] ??
-                      'Your order has been placed successfully.',
+                  'Your birthdate analysis is now saved and unlocked successfully. You can now explore all the hidden secrets of your birthdate!',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -3298,7 +3287,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                     ),
                     child: Text(
-                      l10n['continue_shopping'] ?? 'Continue Shopping',
+                      'View Analysis',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

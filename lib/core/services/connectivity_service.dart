@@ -9,8 +9,15 @@ class ConnectivityServiceImpl implements IConnectivityService {
 
   @override
   Future<bool> isOnline() async {
-    final results = await _connectivity.checkConnectivity();
-    return !results.contains(ConnectivityResult.none);
+    try {
+      final results = await _connectivity.checkConnectivity();
+      if (results.isEmpty) return true; // Default to online if no result yet
+      return !results.contains(ConnectivityResult.none);
+    } catch (e) {
+      // If the platform channel fails (common on some web/desktop setups), 
+      // assume online to avoid annoying the user with false offline errors.
+      return true; 
+    }
   }
 
   @override
@@ -30,9 +37,14 @@ final connectivityStatusProvider = StreamProvider<bool>((ref) {
 
   final connectivityChanges = service.onConnectivityChanged;
   final periodicChecks = Stream.periodic(
-    const Duration(seconds: 3),
+    const Duration(seconds: 5),
   ).asyncMap((_) => service.isOnline());
-  final initialCheck = Stream.fromFuture(service.isOnline());
+  
+  // Delay the initial check slightly (500ms) to allow the platform to stabilize
+  // on startup (common issue on Web/Chrome).
+  final initialCheck = Stream.fromFuture(
+    Future.delayed(const Duration(milliseconds: 500), () => service.isOnline()),
+  );
 
   return StreamGroup.merge<bool>([
     initialCheck,

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:developer' as developer;
 import '../../../../core/exceptions/app_exceptions.dart';
 import '../../../../core/interfaces/connectivity_service_interface.dart';
 
@@ -51,39 +52,38 @@ class CartOrderService {
     await client.from('birthdates').update({'full_name': newName}).eq('id', id);
   }
 
-  Future<String> processPayments({
+  Future<String> completePurchase({
     required List<String> poIds,
     required String userId,
+    required String paymentId,
+    required String signature,
+    required String orderId,
   }) async {
     if (!await _connectivityService.isOnline()) {
       throw NoInternetException();
     }
 
-    // Create the main purchase order
-    final poResponse = await client
-        .from('purchase_order')
-        .insert({
-          'status': 'confirmed',
-          'birthdate_ids': poIds,
-          'created_by': userId,
-          'updated_by': userId,
-          'user_comment': 'Birthdate Analysis Order',
-          'po_line_item_count': poIds.length,
-        })
-        .select('po_id')
-        .single();
+    try {
+      final response = await client.functions.invoke(
+        'verify-payment',
+        body: {
+          'razorpay_payment_id': paymentId,
+          'razorpay_order_id': orderId,
+          'razorpay_signature': signature,
+          'poIds': poIds,
+          'userId': userId,
+        },
+      );
 
-    final generatedPoId = poResponse['po_id'] as String;
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Payment verification failed');
+      }
 
-    // Update status and po_id for all selected birthdate records
-    for (final id in poIds) {
-      await client
-          .from('birthdates')
-          .update({'status': 'confirmed', 'po_id': generatedPoId})
-          .eq('id', id);
+      return response.data['poId'] as String;
+    } catch (e) {
+      developer.log("Error in verify-payment Edge Function: $e", name: 'CartOrderService');
+      rethrow;
     }
-
-    return generatedPoId;
   }
 
   Future<void> deleteBirthdate(String id) async {

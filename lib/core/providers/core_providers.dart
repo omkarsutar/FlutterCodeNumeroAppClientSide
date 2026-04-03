@@ -6,6 +6,7 @@ import '../services/logger_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/error_handler.dart';
 import '../services/rbac_service.dart';
+import '../services/razorpay_service.dart';
 import '../interfaces/connectivity_service_interface.dart';
 
 /// Provides the global Supabase client instance
@@ -75,4 +76,12 @@ final roleNameProvider = Provider<String?>((ref) {
   // 3. Try standard profile state
   final profile = ref.watch(userProfileStateProvider).profile;
   return profile?.roleId;
+});
+
+/// Provides the Razorpay service instance
+final razorpayServiceProvider = Provider<RazorpayService>((ref) {
+  // Placeholder key - user will provide later
+  // const razorpayKey = 'rzp_test_YOUR_KEY_HERE';
+  const razorpayKey = 'rzp_test_SYxEd8SaQvfl81';
+  return RazorpayService(apiKey: razorpayKey);
 });

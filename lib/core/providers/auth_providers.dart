@@ -30,9 +30,11 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 /// Stream of the current user's profile
 final userProfileProvider = StreamProvider<ModelUser?>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  final authState = ref.watch(authStateProvider).value;
-
-  final user = authState?.session?.user ?? client.auth.currentUser;
+  
+  // Watch auth state changes; initial loading state is expected and handled
+  final authAsync = ref.watch(authStateProvider);
+  final user = authAsync.value?.session?.user ?? client.auth.currentUser;
+  
   if (user == null) return Stream.value(null);
 
   return client
