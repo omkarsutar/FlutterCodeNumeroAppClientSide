@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -42,7 +41,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
     final birthdate = ref.read(birthdateProvider);
     if (birthdate == null) {
-      await ref.refresh(birthdatesStreamProvider.future);
+      ref.invalidate(birthdatesStreamProvider);
       return;
     }
 
@@ -990,7 +989,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(staticTestimonialsProvider),
+        message: 'Could not load testimonials',
+      ),
     );
   }
 
@@ -1138,7 +1141,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(importantPointsProvider),
+        message: 'Could not load important points',
+      ),
     );
   }
 
@@ -1254,7 +1261,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(stockMarketInfoProvider),
+        message: 'Could not load stock market insight',
+      ),
     );
   }
 
@@ -1372,7 +1383,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(remedyValuesProvider),
+        message: 'Could not load remedies',
+      ),
     );
   }
 
@@ -1588,14 +1603,22 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (err, stack) => const SizedBox.shrink(),
+          error: (err, stack) => SmallErrorView(
+            error: err,
+            onRetry: () => ref.invalidate(numbersNotForRemedyProvider),
+            message: 'Could not load enemy numbers',
+          ),
         );
       },
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(missingNumberRemediesProvider),
+        message: 'Could not load missing number remedies',
+      ),
     );
   }
 
@@ -1753,7 +1776,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(missingNumberTellsProvider),
+        message: 'Could not load missing number details',
+      ),
     );
   }
 
@@ -1884,7 +1911,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(loshuPlanesProvider),
+        message: 'Could not load grid planes',
+      ),
     );
   }
 
@@ -2082,7 +2113,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(numberOccurrenceDetailsProvider),
+        message: 'Could not load number details',
+      ),
     );
   }
 
@@ -2198,7 +2233,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(careerDataProvider),
+        message: 'Could not load career info',
+      ),
     );
   }
 
@@ -2364,7 +2403,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(combinationDataProvider),
+        message: 'Could not load combination analysis',
+      ),
     );
   }
 
@@ -2514,7 +2557,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(boostingPersonalityDataProvider),
+        message: 'Could not load boosting info',
+      ),
     );
   }
 
@@ -2630,7 +2677,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(lifePathNumberDataProvider),
+        message: 'Could not load life path details',
+      ),
     );
   }
 
@@ -2748,7 +2799,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) => const SizedBox.shrink(),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(provider),
+        message: 'Could not load pinnacle data',
+      ),
     );
   }
 
@@ -3046,7 +3101,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         padding: EdgeInsets.all(32),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, s) => const SizedBox.shrink(),
+      error: (e, s) => SmallErrorView(
+        error: e,
+        onRetry: () => ref.invalidate(personalityDataProvider),
+        message: 'Could not load personality analysis',
+      ),
     );
   }
 
@@ -3120,21 +3179,21 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     try {
       await ref.read(cartControllerProvider).placeOrder(birthdate: birthdate);
 
-        if (mounted) {
-          Navigator.of(context).pop(); // Dismiss loading
-          await _showThankYouDialog();
-        }
-      } catch (e) {
-        if (mounted) {
-          Navigator.of(context).pop(); // Dismiss loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to place order: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        await _showThankYouDialog();
       }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to place order: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _updateBirthdateName(String id, String currentName) async {

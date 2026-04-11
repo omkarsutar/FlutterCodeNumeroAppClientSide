@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/cart_order_service.dart';
 import '../../../../core/services/razorpay_service.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
+import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/providers/numerology_content_providers.dart';
 import 'cart_providers.dart';
 
 final cartOrderServiceProvider = Provider(
@@ -55,9 +56,29 @@ class CartController {
 
         // Invalidate relevant providers to force fresh data fetch
         ref.invalidate(birthdatesStreamProvider);
+        ref.invalidate(cachedBirthdateRecordsProvider);
         ref.invalidate(unpaidOrdersProvider);
         ref.invalidate(currentBirthdateRecordProvider);
         ref.read(selectedOrdersProvider.notifier).state = {};
+
+        // Invalidate all numerology content providers so the analysis
+        // page fetches fresh data reflecting the new 'confirmed' status
+        ref.invalidate(personalityDataProvider);
+        ref.invalidate(loshuPlanesProvider);
+        ref.invalidate(numberOccurrenceDetailsProvider);
+        ref.invalidate(missingNumberTellsProvider);
+        ref.invalidate(importantPointsProvider);
+        ref.invalidate(stockMarketInfoProvider);
+        ref.invalidate(remedyValuesProvider);
+        ref.invalidate(missingNumberRemediesProvider);
+        ref.invalidate(pinnacleData1Provider);
+        ref.invalidate(pinnacleData2Provider);
+        ref.invalidate(pinnacleData3Provider);
+        ref.invalidate(pinnacleData4Provider);
+        ref.invalidate(lifePathNumberDataProvider);
+        ref.invalidate(careerDataProvider);
+        ref.invalidate(boostingPersonalityDataProvider);
+        ref.invalidate(combinationDataProvider);
 
         _onPaymentSuccess?.call(poId);
       } catch (e) {

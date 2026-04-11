@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/app_config_provider.dart';
+import '../../../shared/widgets/shared_widget_barrel.dart';
 
 class VacationModeScreen extends ConsumerWidget {
   const VacationModeScreen({super.key});
@@ -72,8 +73,12 @@ class VacationModeScreen extends ConsumerWidget {
                   ],
                 ],
               ),
-              loading: () => const CircularProgressIndicator(),
-              error: (err, _) => Text('Error loading message: $err'),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => AppErrorView(
+                error: err,
+                stackTrace: stack,
+                onRetry: () => ref.invalidate(appConfigProvider),
+              ),
             ),
             const SizedBox(height: 48),
             Text(

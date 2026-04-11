@@ -7,7 +7,6 @@ import '../../../core/config/module_config.dart';
 import '../../../core/models/entity_meta.dart';
 import '../../../core/services/entity_service.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/app_localization_provider.dart';
 import 'entity_card.dart';
 import 'providers/generic_list_controller.dart';
 import 'providers/generic_list_logic.dart';
@@ -102,7 +101,6 @@ class _EntityListPageRiverpodState<T>
     final service = ref.watch(widget.serviceProvider);
 
     final entitiesAsync = ref.watch(widget.streamProvider);
-    final l10n = ref.watch(appL10nProvider);
 
     // Use entityName as unique key for the controller family
     final controllerKey = widget.entityMeta.entityName;
@@ -262,28 +260,10 @@ class _EntityListPageRiverpodState<T>
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: theme.colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '${l10n['error_loading'] ?? 'Error loading'} ${l10n[widget.entityMeta.entityNamePluralLower] ?? widget.entityMeta.entityNamePluralLower}',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n[err.toString()] ?? err.toString(),
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+                error: (err, stack) => AppErrorView(
+                  error: err,
+                  stackTrace: stack,
+                  onRetry: () => ref.refresh(widget.streamProvider),
                 ),
               ),
             ),

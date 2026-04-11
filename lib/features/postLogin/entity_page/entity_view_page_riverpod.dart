@@ -10,7 +10,7 @@ import '../../../core/providers/core_providers.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import 'providers/entity_view_logic.dart';
 import 'providers/generic_view_controller.dart';
-import '../../../../core/providers/app_localization_provider.dart';
+import '../../../shared/widgets/shared_widget_barrel.dart';
 
 /// Generic Riverpod version of Entity View Page
 /// Can be used for any entity type (Role, Note, etc.)
@@ -315,7 +315,6 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final l10n = ref.watch(appL10nProvider);
     final entityAsync = ref.watch(entityByIdProvider(entityId));
     final entityAdapter = ref.watch(adapterProvider);
     final isInitialized = ref.watch(rbacInitializationProvider);
@@ -484,28 +483,10 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${l10n['error_loading'] ?? 'Error loading'} ${l10n[entityMeta.entityNameLower] ?? entityMeta.entityNameLower}',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n[err.toString()] ?? err.toString(),
-                    style: theme.textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+            error: (err, stack) => AppErrorView(
+              error: err,
+              stackTrace: stack,
+              onRetry: () => ref.refresh(entityByIdProvider(entityId)),
             ),
           ),
 

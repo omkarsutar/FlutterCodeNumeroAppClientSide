@@ -88,7 +88,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                   child: FilledButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.goNamed(AppRoute.birthdateAnalysisName);
+                      context.goNamed(AppRoute.purchaseOrdersName);
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,

@@ -263,15 +263,10 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Text(
-                'Error loading history: $e',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-            ),
+          error: (e, s) => AppErrorView(
+            error: e,
+            stackTrace: s,
+            onRetry: _refreshPurchaseHistory,
           ),
         ),
       ),

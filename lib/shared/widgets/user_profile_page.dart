@@ -244,7 +244,15 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, stack) => Scaffold(
+        appBar: CustomAppBar(title: 'Your Profile', showBack: false),
+        drawer: const CustomDrawer(),
+        body: AppErrorView(
+          error: e,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(enrichedUserProfileProvider),
+        ),
+      ),
     );
   }
 }

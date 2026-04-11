@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/auth_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/birthdate_localization_provider.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 
@@ -14,6 +15,8 @@ final cachedBirthdateRecordsProvider = StateProvider<List<ModelBirthdate>>(
 
 final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   final client = ref.watch(supabaseClientProvider);
+  // Watch auth state so this provider rebuilds on login/logout
+  ref.watch(authStateProvider);
   final user = client.auth.currentUser;
   if (user == null) {
     ref.read(cachedBirthdateRecordsProvider.notifier).state = [];
