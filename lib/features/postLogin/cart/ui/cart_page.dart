@@ -10,6 +10,8 @@ import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
+import '../../../../core/services/analytics_service.dart';
+
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -46,7 +48,12 @@ class _CartPageState extends ConsumerState<CartPage> {
         Navigator.of(context).pop();
       }
       
+      ref.read(analyticsServiceProvider).logPaymentEvent(
+        status: 'success',
+        itemCount: 1, // poId indicates specific order
+      );
       _showSuccessDialog(poId);
+
     }
   }
 
@@ -111,7 +118,12 @@ class _CartPageState extends ConsumerState<CartPage> {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
+      ref.read(analyticsServiceProvider).logPaymentEvent(
+        status: 'failure',
+        error: error,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
+
         SnackBar(content: Text('Payment Failed: $error'), backgroundColor: Colors.red),
       );
     }
@@ -208,13 +220,16 @@ class _CartPageState extends ConsumerState<CartPage> {
                                 final current = Set<String>.from(selectedIds);
                                 if (val == true) {
                                   current.add(recordId);
+                                  ref.read(analyticsServiceProvider).logCartAction('item_selected');
                                 } else {
                                   current.remove(recordId);
+                                  ref.read(analyticsServiceProvider).logCartAction('item_deselected');
                                 }
                                 ref
                                         .read(selectedOrdersProvider.notifier)
                                         .state =
                                     current;
+
                               },
                             ),
                             title: Text(
@@ -257,7 +272,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                             onTap: () {
                               ref.read(birthdateProvider.notifier).state =
                                   order.birthdate;
+                              ref.read(analyticsServiceProvider).logClickEvent('cart_item_tapped');
                               context.pushNamed(AppRoute.birthdateAnalysisName);
+
                             },
                           ),
                         );
@@ -289,6 +306,8 @@ class _CartPageState extends ConsumerState<CartPage> {
 
       try {
         await ref.read(cartControllerProvider).deleteBirthdate(id);
+        ref.read(analyticsServiceProvider).logCartAction('item_deleted');
+
 
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
@@ -369,8 +388,15 @@ class _CartPageState extends ConsumerState<CartPage> {
         final email = user.email ?? '';
         final contact = user.userMetadata?['phone'] ?? '';
 
+        ref.read(analyticsServiceProvider).logPaymentEvent(
+          status: 'initiated',
+          amount: totalAmount.toDouble(),
+          itemCount: poIds.length,
+        );
+
         await ref.read(cartControllerProvider).startPaymentFlow(
           poIds: poIds,
+
           totalAmount: totalAmount.toDouble(),
           email: email,
           contact: contact,
@@ -466,9 +492,12 @@ class _CartPageState extends ConsumerState<CartPage> {
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      context.pushNamed(AppRoute.birthdateAnalysisName),
+                  onPressed: () {
+                    ref.read(analyticsServiceProvider).logClickEvent('add_more_from_cart');
+                    context.pushNamed(AppRoute.birthdateAnalysisName);
+                  },
                   icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+
                   label: const Text('Add'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.primary,

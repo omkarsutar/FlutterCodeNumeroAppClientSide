@@ -10,6 +10,8 @@ import '../../core/providers/core_providers.dart';
 import '../../core/utils/dialogs.dart';
 import '../../core/providers/app_localization_provider.dart';
 import '../../router/app_routes.dart';
+import '../../core/services/analytics_service.dart';
+
 
 class CustomDrawer extends ConsumerStatefulWidget {
   const CustomDrawer({super.key});
@@ -166,17 +168,21 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
             leading: const Icon(Icons.auto_awesome_rounded),
             title: Text(l10n['birthdate_analysis'] ?? 'Birthdate Analysis'),
             onTap: () {
+              ref.read(analyticsServiceProvider).logClickEvent('drawer_analysis_clicked');
               Navigator.pop(context);
               context.goNamed(AppRoute.birthdateAnalysisName);
             },
+
           ),
           ListTile(
             leading: const Icon(Icons.shopping_cart),
             title: Text(l10n['my_cart'] ?? 'My Cart'),
             onTap: () {
+              ref.read(analyticsServiceProvider).logClickEvent('drawer_cart_clicked');
               Navigator.pop(context);
               context.goNamed(AppRoute.cartName);
             },
+
           ),
 
           // Purchase Orders by Shop
@@ -185,9 +191,11 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               leading: const Icon(Icons.receipt_long),
               title: Text(l10n['purchase_history'] ?? 'Purchase History'),
               onTap: () {
+                ref.read(analyticsServiceProvider).logClickEvent('drawer_history_clicked');
                 Navigator.pop(context);
                 context.goNamed(AppRoute.purchaseOrdersName);
               },
+
             ),
 
           if (isLoggedIn)
@@ -195,9 +203,11 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               leading: const Icon(Icons.person), // 👤 Profile
               title: Text(l10n['profile'] ?? 'Profile'),
               onTap: () {
+                ref.read(analyticsServiceProvider).logClickEvent('drawer_profile_clicked');
                 Navigator.pop(context);
                 context.goNamed(AppRoute.profileName);
               },
+
             ),
 
           if (!isLoggedIn)
@@ -228,8 +238,10 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                   confirmLabel: l10n['logout'] ?? 'Logout',
                 );
                 if (confirmed) {
+                  ref.read(analyticsServiceProvider).logClickEvent('logout_confirmed');
                   await authService.signOut();
                 }
+
               },
             ),
         ],

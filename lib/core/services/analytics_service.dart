@@ -33,4 +33,46 @@ class AnalyticsService {
   FirebaseAnalyticsObserver getObserver() {
     return FirebaseAnalyticsObserver(analytics: _analytics);
   }
+
+  /// Log when an analysis is viewed for a specific birthdate.
+  Future<void> logAnalysisView(DateTime birthdate) async {
+    await _analytics.logEvent(
+      name: 'analysis_viewed',
+      parameters: {
+        'birthdate': birthdate.toIso8601String(),
+        'day': birthdate.day,
+        'month': birthdate.month,
+        'year': birthdate.year,
+      },
+    );
+  }
+
+  /// Log cart interactions (add, remove, select).
+  Future<void> logCartAction(String action, {Map<String, Object>? parameters}) async {
+    await _analytics.logEvent(
+      name: 'cart_action',
+      parameters: {
+        'action_type': action,
+        ...?parameters,
+      },
+    );
+  }
+
+  /// Log payment lifecycle events.
+  Future<void> logPaymentEvent({
+    required String status,
+    double? amount,
+    int? itemCount,
+    String? error,
+  }) async {
+    await _analytics.logEvent(
+      name: 'payment_lifecycle',
+      parameters: {
+        'status': status,
+        if (amount != null) 'amount': amount,
+        if (itemCount != null) 'item_count': itemCount,
+        if (error != null) 'error_message': error,
+      },
+    );
+  }
 }

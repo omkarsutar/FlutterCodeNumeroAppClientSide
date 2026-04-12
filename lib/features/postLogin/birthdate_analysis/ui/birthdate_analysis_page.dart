@@ -13,6 +13,8 @@ import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../../../../core/utils/dialogs.dart';
+import '../../../../core/services/analytics_service.dart';
+
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
@@ -121,9 +123,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: TextButton(
-                          onPressed: () => ref
-                              .read(languageProvider.notifier)
-                              .toggleLanguage(),
+                          onPressed: () {
+                            ref.read(languageProvider.notifier).toggleLanguage();
+                            final newLang = ref.read(languageProvider);
+                            ref.read(analyticsServiceProvider).logClickEvent(
+                              'toggle_language',
+                              parameters: {'target_language': newLang.toString()},
+                            );
+                          },
+
                           style: TextButton.styleFrom(
                             foregroundColor: Theme.of(
                               context,
@@ -263,11 +271,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 : () {
                     if (isPending) {
                       // Navigate to Cart and select this birthdate
+                      ref.read(analyticsServiceProvider).logClickEvent('read_more_clicked');
                       _navigateToCartAndSelect(birthdate);
                     } else {
                       // Save new birthdate
+                      ref.read(analyticsServiceProvider).logClickEvent('save_birthdate_clicked');
                       _handleOrderAction(birthdate);
                     }
+
                   },
             icon: Icon(
               isPending ? Icons.shopping_cart_outlined : Icons.save_rounded,
@@ -392,7 +403,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             );
             if (picked != null) {
               ref.read(birthdateProvider.notifier).state = picked;
+              ref.read(analyticsServiceProvider).logAnalysisView(picked);
             }
+
           },
         ),
       ),
@@ -478,10 +491,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         if (birthdateId != null)
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
-                            onPressed: () => _updateBirthdateName(
-                              birthdateId,
-                              fullName == 'Age Snapshot' ? '' : fullName,
-                            ),
+                            onPressed: () {
+                              ref.read(analyticsServiceProvider).logClickEvent('edit_name_pressed');
+                              _updateBirthdateName(
+                                birthdateId,
+                                fullName == 'Age Snapshot' ? '' : fullName,
+                              );
+                            },
                             tooltip: 'Edit Name',
                             color: theme.colorScheme.primary.withValues(
                               alpha: 0.7,
@@ -2009,7 +2025,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final detail = details[index];
-                  final occLabel = occurrenceLabel(detail.occurrence);
+
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
