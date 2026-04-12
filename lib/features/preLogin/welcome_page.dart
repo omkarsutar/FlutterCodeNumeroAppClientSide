@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/analytics_service.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     // Responsive Font Sizing
@@ -81,7 +83,7 @@ class WelcomePage extends StatelessWidget {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        'NumeroApp',
+                        'Numero Shastra',
                         style: TextStyle(
                           fontSize: titleFontSize,
                           fontWeight: FontWeight.w900,
@@ -121,7 +123,10 @@ class WelcomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ElevatedButton(
-                        onPressed: () => context.goNamed('login'),
+                        onPressed: () {
+                          ref.read(analyticsServiceProvider).logClickEvent('get_started');
+                          context.goNamed('login');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFC107), // Amber
                           foregroundColor: Colors.black87,

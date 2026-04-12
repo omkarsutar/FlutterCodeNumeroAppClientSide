@@ -9,9 +9,17 @@ import 'core/config/supabase_config.dart';
 import 'core/globals.dart';
 import 'core/utils/platform/web_utils.dart';
 import 'router/app_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'core/services/messaging_service.dart';
+import 'core/services/analytics_service.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
@@ -43,7 +51,10 @@ void main() async {
     );
   };
 
-  runApp(const ProviderScope(child: MainApp()));
+  final container = ProviderContainer();
+  await container.read(messagingServiceProvider).initialize();
+
+  runApp(UncontrolledProviderScope(container: container, child: const MainApp()));
 }
 
 class MainApp extends ConsumerWidget {
@@ -55,7 +66,7 @@ class MainApp extends ConsumerWidget {
 
     return AppOrchestratorScope(
       child: MaterialApp.router(
-        title: 'NumeroApp',
+        title: 'Numero Shastra',
         scaffoldMessengerKey: scaffoldMessengerKey,
         routerConfig: router,
         theme: ThemeData(

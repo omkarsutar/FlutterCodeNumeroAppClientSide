@@ -13,8 +13,9 @@ class RazorpayService {
     required Function(PaymentFailureResponse) onFailure,
     required Function(ExternalWalletResponse) onExternalWallet,
   }) {
-    if (kIsWeb) return; // Avoid native plugin initialization on web if it causes issues
-    
+    if (kIsWeb)
+      return; // Avoid native plugin initialization on web if it causes issues
+
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, onSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, onFailure);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, onExternalWallet);
@@ -27,21 +28,20 @@ class RazorpayService {
     required String email,
   }) {
     if (kIsWeb) {
-      developer.log("Razorpay checkout requested on web. Redirecting to hosted page or showing alternative UI...");
+      developer.log(
+        "Razorpay checkout requested on web. Redirecting to hosted page or showing alternative UI...",
+      );
       // For now, prompt the user or handle via standard web checkout if necessary
       return;
     }
-    
+
     var options = {
       'key': _apiKey,
       'amount': (amount * 100).toInt(), // Amount is in paise
-      'name': 'Numero App',
+      'name': 'Numero Shastra',
       'description': description,
       'timeout': 300, // in seconds
-      'prefill': {
-        'contact': contact,
-        'email': email,
-      }
+      'prefill': {'contact': contact, 'email': email},
     };
 
     try {

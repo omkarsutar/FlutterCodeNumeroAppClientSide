@@ -15,6 +15,7 @@ import '../core/routing/module_route_generator.dart';
 import '../core/services/rbac_service.dart';
 import '../core/models/route_permission.dart';
 import 'route_guards.dart';
+import '../core/services/analytics_service.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Register permissions for non-generic modules
@@ -48,6 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
     ],
+    observers: [ref.read(analyticsServiceProvider).getObserver()],
     initialLocation: AppRoute.welcome,
     redirect: (context, state) =>
         ref.read(routeGuardServiceProvider).handleRedirect(ref, state),

@@ -1,4 +1,4 @@
-package com.numeroapp.client
+package com.numeroshastra.client
 
 import io.flutter.embedding.android.FlutterActivity
 

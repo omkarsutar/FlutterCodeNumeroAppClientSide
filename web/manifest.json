@@ -1,6 +1,6 @@
 {
-    "name": "NumeroApp",
-    "short_name": "NumeroApp",
+    "name": "Numero Shastra",
+    "short_name": "Numero Shastra",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

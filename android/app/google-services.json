@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "398076701751",
+    "project_id": "numero-shastra",
+    "storage_bucket": "numero-shastra.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398076701751:android:3e22cd4c1d311ab3f2a3b2",
+        "android_client_info": {
+          "package_name": "com.numeroshastra.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyActmShjR2HwMWZenZmkBYehLsHUCbAmTU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

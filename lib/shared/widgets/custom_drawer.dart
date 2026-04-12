@@ -124,7 +124,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                       ),
                     ),
                     Text(
-                      "NumeroApp",
+                      "Numero Shastra",
                       style: TextStyle(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -139,7 +139,8 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                           '{name}',
                           displayName,
                         )
-                      : l10n['welcome_numeroapp'] ?? 'Welcome to NumeroApp',
+                      : l10n['welcome_numeroshastra'] ??
+                            'Welcome to Numero Shastra',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w400,
