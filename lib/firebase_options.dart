@@ -32,11 +32,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'not-needed-read-from-google-services-json',
-    appId: '1:placeholder:android:placeholder', // This will be overridden by the .json file on Android
-    messagingSenderId: 'placeholder',
-    projectId: 'placeholder',
-    storageBucket: 'placeholder.appspot.com',
+    apiKey: 'AIzaSyActmShjR2HwMWZenZmkBYehLsHUCbAmTU',
+    appId: '1:398076701751:android:3e22cd4c1d311ab3f2a3b2',
+    messagingSenderId: '398076701751',
+    projectId: 'numero-shastra',
+    storageBucket: 'numero-shastra.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

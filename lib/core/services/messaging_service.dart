@@ -26,9 +26,20 @@ class MessagingService {
         
         // Get the token for this device (skip on web if not explicitly configured with VAPID)
         if (!kIsWeb) {
-          final token = await _messaging.getToken();
-          if (token != null) {
-            debugPrint('FCM Token: $token');
+          try {
+            // Add a timeout to prevent hanging on app startup
+            final token = await _messaging.getToken().timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                debugPrint('FCM Token retrieval timed out after 10 seconds');
+                return null;
+              },
+            );
+            if (token != null) {
+              debugPrint('FCM Token: $token');
+            }
+          } catch (e) {
+            debugPrint('Error getting FCM token: $e');
           }
         } else {
           debugPrint('FCM Token retrieval skipped on Web (requires VAPID key configuration)');
