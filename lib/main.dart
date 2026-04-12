@@ -12,7 +12,15 @@ import 'router/app_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/services/messaging_service.dart';
 import 'core/services/analytics_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized for the background isolate
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +28,9 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     debugPrint('Firebase initialized successfully');
+
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
@@ -61,9 +71,12 @@ void main() async {
   };
 
   final container = ProviderContainer();
-  await container.read(messagingServiceProvider).initialize();
+  // Initialize messaging in background to avoid blocking the UI startup
+  container.read(messagingServiceProvider).initialize();
+
 
   runApp(UncontrolledProviderScope(container: container, child: const MainApp()));
+
 }
 
 class MainApp extends ConsumerWidget {

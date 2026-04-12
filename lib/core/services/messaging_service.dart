@@ -13,47 +13,74 @@ class MessagingService {
 
   /// Initialize messaging settings and request permissions.
   Future<void> initialize() async {
+    debugPrint('MessagingService: Starting initialization...');
     try {
       // Request permissions for iOS and newer Android versions.
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('MessagingService: requestPermission timed out after 5s');
+          return const NotificationSettings(
+            alert: AppleNotificationSetting.notSupported,
+            announcement: AppleNotificationSetting.notSupported,
+            authorizationStatus: AuthorizationStatus.notDetermined,
+            badge: AppleNotificationSetting.notSupported,
+            carPlay: AppleNotificationSetting.notSupported,
+            lockScreen: AppleNotificationSetting.notSupported,
+            notificationCenter: AppleNotificationSetting.notSupported,
+            showPreviews: AppleShowPreviewSetting.notSupported,
+            sound: AppleNotificationSetting.notSupported,
+            criticalAlert: AppleNotificationSetting.notSupported,
+            timeSensitive: AppleNotificationSetting.notSupported,
+            providesAppNotificationSettings: AppleNotificationSetting.notSupported,
+          );
+
+
+        },
       );
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted push notification permission');
+      debugPrint('MessagingService: Permission status: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
         
         // Get the token for this device (skip on web if not explicitly configured with VAPID)
         if (!kIsWeb) {
+          debugPrint('MessagingService: Attempting to retrieve FCM Token...');
           try {
             // Add a timeout to prevent hanging on app startup
             final token = await _messaging.getToken().timeout(
               const Duration(seconds: 10),
               onTimeout: () {
-                debugPrint('FCM Token retrieval timed out after 10 seconds');
+                debugPrint('MessagingService: FCM Token retrieval timed out after 10 seconds');
                 return null;
               },
             );
             if (token != null) {
               debugPrint('FCM Token: $token');
+            } else {
+              debugPrint('MessagingService: Token received was null');
             }
           } catch (e) {
-            debugPrint('Error getting FCM token: $e');
+            debugPrint('MessagingService: Error getting FCM token: $e');
           }
         } else {
-          debugPrint('FCM Token retrieval skipped on Web (requires VAPID key configuration)');
+          debugPrint('MessagingService: Token retrieval skipped on Web (requires VAPID key configuration)');
         }
       } else {
-        debugPrint('User declined or has not yet granted push notification permission');
+        debugPrint('MessagingService: Token retrieval skipped due to insufficient permissions');
       }
 
       // Handle incoming messages while the app is in the foreground.
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('Received foreground message: ${message.notification?.title}');
+        debugPrint('MessagingService: Received foreground message: ${message.notification?.title}');
       });
     } catch (e) {
-      debugPrint('Error initializing Firebase Messaging: $e');
+      debugPrint('MessagingService: Error initializing Firebase Messaging: $e');
     }
   }
 
