@@ -124,7 +124,13 @@ class _CartPageState extends ConsumerState<CartPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
 
-        SnackBar(content: Text('Payment Failed: $error'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            'Payment Failed: $error',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red[700],
+        ),
       );
     }
   }
@@ -352,8 +358,11 @@ class _CartPageState extends ConsumerState<CartPage> {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Record deleted successfully.'),
-              backgroundColor: Colors.green,
+              content: Text(
+                'Record deleted successfully.',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Color(0xFF15803D),
             ),
           );
         }
@@ -362,8 +371,11 @@ class _CartPageState extends ConsumerState<CartPage> {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete record: $e'),
-              backgroundColor: Colors.red,
+              content: Text(
+                'Failed to delete record: $e',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red[700],
             ),
           );
         }
@@ -445,8 +457,11 @@ class _CartPageState extends ConsumerState<CartPage> {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to initiate payment: $e'),
-              backgroundColor: Colors.red,
+              content: Text(
+                'Failed to initiate payment: $e',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red[700],
             ),
           );
         }

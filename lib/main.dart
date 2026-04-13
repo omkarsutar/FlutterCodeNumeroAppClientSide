@@ -14,6 +14,7 @@ import 'core/services/messaging_service.dart';
 import 'core/services/analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
+import 'core/providers/theme_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -79,88 +80,25 @@ void main() async {
 
 }
 
+
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return AppOrchestratorScope(
       child: MaterialApp.router(
         title: 'Numero Shastra',
         scaffoldMessengerKey: scaffoldMessengerKey,
         routerConfig: router,
-        theme: ThemeData(
-          useMaterial3: true,
-          fontFamily: 'Roboto',
-          brightness: Brightness.dark,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6366F1),
-            brightness: Brightness.dark,
-            primary: const Color(0xFF6366F1),
-            secondary: const Color(0xFFF59E0B),
-            surface: const Color(0xFF020617),
-            onSurface: const Color(0xFFF8FAFC),
-            surfaceContainerHighest: const Color(0xFF1E293B),
-            outlineVariant: const Color(0xFF334155),
-          ),
-          scaffoldBackgroundColor: const Color(0xFF020617),
-          cardTheme: CardThemeData(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(
-                color: Color(0xFF334155),
-                width: 1.5,
-              ),
-            ),
-            color: const Color(0xFF111827),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
-            ),
-            filled: true,
-            fillColor: const Color(0xFF111827),
-            labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-            hintStyle: const TextStyle(color: Color(0xFF475569)),
-          ),
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            foregroundColor: Color(0xFFF8FAFC),
-            titleTextStyle: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-              color: Color(0xFFF8FAFC),
-            ),
-          ),
-          floatingActionButtonTheme: FloatingActionButtonThemeData(
-            backgroundColor: const Color(0xFFF59E0B),
-            foregroundColor: Colors.black,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          dividerTheme: const DividerThemeData(
-            color: Color(0xFF334155),
-            thickness: 1,
-          ),
-        ),
+        themeMode: themeMode,
+        theme: buildLightTheme(),
+        darkTheme: buildDarkTheme(),
       ),
     );
   }
 }
+

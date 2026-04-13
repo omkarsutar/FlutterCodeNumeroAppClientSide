@@ -121,9 +121,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     ),
                     title: Text(
                       l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     actions: [
@@ -255,39 +255,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final isPending = cartStatus?.toLowerCase() == 'pending';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: theme.colorScheme.surface, // Keep background to prevent overlap issues
       child: SafeArea(
         top: false,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color:
-                    (isPending
-                            ? theme.colorScheme.secondary
-                            : theme.colorScheme.primary)
-                        .withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+        child: SizedBox(
+          width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: birthdate == null
                 ? null
@@ -311,7 +284,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             label: Text(
               isPending
                   ? (l10n['read_more'] ?? 'Unlock Full Analysis')
-                  : (l10n['save_birthdate'] ?? 'Save & Analyze'),
+                  : (l10n['save_birthdate'] ?? 'Reveal My Birthdate Secrets'),
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
@@ -323,10 +296,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ? theme.colorScheme.secondary
                   : theme.colorScheme.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 18),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
@@ -2300,8 +2273,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             content: Text(
               l10n['cart_saved_login'] ??
                   'Cart saved. Please login to complete your order.',
+              style: const TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.orange,
+            backgroundColor: Colors.orange[700],
           ),
         );
         context.pushNamed(AppRoute.loginName);
@@ -2327,8 +2301,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         Navigator.of(context).pop(); // Dismiss loading
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to place order: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Failed to place order: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red[700],
           ),
         );
       }
@@ -2394,8 +2371,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             SnackBar(
               content: Text(
                 l10n['name_updated_success'] ?? 'Name updated successfully!',
+                style: const TextStyle(color: Colors.white),
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.green[700],
             ),
           );
         }
@@ -2404,8 +2382,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to update name: $e'),
-              backgroundColor: Colors.red,
+              content: Text(
+                'Failed to update name: $e',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red[700],
             ),
           );
         }
@@ -2571,19 +2552,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             children: [
               Text(
                 title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.5,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                  letterSpacing: 0.3,
                 ),
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],

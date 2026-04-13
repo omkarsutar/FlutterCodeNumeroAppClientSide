@@ -11,6 +11,7 @@ import '../../core/utils/dialogs.dart';
 import '../../core/providers/app_localization_provider.dart';
 import '../../router/app_routes.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/providers/theme_provider.dart';
 
 
 class CustomDrawer extends ConsumerStatefulWidget {
@@ -226,6 +227,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               title: const Text('Welcome'),
               onTap: () => context.goNamed(AppRoute.welcomeName),
             ), */
+          const Divider(),
+          SwitchListTile(
+            secondary: Icon(
+              ref.watch(themeModeProvider) == ThemeMode.dark
+                  ? Icons.dark_mode_rounded
+                  : Icons.light_mode_rounded,
+            ),
+            title: Text(l10n['dark_mode'] ?? 'Dark Mode'),
+            value: ref.watch(themeModeProvider) == ThemeMode.dark,
+            onChanged: (isDark) {
+              ref.read(themeModeProvider.notifier).state =
+                  isDark ? ThemeMode.dark : ThemeMode.light;
+            },
+          ),
           if (Supabase.instance.client.auth.currentSession != null)
             ListTile(
               leading: const Icon(Icons.logout),
@@ -238,10 +253,11 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                   confirmLabel: l10n['logout'] ?? 'Logout',
                 );
                 if (confirmed) {
-                  ref.read(analyticsServiceProvider).logClickEvent('logout_confirmed');
+                  ref
+                      .read(analyticsServiceProvider)
+                      .logClickEvent('logout_confirmed');
                   await authService.signOut();
                 }
-
               },
             ),
         ],
