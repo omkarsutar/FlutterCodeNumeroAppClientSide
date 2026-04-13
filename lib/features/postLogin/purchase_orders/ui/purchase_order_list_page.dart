@@ -48,7 +48,7 @@ class PurchaseOrdersPage extends ConsumerStatefulWidget {
 class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
   Future<void> _refreshPurchaseHistory() async {
     ref.invalidate(birthdatesStreamProvider);
-    await ref.refresh(birthdatesStreamProvider.future);
+    await ref.read(birthdatesStreamProvider.future);
   }
 
   @override
@@ -141,12 +141,6 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
                   final dateDisplay = DateFormat('dd-MMM-yyyy').format(
                     record.birthdate,
                   );
-                  final status = record.status.toLowerCase();
-                  final statusColor = status == 'confirmed'
-                      ? Colors.green[700]!
-                      : status == 'paid'
-                          ? Colors.blue[700]!
-                          : theme.colorScheme.primary;
 
                   return Card(
                     margin: const EdgeInsets.symmetric(
@@ -205,7 +199,7 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    dateDisplay,
+                                    'Birthdate: $dateDisplay',
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(
                                           fontWeight: FontWeight.bold,
@@ -215,7 +209,7 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Birthdate • ${record.fullName}',
+                                    record.fullName ?? '',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color:
                                           theme.colorScheme.onSurfaceVariant,
@@ -224,34 +218,6 @@ class _PurchaseOrdersPageState extends ConsumerState<PurchaseOrdersPage> {
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: statusColor,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    status.toUpperCase(),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),

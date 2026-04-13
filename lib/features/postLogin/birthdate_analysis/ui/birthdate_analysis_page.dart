@@ -92,6 +92,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final birthdate = ref.watch(birthdateProvider);
     final cartStatus = ref.watch(cartStatusProvider);
     final currentLang = ref.watch(languageProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -108,38 +109,37 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 slivers: [
                   SliverAppBar(
                     pinned: true,
-                    toolbarHeight: 64,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    stretch: true,
+                    expandedHeight: 0,
+                    toolbarHeight: 70,
+                    backgroundColor: theme.colorScheme.surface,
+                    foregroundColor: theme.colorScheme.onSurface,
                     elevation: 0,
+                    centerTitle: true,
                     leading: IconButton(
-                      icon: const Icon(Icons.menu),
+                      icon: const Icon(Icons.menu_rounded),
                       onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                     ),
                     title: Text(
                       l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
                     ),
                     actions: [
                       Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
+                        padding: const EdgeInsets.only(right: 12.0),
                         child: TextButton(
                           onPressed: () {
-                            ref.read(languageProvider.notifier).toggleLanguage();
-                            final newLang = ref.read(languageProvider);
-                            ref.read(analyticsServiceProvider).logClickEvent(
-                              'toggle_language',
-                              parameters: {'target_language': newLang.toString()},
-                            );
+                            ref
+                                .read(languageProvider.notifier)
+                                .toggleLanguage();
                           },
-
                           style: TextButton.styleFrom(
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimaryContainer,
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .primaryContainer
-                                .withValues(alpha: 0.3),
+                            foregroundColor: theme.colorScheme.primary,
+                            backgroundColor: theme.colorScheme.primary
+                                .withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -149,13 +149,21 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             currentLang == AppLanguage.english
                                 ? 'EN'
                                 : currentLang == AppLanguage.hindi
-                                ? '\u0939\u093f'
-                                : '\u092e',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ? '\u0939\u093f'
+                                    : '\u092e',
+                            style: const TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
                       ),
                     ],
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(1),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
                   ),
                   SliverPersistentHeader(
                     pinned: true,
@@ -166,7 +174,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         l10n,
                         integrated: true,
                       ),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: theme.colorScheme.surface,
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -240,7 +248,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     DateTime? birthdate,
     String? cartStatus,
   ) {
-    // Hide button entirely if birthdate is already saved dynamically.
     if (cartStatus != null && cartStatus.toLowerCase() != 'pending') {
       return const SizedBox.shrink();
     }
@@ -249,56 +256,71 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final isPending = cartStatus?.toLowerCase() == 'pending';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            offset: const Offset(0, -4),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: (isPending ? theme.colorScheme.secondary : theme.colorScheme.primary)
+                    .withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: ElevatedButton.icon(
             onPressed: birthdate == null
                 ? null
                 : () {
                     if (isPending) {
-                      // Navigate to Cart and select this birthdate
                       ref.read(analyticsServiceProvider).logClickEvent('read_more_clicked');
                       _navigateToCartAndSelect(birthdate);
                     } else {
-                      // Save new birthdate
                       ref.read(analyticsServiceProvider).logClickEvent('save_birthdate_clicked');
                       _handleOrderAction(birthdate);
                     }
-
                   },
             icon: Icon(
-              isPending ? Icons.shopping_cart_outlined : Icons.save_rounded,
+              isPending ? Icons.auto_awesome_rounded : Icons.lock_open_rounded,
               size: 20,
             ),
             label: Text(
               isPending
-                  ? (l10n['read_more'] ?? 'Read More')
-                  : (l10n['save_birthdate'] ?? 'Save Birthdate'),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ? (l10n['read_more'] ?? 'Unlock Full Analysis')
+                  : (l10n['save_birthdate'] ?? 'Save & Analyze'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: 1.2,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isPending
                   ? theme.colorScheme.secondary
                   : theme.colorScheme.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
+              padding: const EdgeInsets.symmetric(vertical: 20),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
             ),
           ),
@@ -314,99 +336,58 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     bool integrated = false,
   }) {
     final theme = Theme.of(context);
-    final dateDisplay = birthdate != null
-        ? DateFormat('dd-MMM-yyyy').format(birthdate)
-        : '';
+    final dateDisplay =
+        birthdate != null ? DateFormat('dd-MMM-yyyy').format(birthdate) : '';
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(integrated ? 20 : 24),
-          gradient: LinearGradient(
-            colors: integrated
-                ? [
-                    Colors.white.withValues(alpha: 0.18),
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.28),
-                  ]
-                : [
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-                    theme.colorScheme.surface,
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(
-            color: integrated
-                ? Colors.white.withValues(alpha: 0.18)
-                : theme.colorScheme.primary.withValues(alpha: 0.1),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: integrated
-                  ? Colors.black.withValues(alpha: 0.14)
-                  : theme.colorScheme.primary.withValues(alpha: 0.2),
-              blurRadius: integrated ? 18 : 12,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 4,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: integrated
-                  ? Colors.white.withValues(alpha: 0.14)
-                  : theme.colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              color: integrated ? Colors.white : theme.colorScheme.primary,
-              size: 28,
-            ),
-          ),
-          title: Text(
-            "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: integrated ? Colors.white : theme.colorScheme.primary,
-            ),
-          ),
-          trailing: Icon(
-            Icons.calendar_month_rounded,
-            color: integrated
-                ? Colors.white.withValues(alpha: 0.92)
-                : theme.colorScheme.primary.withValues(alpha: 0.6),
-          ),
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: birthdate ?? DateTime(1990),
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: theme.colorScheme.primary,
-                    ),
+      child: InkWell(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: birthdate ?? DateTime(1990),
+            firstDate: DateTime(1900),
+            lastDate: DateTime.now(),
+          );
+          if (picked != null) {
+            ref.read(birthdateProvider.notifier).state = picked;
+            ref.read(analyticsServiceProvider).logAnalysisView(picked);
+          }
+        },
+        child: _buildMysticSection(
+          margin: integrated ? EdgeInsets.zero : const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
                   ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null) {
-              ref.read(birthdateProvider.notifier).state = picked;
-              ref.read(analyticsServiceProvider).logAnalysisView(picked);
-            }
-
-          },
+                ),
+              ),
+              Icon(
+                Icons.calendar_month_rounded,
+                color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -428,32 +409,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final fullName = birthdateRecord?['full_name'] as String? ?? 'Age Snapshot';
     final birthdateId = birthdateRecord?['id'] as String?;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.secondaryContainer.withValues(alpha: 0.85),
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.65),
-            theme.colorScheme.surface,
-          ],
-        ),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return _buildMysticSection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,7 +418,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -482,32 +438,25 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           child: Text(
                             fullName,
                             style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                               color: theme.colorScheme.primary,
+                              letterSpacing: 0.5,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (birthdateId != null)
                           IconButton(
-                            icon: const Icon(Icons.edit, size: 20),
-                            onPressed: () {
-                              ref.read(analyticsServiceProvider).logClickEvent('edit_name_pressed');
-                              _updateBirthdateName(
-                                birthdateId,
-                                fullName == 'Age Snapshot' ? '' : fullName,
-                              );
-                            },
-                            tooltip: 'Edit Name',
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.7,
+                            icon: const Icon(Icons.edit_note_rounded, size: 22),
+                            onPressed: () => _updateBirthdateName(
+                              birthdateId,
+                              fullName == 'Age Snapshot' ? '' : fullName,
                             ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            tooltip: 'Edit Name',
+                            color: theme.colorScheme.primary,
                           ),
                       ],
                     ),
-                    const SizedBox(height: 2),
                     Text(
                       l10n['age_prefix'] ?? 'Your age today is',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -520,23 +469,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
+          const SizedBox(height: 20),
+          _buildMysticContentCard(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.78),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              ),
-            ),
             child: Text(
               ageText ?? '',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
-                height: 1.35,
+                height: 1.4,
               ),
             ),
           ),
@@ -584,15 +525,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }) {
     final theme = Theme.of(context);
 
-    return Container(
+    return _buildMysticContentCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        ),
-      ),
       child: Column(
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
@@ -601,7 +535,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             '$value',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(height: 4),
@@ -610,7 +544,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -619,190 +554,223 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }
 
   Widget _buildNumerologyCoreDetailsTile(BuildContext context, WidgetRef ref) {
-    final numerology = ref.watch(numerologyProvider);
-    final l10n = ref.watch(birthdateL10nProvider);
-    final theme = Theme.of(context);
-
-    // Don't show anything if no birthdate selected
     if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          width: 1.5,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-            theme.colorScheme.surface,
-          ],
-        ),
-      ),
+    final numerology = ref.watch(numerologyProvider);
+    final l10n = ref.watch(birthdateL10nProvider);
+
+    return _buildMysticSection(
       child: _buildNumerologyGrid(context, numerology, l10n),
     );
   }
 
   Widget _buildNumerologyAnalysisSection(BuildContext context, WidgetRef ref) {
+    if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
+
     final numerology = ref.watch(numerologyProvider);
     final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
 
-    // Don't show anything if no birthdate selected
-    if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          width: 1.5,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-            theme.colorScheme.surface,
-          ],
-        ),
-      ),
+    return _buildMysticSection(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _buildMysticHeader(
+                  title: l10n['numerology_summary'] ?? 'Numerical Analysis',
+                  icon: Icons.grid_view_rounded,
+                  subtitle: 'Ancient secrets revealed through numbers',
+                ),
+              ),
+              _buildMysticChip(
+                label: 'Lo Shu Grid',
+                color: theme.colorScheme.secondary,
+              ),
+            ],
+          ),
           if (numerology.loShuGrid != null) ...[
             const SizedBox(height: 24),
-            Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
-            const SizedBox(height: 16),
-            Text(
-              "Lo Shu Grid",
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
             _buildLoShuGrid(context, numerology.loShuGrid!),
           ],
-
           if (numerology.absentNumbers != null &&
               numerology.absentNumbers!.isNotEmpty) ...[
             const SizedBox(height: 24),
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               l10n['absent_numbers_label'] ??
                   "Missing Numbers (from Lo Shu Grid)",
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 12),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: numerology.absentNumbers!.map((n) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer.withValues(
-                      alpha: 0.1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.error.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Text(
-                    n.toString(),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                return _buildMysticChip(
+                  label: n.toString(),
+                  color: theme.colorScheme.error,
+                  icon: Icons.do_not_disturb_on_rounded,
                 );
               }).toList(),
             ),
           ],
-
           if (numerology.numberOccurrences != null) ...[
             const SizedBox(height: 24),
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               l10n['occurrence_label'] ?? "Number Occurrences",
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 12),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: numerology.numberOccurrences!.entries
                   .where((e) => e.value > 0)
                   .map((e) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.05,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "${e.key}",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            " : ",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            "${e.value}",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.secondary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  })
-                  .toList(),
+                return _buildMysticChip(
+                  label: "${e.key} : ${e.value}",
+                  color: theme.colorScheme.primary,
+                  icon: Icons.repeat_rounded,
+                );
+              }).toList(),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoShuGrid(BuildContext context, List<List<String>> grid) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        children: [
+          for (var r = 0; r < 3; r++) ...[
+            Row(
+              children: [
+                for (var c = 0; c < 3; c++) ...[
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _buildGridCell(context, grid[r][c]),
+                    ),
+                  ),
+                  if (c < 2) const SizedBox(width: 6),
+                ],
+              ],
+            ),
+            if (r < 2) const SizedBox(height: 6),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridCell(BuildContext context, String value) {
+    final theme = Theme.of(context);
+    final isPresent = value.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isPresent
+            ? theme.colorScheme.primary.withValues(alpha: 0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPresent
+              ? theme.colorScheme.primary.withValues(alpha: 0.3)
+              : theme.colorScheme.primary.withValues(alpha: 0.05),
+          width: isPresent ? 2 : 1,
+        ),
+        boxShadow: isPresent
+            ? [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          value,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: isPresent
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumerologyMetricItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    final theme = Theme.of(context);
+
+    return _buildMysticContentCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  value,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -818,59 +786,21 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
         final activePage = _testimonialPage.clamp(0, testimonials.length - 1);
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        return _buildMysticSection(
           padding: const EdgeInsets.fromLTRB(0, 20, 0, 16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.forum_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Success Stories',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: _buildMysticHeader(
+                  title: 'Success Stories',
+                  icon: Icons.forum_rounded,
                 ),
               ),
               const SizedBox(height: 18),
               SizedBox(
-                height: 280,
+                height: 340,
                 child: PageView.builder(
                   controller: _testimonialController,
                   itemCount: testimonials.length,
@@ -883,95 +813,81 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     final testimonial = testimonials[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              theme.colorScheme.primaryContainer.withValues(
-                                alpha: 0.22,
-                              ),
-                              theme.colorScheme.surface,
-                            ],
-                          ),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  ClipRRect(
+                      child: _buildMysticContentCard(
+                        gradientColors: [
+                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                          theme.colorScheme.surface,
+                        ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.2),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
                                     child: Image.network(
                                       testimonial.image,
-                                      width: 64,
-                                      height: 64,
+                                      width: 60,
+                                      height: 60,
                                       fit: BoxFit.cover,
                                       errorBuilder:
                                           (context, error, stackTrace) =>
                                               Container(
-                                                width: 64,
-                                                height: 64,
-                                                decoration: BoxDecoration(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .primaryContainer,
-                                                  borderRadius:
-                                                      BorderRadius.circular(18),
-                                                ),
-                                                child: Icon(
-                                                  Icons.person_rounded,
-                                                  color:
-                                                      theme.colorScheme.primary,
-                                                ),
-                                              ),
+                                        width: 60,
+                                        height: 60,
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.1),
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Text(
-                                      testimonial.personName,
-                                      style: theme.textTheme.titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 18),
-                              Icon(
-                                Icons.format_quote_rounded,
-                                size: 28,
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.35,
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  physics: const NeverScrollableScrollPhysics(),
+                                const SizedBox(width: 14),
+                                Expanded(
                                   child: Text(
-                                    testimonial.description,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      height: 1.55,
+                                    testimonial.personName,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: theme.colorScheme.primary,
                                     ),
                                   ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Icon(
+                              Icons.format_quote_rounded,
+                              size: 28,
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.35,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: Text(
+                                  testimonial.description,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    height: 1.55,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -1021,92 +937,26 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (points) {
         if (points.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondaryContainer.withValues(
-                        alpha: 0.28,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.tips_and_updates_rounded,
-                      color: theme.colorScheme.secondary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Important Points',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Based on present numbers in your Lo Shu Grid',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Important Points',
+                subtitle: 'Based on present numbers in your Lo Shu Grid',
+                icon: Icons.tips_and_updates_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 20),
               ...points.map(
-                (point) => Container(
+                (point) => _buildMysticContentCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: theme.colorScheme.secondary.withValues(
-                        alpha: 0.16,
-                      ),
-                    ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.secondaryContainer.withValues(
-                          alpha: 0.18,
-                        ),
-                        theme.colorScheme.surface,
-                      ],
-                    ),
-                  ),
+                  borderColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                  gradientColors: [
+                    theme.colorScheme.secondary.withValues(alpha: 0.05),
+                    theme.colorScheme.surface,
+                  ],
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1115,24 +965,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         runSpacing: 8,
                         children: point.includedNumbers
                             .map(
-                              (number) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.secondary.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  number,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: theme.colorScheme.secondary,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
+                              (number) => _buildMysticChip(
+                                label: number,
+                                color: theme.colorScheme.secondary,
                               ),
                             )
                             .toList(),
@@ -1173,84 +1008,36 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.trending_up_rounded,
-                      color: Colors.green,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Stock Market Insight',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Stock Market Insight',
+                icon: Icons.trending_up_rounded,
+                iconColor: Colors.green,
+                iconBgColor: Colors.green.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 20),
               ...items.map(
-                (item) => Container(
-                  width: double.infinity,
+                (item) => _buildMysticContentCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.green.withValues(alpha: 0.08),
-                        theme.colorScheme.surface,
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Colors.green.withValues(alpha: 0.16),
-                    ),
-                  ),
+                  borderColor: Colors.green.withValues(alpha: 0.2),
+                  gradientColors: [
+                    Colors.green.withValues(alpha: 0.05),
+                    theme.colorScheme.surface,
+                  ],
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
+                          color: Colors.green.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
-                          Icons.auto_graph_rounded,
+                          Icons.insights_rounded,
                           color: Colors.green,
                           size: 20,
                         ),
@@ -1262,6 +1049,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             height: 1.55,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -1294,56 +1082,17 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         if (items.isEmpty) return const SizedBox.shrink();
         final remedy = items.first;
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withValues(
-                        alpha: 0.28,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.auto_fix_high_rounded,
-                      color: theme.colorScheme.tertiary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Lucky - Unlucky',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Lucky - Unlucky',
+                icon: Icons.auto_fix_high_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               _buildRemedyGroup(
                 context,
                 title: 'Lucky Numbers',
@@ -1418,40 +1167,40 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     if (values.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: theme.colorScheme.primary,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 10,
+            runSpacing: 10,
             children: values
                 .map(
-                  (value) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: color.withValues(alpha: 0.18)),
-                    ),
-                    child: Text(
-                      value,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                  (value) => _buildMysticChip(
+                    label: value,
+                    color: color,
                   ),
                 )
                 .toList(),
@@ -1477,53 +1226,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               return const SizedBox.shrink();
             }
 
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
+            return _buildMysticSection(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer
-                              .withValues(alpha: 0.24),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.healing_rounded,
-                          color: theme.colorScheme.secondary,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Missing Number Remedies',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    ],
+                  _buildMysticHeader(
+                    title: 'Missing Number Remedies',
+                    icon: Icons.healing_rounded,
+                    iconColor: theme.colorScheme.secondary,
+                    iconBgColor:
+                        theme.colorScheme.secondary.withValues(alpha: 0.1),
                   ),
                   const SizedBox(height: 8),
                   Divider(
@@ -1532,34 +1244,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ),
                   if (remedies.isNotEmpty) ...[
                     ...remedies.map(
-                      (remedy) => Container(
+                      (remedy) => _buildMysticContentCard(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              theme.colorScheme.secondaryContainer.withValues(
-                                alpha: 0.16,
-                              ),
-                              theme.colorScheme.surface,
-                            ],
-                          ),
-                          border: Border.all(
-                            color: theme.colorScheme.secondary.withValues(
-                              alpha: 0.14,
-                            ),
-                          ),
-                        ),
+                        gradientColors: [
+                          theme.colorScheme.secondary.withValues(alpha: 0.05),
+                          theme.colorScheme.surface,
+                        ],
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Remedy for number ${remedy.missingNumber}',
                               style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
                               ),
                             ),
@@ -1568,7 +1265,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               remedy.description,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
-                                height: 1.5,
+                                height: 1.55,
                               ),
                             ),
                           ],
@@ -1577,26 +1274,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     ),
                   ],
                   if (numbersNotForRemedy.isNotEmpty) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer.withValues(
-                          alpha: 0.22,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: theme.colorScheme.error.withValues(
-                            alpha: 0.16,
-                          ),
-                        ),
-                      ),
+                    _buildMysticContentCard(
+                      borderColor: theme.colorScheme.error.withValues(alpha: 0.2),
+                      gradientColors: [
+                        theme.colorScheme.error.withValues(alpha: 0.05),
+                        theme.colorScheme.surface,
+                      ],
                       child: Text(
                         'No remedy to number ${_formatNumberList(numbersNotForRemedy)} as ${numbersNotForRemedy.length == 1 ? 'this is' : 'they are'} enemy to you',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onErrorContainer,
+                          color: theme.colorScheme.error,
                           fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           height: 1.45,
                         ),
                       ),
@@ -1642,6 +1331,100 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     return numbers.map((number) => number.toString()).join(', ');
   }
 
+  Widget _buildNumberOccurrenceDetailsSection(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, String> l10n,
+  ) {
+    final occurrenceDetailsAsync = ref.watch(numberOccurrenceDetailsProvider);
+    final theme = Theme.of(context);
+
+    return occurrenceDetailsAsync.when(
+      data: (details) {
+        if (details.isEmpty) return const SizedBox.shrink();
+
+        return _buildMysticSection(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMysticHeader(
+                title: l10n['occurrence_label'] ?? "Number Occurrences Details",
+                subtitle: 'Deep insight into repeated numbers in your grid',
+                icon: Icons.auto_graph_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 24),
+              ...details.map(
+                (detail) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color:
+                                theme.colorScheme.primary.withValues(alpha: 0.2),
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          '${detail.number}',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Number ${detail.number} (${detail.occurrence} ${detail.occurrence == 1 ? 'time' : 'times'})',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              detail.description,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.55,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => SmallErrorView(
+        error: err,
+        onRetry: () => ref.invalidate(numberOccurrenceDetailsProvider),
+        message: 'Could not load occurrences details',
+      ),
+    );
+  }
+
   Widget _buildMissingNumberTellsSection(
     BuildContext context,
     WidgetRef ref,
@@ -1654,100 +1437,40 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (tells) {
         if (tells.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withValues(
-                        alpha: 0.18,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.remove_circle_outline_rounded,
-                      color: theme.colorScheme.error,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Missing Number Tells',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Based on absent numbers in your Lo Shu Grid',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Missing Number Tells',
+                subtitle: 'Based on absent numbers in your Lo Shu Grid',
+                icon: Icons.remove_circle_outline_rounded,
+                iconColor: theme.colorScheme.error,
+                iconBgColor: theme.colorScheme.error.withValues(alpha: 0.1),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               ...tells.map(
-                (tell) => Container(
+                (tell) => _buildMysticContentCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: theme.colorScheme.error.withValues(alpha: 0.14),
-                    ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.errorContainer.withValues(
-                          alpha: 0.12,
-                        ),
-                        theme.colorScheme.surface,
-                      ],
-                    ),
-                  ),
+                  borderColor: theme.colorScheme.error.withValues(alpha: 0.15),
+                  gradientColors: [
+                    theme.colorScheme.error.withValues(alpha: 0.05),
+                    theme.colorScheme.surface,
+                  ],
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.error.withValues(alpha: 0.2),
+                            width: 2,
+                          ),
                         ),
                         child: Text(
                           '${tell.missingNumber}',
@@ -1757,7 +1480,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1765,7 +1488,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             Text(
                               'Missing Number ${tell.missingNumber}',
                               style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
                               ),
                             ),
@@ -1805,119 +1528,60 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     WidgetRef ref,
     Map<String, String> l10n,
   ) {
-    final loshuPlanesAsync = ref.watch(loshuPlanesProvider);
+    final loShuPlanesAsync = ref.watch(loshuPlanesProvider);
     final theme = Theme.of(context);
 
-    return loshuPlanesAsync.when(
+    return loShuPlanesAsync.when(
       data: (planes) {
         if (planes.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.layers_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n['loshu_planes_label'] ?? "Loshu Grid Planes",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Lo Shu Planes',
+                subtitle: 'Horizontal, Vertical and Diagonal planes analysis',
+                icon: Icons.layers_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: planes.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final plane = planes[index];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.05,
-                          ),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.layers_outlined,
-                              size: 18,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                plane.title,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
+              ...planes.map(
+                (plane) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              plane.title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          plane.description,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.4,
                           ),
+                          _buildMysticChip(
+                            label: plane.gridPosition,
+                            color: theme.colorScheme.secondary,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        plane.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -1930,209 +1594,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       error: (err, stack) => SmallErrorView(
         error: err,
         onRetry: () => ref.invalidate(loshuPlanesProvider),
-        message: 'Could not load grid planes',
-      ),
-    );
-  }
-
-  Widget _buildNumberOccurrenceDetailsSection(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, String> l10n,
-  ) {
-    final detailsAsync = ref.watch(numberOccurrenceDetailsProvider);
-    final theme = Theme.of(context);
-    String occurrenceLabel(int count) {
-      if (count == 1) return 'once';
-      if (count == 2) return 'twice';
-      if (count == 3) return 'three times';
-      return '$count times';
-    }
-
-    return detailsAsync.when(
-      data: (details) {
-        if (details.isEmpty) return const SizedBox.shrink();
-
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.format_list_numbered_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n['number_occurrence_details_label'] ??
-                              "Number Occurrence Details",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Based on repeated numbers in your Lo Shu Grid',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: details.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final detail = details[index];
-
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.colorScheme.primaryContainer.withValues(
-                            alpha: 0.16,
-                          ),
-                          theme.colorScheme.surface,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.05,
-                          ),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.12,
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: theme.colorScheme.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  detail.number.toString(),
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Number ${detail.number}',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: theme.colorScheme.onSurface,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Repeats ${detail.occurrence} ${detail.occurrence == 1 ? 'time' : 'times'}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.secondary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          detail.description,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, stack) => SmallErrorView(
-        error: err,
-        onRetry: () => ref.invalidate(numberOccurrenceDetailsProvider),
-        message: 'Could not load number details',
+        message: 'Could not load lo shu planes',
       ),
     );
   }
@@ -2142,103 +1604,49 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     WidgetRef ref,
     Map<String, String> l10n,
   ) {
-    final careerAsync = ref.watch(careerDataProvider);
+    final careerInfoAsync = ref.watch(careerDataProvider);
     final theme = Theme.of(context);
 
-    return careerAsync.when(
-      data: (data) {
-        if (data.isEmpty) return const SizedBox.shrink();
+    return careerInfoAsync.when(
+      data: (info) {
+        if (info.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.work_outline_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n['career_destiny_label'] ?? "Career by Destiny",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: 'Career & Destiny',
+                subtitle: 'Your professional path and life purpose',
+                icon: Icons.work_history_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
-              ...data.map(
-                (item) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          height: 1.5,
-                        ),
+              ...info.map(
+                (item) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          TextSpan(
-                            text: "Life Path Number: ",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: item.lifePathNumber.toString(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
+                          _buildMysticChip(
+                            label: 'Life Path ${item.lifePathNumber}',
+                            color: theme.colorScheme.primary,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      item.careerDescription,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
+                      const SizedBox(height: 12),
+                      Text(
+                        item.careerDescription,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
+                        ),
                       ),
-                    ),
-                    if (data.indexOf(item) < data.length - 1) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      const SizedBox(height: 24),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -2269,146 +1677,73 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.hub_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n['combination_analysis_label'] ??
-                          "Personality & Life Path Combination",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: l10n['combination_analysis_label'] ??
+                    "Personality & Life Path Combination",
+                subtitle: 'Synergy between your numbers',
+                icon: Icons.hub_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
               ...data.map(
-                (item) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        _buildCombinationChip(
-                          theme,
-                          "Personality",
-                          item.personalityNumber.toString(),
+                (item) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCombinationGrid(context, l10n, item),
+                      const SizedBox(height: 20),
+                      Text(
+                        item.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.6,
                         ),
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.add_rounded,
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.5,
-                          ),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildCombinationChip(
-                          theme,
-                          "Life Path",
-                          item.lifePathNumber.toString(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      item.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        height: 1.5,
                       ),
-                    ),
-                    if (item.example.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer
-                              .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                      if (item.example.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
                             color: theme.colorScheme.secondary.withValues(
-                              alpha: 0.1,
+                              alpha: 0.05,
                             ),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.person_search_rounded,
-                              size: 18,
-                              color: theme.colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: RichText(
-                                text: TextSpan(
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color:
-                                        theme.colorScheme.onSecondaryContainer,
-                                    height: 1.4,
-                                  ),
-                                  children: [
-                                    const TextSpan(
-                                      text: "Examples: ",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(text: item.example),
-                                  ],
-                                ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.1,
                               ),
                             ),
-                          ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.lightbulb_outline_rounded,
+                                size: 16,
+                                color: theme.colorScheme.secondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Example: ${item.example}",
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.secondary,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                    if (data.indexOf(item) < data.length - 1) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -2427,37 +1762,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildCombinationChip(ThemeData theme, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.primary.withValues(alpha: 0.7),
-              fontSize: 10,
-            ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildBoostingPersonalitySection(
     BuildContext context,
@@ -2471,98 +1776,42 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.rocket_launch_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n['boosting_personality_label'] ??
-                          "Boosting Personality",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: l10n['boosting_personality_label'] ?? "Boosting Personality",
+                subtitle: 'Practical tips to enhance your vibrational energy',
+                icon: Icons.rocket_launch_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
               ...data.map(
-                (item) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          height: 1.5,
-                        ),
+                (item) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          TextSpan(
-                            text: "Personality Number: ",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: item.personalityNumber.toString(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
+                          _buildMysticChip(
+                            label: 'Number ${item.personalityNumber}',
+                            color: theme.colorScheme.primary,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      item.boostingDescription,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
+                      const SizedBox(height: 12),
+                      Text(
+                        item.boostingDescription,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
+                        ),
                       ),
-                    ),
-                    if (data.indexOf(item) < data.length - 1) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      const SizedBox(height: 24),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -2593,96 +1842,43 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.directions_walk_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n['life_path_details_label'] ?? "Life Path Details",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: l10n['life_path_details_label'] ?? "Life Path Details",
+                subtitle: 'Understanding your soul\'s journey through numbers',
+                icon: Icons.auto_stories_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
               ...data.map(
-                (item) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          height: 1.5,
-                        ),
+                (item) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          TextSpan(
-                            text: "Life Path Number: ",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: item.lifePathNumber.toString(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
+                          _buildMysticChip(
+                            label: 'Life Path ${item.lifePathNumber}',
+                            color: theme.colorScheme.primary,
+                            icon: Icons.explore_rounded,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      item.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
+                      const SizedBox(height: 12),
+                      Text(
+                        item.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
+                        ),
                       ),
-                    ),
-                    if (data.indexOf(item) < data.length - 1) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      const SizedBox(height: 24),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -2715,96 +1911,52 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (pinnacles) {
         if (pinnacles.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.trending_up_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: title,
+                subtitle: 'Life cycle analysis for specific age periods',
+                icon: Icons.query_stats_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
               ),
               const SizedBox(height: 24),
               ...pinnacles.map(
-                (pinnacle) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          height: 1.5,
-                        ),
+                (pinnacle) => _buildMysticContentCard(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextSpan(
-                            text: "Age ${pinnacle.lifePeriodRange}: ",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: "Pinnacle number ${pinnacle.pinnacleno}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
+                          Expanded(
+                            child: Text(
+                              "Age: ${pinnacle.lifePeriodRange}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
+                          ),
+                          _buildMysticChip(
+                            label: 'Number ${pinnacle.pinnacleno}',
+                            color: theme.colorScheme.secondary,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      pinnacle.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
+                      const SizedBox(height: 12),
+                      Text(
+                        pinnacle.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
+                        ),
                       ),
-                    ),
-                    if (pinnacles.indexOf(pinnacle) < pinnacles.length - 1) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                      const SizedBox(height: 24),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -2823,59 +1975,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildLoShuGrid(BuildContext context, List<List<String>> grid) {
-    final theme = Theme.of(context);
-    return Container(
-      width: 260,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: List.generate(3, (row) {
-          return Row(
-            children: List.generate(3, (col) {
-              return Expanded(
-                child: Container(
-                  height: 80,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      right: col < 2
-                          ? BorderSide(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                            )
-                          : BorderSide.none,
-                      bottom: row < 2
-                          ? BorderSide(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                            )
-                          : BorderSide.none,
-                    ),
-                  ),
-                  child: Text(
-                    grid[row][col],
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          );
-        }),
-      ),
-    );
-  }
+  // --- Helper Widgets ---
 
   Widget _buildNumerologyGrid(
     BuildContext context,
@@ -2888,31 +1988,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       {
         'label': l10n['personality_number_label'] ?? 'Personality',
         'val': data.personality,
+        'icon': Icons.person_3_rounded,
       },
       {
         'label': l10n['life_path_number_label'] ?? 'Life Path',
         'val': data.lifePath,
+        'icon': Icons.directions_rounded,
       },
-      /* {
-        'label': l10n['pinnacle1_number_label'] ?? 'Pinnacle 1',
-        'val': data.pinnacle1,
-      },
-      {
-        'label': l10n['pinnacle2_number_label'] ?? 'Pinnacle 2',
-        'val': data.pinnacle2,
-      },
-      {
-        'label': l10n['pinnacle3_number_label'] ?? 'Pinnacle 3',
-        'val': data.pinnacle3,
-      },
-      {
-        'label': l10n['pinnacle4_number_label'] ?? 'Pinnacle 4',
-        'val': data.pinnacle4,
-      },
-      {
-        'label': l10n['pinnacle_base_label'] ?? 'Pinnacle Base',
-        'val': data.pinnacleBase,
-      }, */
     ];
 
     return Wrap(
@@ -2921,45 +2003,109 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       alignment: WrapAlignment.center,
       children: items.map((item) {
         if (item['val'] == null) return const SizedBox.shrink();
-        return Container(
-          width: (MediaQuery.of(context).size.width - 80) / 2,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Column(
-            children: [
-              Text(
-                item['label'] as String,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+        return SizedBox(
+          width: (MediaQuery.of(context).size.width - 44) / 2,
+          child: _buildMysticContentCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      item['icon'] as IconData,
+                      size: 14,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      item['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
+                const SizedBox(height: 10),
+                Text(
                   item['val'].toString(),
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildCombinationGrid(
+    BuildContext context,
+    Map<String, String> l10n,
+    CombinationData data,
+  ) {
+    final theme = Theme.of(context);
+    final items = [
+      {
+        'label': l10n['personality_number_label'] ?? 'Personality',
+        'val': data.personalityNumber,
+        'icon': Icons.person_3_rounded,
+      },
+      {
+        'label': l10n['life_path_number_label'] ?? 'Life Path',
+        'val': data.lifePathNumber,
+        'icon': Icons.directions_rounded,
+      },
+    ];
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      alignment: WrapAlignment.center,
+      children: items.map((item) {
+        if (item['val'] == null) return const SizedBox.shrink();
+        return SizedBox(
+          width: (MediaQuery.of(context).size.width - 44) / 2,
+          child: _buildMysticContentCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      item['icon'] as IconData,
+                      size: 14,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      item['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  item['val'].toString(),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -2975,51 +2121,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       data: (data) {
         if (data == null) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        return _buildMysticSection(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.psychology_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n['personality_analysis_title'] ??
-                        "Personality Analysis",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
+              _buildMysticHeader(
+                title: l10n['personality_analysis_title'] ?? "Personality Analysis",
+                icon: Icons.psychology_rounded,
               ),
               const SizedBox(height: 24),
               _buildDetailRow(
@@ -3047,32 +2155,27 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ),
               const SizedBox(height: 24),
               if (data.youShould != null && data.youShould!.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer.withValues(
-                      alpha: 0.3,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-                    ),
-                  ),
+                _buildMysticContentCard(
+                  borderColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                  gradientColors: [
+                    theme.colorScheme.secondary.withValues(alpha: 0.05),
+                    theme.colorScheme.surface,
+                  ],
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Icon(
-                            Icons.lightbulb_outline_rounded,
-                            size: 20,
+                            Icons.auto_awesome_rounded,
+                            size: 18,
                             color: theme.colorScheme.secondary,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             l10n['recommendation_label'] ?? "You Should",
                             style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                               color: theme.colorScheme.secondary,
                             ),
                           ),
@@ -3082,8 +2185,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Text(
                         data.youShould!,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                          height: 1.5,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.55,
                         ),
                       ),
                     ],
@@ -3093,9 +2196,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ],
               if (data.description != null && data.description!.isNotEmpty) ...[
                 Text(
-                  l10n['description_label'] ?? "Detailed Description",
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  l10n['description_label'] ?? "Detailed Insight",
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
                     color: theme.colorScheme.primary,
                   ),
                 ),
@@ -3105,7 +2208,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.6,
-                    letterSpacing: 0.2,
+                    letterSpacing: 0.1,
                   ),
                 ),
               ],
@@ -3377,7 +2480,163 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       },
     );
   }
+
+  // --- Mystic Shastra Design System Helpers ---
+
+  Widget _buildMysticSection({
+    required Widget child,
+    EdgeInsetsGeometry? margin,
+    EdgeInsetsGeometry? padding,
+    Color? borderColor,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.15),
+          width: 1.5,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildMysticHeader({
+    required String title,
+    required IconData icon,
+    String? subtitle,
+    Color? iconColor,
+    Color? iconBgColor,
+  }) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconBgColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: iconColor ?? theme.colorScheme.primary,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMysticContentCard({
+    required Widget child,
+    EdgeInsetsGeometry? margin,
+    EdgeInsetsGeometry? padding,
+    List<Color>? gradientColors,
+    Color? borderColor,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: margin,
+      padding: padding ?? const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors ??
+              [
+                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+                theme.colorScheme.surface,
+              ],
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildMysticChip({
+    required String label,
+    Color? color,
+    IconData? icon,
+  }) {
+    final theme = Theme.of(context);
+    final baseColor = color ?? theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: baseColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: baseColor.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: baseColor),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: baseColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;

@@ -87,7 +87,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                 const Text(
                   'Your payment was successful and your birthdate analysis is now unlocked! You can find it in your History or by clicking the button below.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Color(0xFF94A3B8)),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -197,85 +197,124 @@ class _CartPageState extends ConsumerState<CartPage> {
                         final order = unpaidOrders[index];
                         final recordId = order.id ?? '';
                         final isSelected = selectedIds.contains(recordId);
+                        final dateDisplay = DateFormat('dd-MMM-yyyy').format(
+                          order.birthdate,
+                        );
 
                         return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
                               color: isSelected
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.outlineVariant,
-                              width: isSelected ? 2 : 1,
+                                  : theme.colorScheme.primary
+                                      .withValues(alpha: 0.1),
+                              width: isSelected ? 2 : 1.5,
                             ),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            leading: Checkbox(
-                              value: isSelected,
-                              onChanged: (val) {
-                                final current = Set<String>.from(selectedIds);
-                                if (val == true) {
-                                  current.add(recordId);
-                                  ref.read(analyticsServiceProvider).logCartAction('item_selected');
-                                } else {
-                                  current.remove(recordId);
-                                  ref.read(analyticsServiceProvider).logCartAction('item_deselected');
-                                }
-                                ref
-                                        .read(selectedOrdersProvider.notifier)
-                                        .state =
-                                    current;
-
-                              },
-                            ),
-                            title: Text(
-                              DateFormat('dd-MMM-yyyy').format(order.birthdate),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              "Record ID: ${recordId.substring(0, 8)}...",
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                  ),
-                                  color: theme.colorScheme.error,
-                                  tooltip: 'Delete this record',
-                                  onPressed: () => _deleteBirthdate(recordId),
-                                ),
-                              ],
-                            ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
                             onTap: () {
                               ref.read(birthdateProvider.notifier).state =
                                   order.birthdate;
-                              ref.read(analyticsServiceProvider).logClickEvent('cart_item_tapped');
+                              ref
+                                  .read(analyticsServiceProvider)
+                                  .logClickEvent('cart_item_tapped');
                               context.pushNamed(AppRoute.birthdateAnalysisName);
-
                             },
+                            child: Container(
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.surface,
+                                    theme.colorScheme.surfaceContainerHighest
+                                        .withValues(alpha: 0.3),
+                                  ],
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.2,
+                                    child: Checkbox(
+                                      value: isSelected,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      side: BorderSide(
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.5),
+                                        width: 1.5,
+                                      ),
+                                      onChanged: (val) {
+                                        final current =
+                                            Set<String>.from(selectedIds);
+                                        if (val == true) {
+                                          current.add(recordId);
+                                          ref
+                                              .read(analyticsServiceProvider)
+                                              .logCartAction('item_selected');
+                                        } else {
+                                          current.remove(recordId);
+                                          ref
+                                              .read(analyticsServiceProvider)
+                                              .logCartAction('item_deselected');
+                                        }
+                                        ref
+                                            .read(
+                                              selectedOrdersProvider.notifier,
+                                            )
+                                            .state = current;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Birthdate: $dateDisplay',
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: theme
+                                                    .colorScheme.onSurface,
+                                                letterSpacing: 0.5,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          order.fullName ?? '',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme.colorScheme
+                                                    .onSurfaceVariant,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                    ),
+                                    color: theme.colorScheme.error,
+                                    tooltip: 'Delete this record',
+                                    onPressed: () => _deleteBirthdate(recordId),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -431,13 +470,12 @@ class _CartPageState extends ConsumerState<CartPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            offset: const Offset(0, -4),
-            blurRadius: 12,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            width: 1,
           ),
-        ],
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
