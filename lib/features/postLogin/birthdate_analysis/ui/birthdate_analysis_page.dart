@@ -15,7 +15,6 @@ import '../../../../router/app_routes.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/services/analytics_service.dart';
 
-
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
 
@@ -149,8 +148,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             currentLang == AppLanguage.english
                                 ? 'EN'
                                 : currentLang == AppLanguage.hindi
-                                    ? '\u0939\u093f'
-                                    : '\u092e',
+                                ? '\u0939\u093f'
+                                : '\u092e',
                             style: const TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
@@ -279,8 +278,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (isPending ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                    .withValues(alpha: 0.3),
+                color:
+                    (isPending
+                            ? theme.colorScheme.secondary
+                            : theme.colorScheme.primary)
+                        .withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -291,10 +293,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 ? null
                 : () {
                     if (isPending) {
-                      ref.read(analyticsServiceProvider).logClickEvent('read_more_clicked');
+                      ref
+                          .read(analyticsServiceProvider)
+                          .logClickEvent('read_more_clicked');
                       _navigateToCartAndSelect(birthdate);
                     } else {
-                      ref.read(analyticsServiceProvider).logClickEvent('save_birthdate_clicked');
+                      ref
+                          .read(analyticsServiceProvider)
+                          .logClickEvent('save_birthdate_clicked');
                       _handleOrderAction(birthdate);
                     }
                   },
@@ -336,8 +342,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     bool integrated = false,
   }) {
     final theme = Theme.of(context);
-    final dateDisplay =
-        birthdate != null ? DateFormat('dd-MMM-yyyy').format(birthdate) : '';
+    final dateDisplay = birthdate != null
+        ? DateFormat('dd-MMM-yyyy').format(birthdate)
+        : '';
 
     return Material(
       color: Colors.transparent,
@@ -639,12 +646,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               children: numerology.numberOccurrences!.entries
                   .where((e) => e.value > 0)
                   .map((e) {
-                return _buildMysticChip(
-                  label: "${e.key} : ${e.value}",
-                  color: theme.colorScheme.primary,
-                  icon: Icons.repeat_rounded,
-                );
-              }).toList(),
+                    return _buildMysticChip(
+                      label: "${e.key} : ${e.value} times",
+                      color: theme.colorScheme.primary,
+                      icon: Icons.repeat_rounded,
+                    );
+                  })
+                  .toList(),
             ),
           ],
         ],
@@ -842,15 +850,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                       errorBuilder:
                                           (context, error, stackTrace) =>
                                               Container(
-                                        width: 60,
-                                        height: 60,
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.1),
-                                        child: Icon(
-                                          Icons.person_rounded,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
+                                                width: 60,
+                                                height: 60,
+                                                color: theme.colorScheme.primary
+                                                    .withValues(alpha: 0.1),
+                                                child: Icon(
+                                                  Icons.person_rounded,
+                                                  color:
+                                                      theme.colorScheme.primary,
+                                                ),
+                                              ),
                                     ),
                                   ),
                                 ),
@@ -858,10 +867,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                 Expanded(
                                   child: Text(
                                     testimonial.personName,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: theme.colorScheme.primary,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          color: theme.colorScheme.primary,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -952,7 +962,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ...points.map(
                 (point) => _buildMysticContentCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  borderColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                  borderColor: theme.colorScheme.secondary.withValues(
+                    alpha: 0.2,
+                  ),
                   gradientColors: [
                     theme.colorScheme.secondary.withValues(alpha: 0.05),
                     theme.colorScheme.surface,
@@ -1197,12 +1209,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             spacing: 10,
             runSpacing: 10,
             children: values
-                .map(
-                  (value) => _buildMysticChip(
-                    label: value,
-                    color: color,
-                  ),
-                )
+                .map((value) => _buildMysticChip(label: value, color: color))
                 .toList(),
           ),
         ],
@@ -1234,8 +1241,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     title: 'Missing Number Remedies',
                     icon: Icons.healing_rounded,
                     iconColor: theme.colorScheme.secondary,
-                    iconBgColor:
-                        theme.colorScheme.secondary.withValues(alpha: 0.1),
+                    iconBgColor: theme.colorScheme.secondary.withValues(
+                      alpha: 0.1,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Divider(
@@ -1275,7 +1283,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ],
                   if (numbersNotForRemedy.isNotEmpty) ...[
                     _buildMysticContentCard(
-                      borderColor: theme.colorScheme.error.withValues(alpha: 0.2),
+                      borderColor: theme.colorScheme.error.withValues(
+                        alpha: 0.2,
+                      ),
                       gradientColors: [
                         theme.colorScheme.error.withValues(alpha: 0.05),
                         theme.colorScheme.surface,
@@ -1366,11 +1376,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color:
-                                theme.colorScheme.primary.withValues(alpha: 0.2),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                             width: 2,
                           ),
                         ),
@@ -1468,7 +1481,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           color: theme.colorScheme.error.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.colorScheme.error.withValues(alpha: 0.2),
+                            color: theme.colorScheme.error.withValues(
+                              alpha: 0.2,
+                            ),
                             width: 2,
                           ),
                         ),
@@ -1632,7 +1647,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Row(
                         children: [
                           _buildMysticChip(
-                            label: 'Life Path ${item.lifePathNumber}',
+                            label: 'Life Path No: ${item.lifePathNumber}',
                             color: theme.colorScheme.primary,
                           ),
                         ],
@@ -1682,7 +1697,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: l10n['combination_analysis_label'] ??
+                title:
+                    l10n['combination_analysis_label'] ??
                     "Personality & Life Path Combination",
                 subtitle: 'Synergy between your numbers',
                 icon: Icons.hub_rounded,
@@ -1762,8 +1778,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-
-
   Widget _buildBoostingPersonalitySection(
     BuildContext context,
     WidgetRef ref,
@@ -1781,7 +1795,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: l10n['boosting_personality_label'] ?? "Boosting Personality",
+                title:
+                    l10n['boosting_personality_label'] ??
+                    "Boosting Personality",
                 subtitle: 'Practical tips to enhance your vibrational energy',
                 icon: Icons.rocket_launch_rounded,
                 iconColor: theme.colorScheme.secondary,
@@ -1797,7 +1813,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Row(
                         children: [
                           _buildMysticChip(
-                            label: 'Number ${item.personalityNumber}',
+                            label: 'Personality No: ${item.personalityNumber}',
                             color: theme.colorScheme.primary,
                           ),
                         ],
@@ -1863,7 +1879,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Row(
                         children: [
                           _buildMysticChip(
-                            label: 'Life Path ${item.lifePathNumber}',
+                            label: 'Life Path No: ${item.lifePathNumber}',
                             color: theme.colorScheme.primary,
                             icon: Icons.explore_rounded,
                           ),
@@ -1942,7 +1958,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             ),
                           ),
                           _buildMysticChip(
-                            label: 'Number ${pinnacle.pinnacleno}',
+                            label: 'Pinnacle No: ${pinnacle.pinnacleno}',
                             color: theme.colorScheme.secondary,
                           ),
                         ],
@@ -2126,7 +2142,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: l10n['personality_analysis_title'] ?? "Personality Analysis",
+                title:
+                    l10n['personality_analysis_title'] ??
+                    "Personality Analysis",
                 icon: Icons.psychology_rounded,
               ),
               const SizedBox(height: 24),
@@ -2156,7 +2174,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               const SizedBox(height: 24),
               if (data.youShould != null && data.youShould!.isNotEmpty) ...[
                 _buildMysticContentCard(
-                  borderColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                  borderColor: theme.colorScheme.secondary.withValues(
+                    alpha: 0.2,
+                  ),
                   gradientColors: [
                     theme.colorScheme.secondary.withValues(alpha: 0.05),
                     theme.colorScheme.surface,
@@ -2497,7 +2517,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.15),
+          color:
+              borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.15),
           width: 1.5,
         ),
         gradient: LinearGradient(
@@ -2533,7 +2554,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconBgColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+            color:
+                iconBgColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -2587,14 +2609,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+          color:
+              borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: gradientColors ??
+          colors:
+              gradientColors ??
               [
-                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+                theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.15,
+                ),
                 theme.colorScheme.surface,
               ],
         ),
@@ -2636,7 +2662,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 }
-
 
 class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
