@@ -1,3 +1,5 @@
+import '../../../../core/providers/localization_provider.dart';
+
 class NumerologyState {
   final int? personality;
   final int? lifePath;
@@ -99,17 +101,35 @@ class NumberOccurrenceDetail {
 class MissingNumberTell {
   final int missingNumber;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   MissingNumberTell({
     required this.missingNumber,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory MissingNumberTell.fromMap(Map<String, dynamic> map) {
     return MissingNumberTell(
       missingNumber: map['missing_number'] as int,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+      default:
+        return description;
+    }
   }
 }
 
@@ -212,17 +232,35 @@ class RemedyValues {
 class MissingNumberRemedy {
   final int missingNumber;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   MissingNumberRemedy({
     required this.missingNumber,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory MissingNumberRemedy.fromMap(Map<String, dynamic> map) {
     return MissingNumberRemedy(
       missingNumber: (map['missing_number'] as num).toInt(),
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+      default:
+        return description;
+    }
   }
 }
 
@@ -245,12 +283,16 @@ class PinnacleData {
   final int pinnacleno;
   final int lifeperiod;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   PinnacleData({
     required this.lifePeriodRange,
     required this.pinnacleno,
     required this.lifeperiod,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory PinnacleData.fromMap(Map<String, dynamic> map) {
@@ -270,52 +312,126 @@ class PinnacleData {
       pinnacleno: map['pinnacleno'] as int,
       lifeperiod: map['lifeperiod'] as int,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+      default:
+        return description;
+    }
   }
 }
 
 class LifePathData {
   final int lifePathNumber;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
-  LifePathData({required this.lifePathNumber, required this.description});
+  LifePathData({
+    required this.lifePathNumber,
+    required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
+  });
 
   factory LifePathData.fromMap(Map<String, dynamic> map) {
     return LifePathData(
       lifePathNumber: map['life_path_number'] as int,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+      default:
+        return description;
+    }
   }
 }
 
 class CareerData {
   final int lifePathNumber;
   final String careerDescription;
+  final String? careerDescriptionHindi;
+  final String? careerDescriptionMarathi;
 
-  CareerData({required this.lifePathNumber, required this.careerDescription});
+  CareerData({
+    required this.lifePathNumber,
+    required this.careerDescription,
+    this.careerDescriptionHindi,
+    this.careerDescriptionMarathi,
+  });
 
   factory CareerData.fromMap(Map<String, dynamic> map) {
     return CareerData(
       lifePathNumber: map['life_path_number'] as int,
       careerDescription: map['career_description'] as String,
+      careerDescriptionHindi: map['career_description_hindi'] as String?,
+      careerDescriptionMarathi: map['career_description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return careerDescriptionHindi ?? careerDescription;
+      case AppLanguage.marathi:
+        return careerDescriptionMarathi ?? careerDescription;
+      case AppLanguage.english:
+      default:
+        return careerDescription;
+    }
   }
 }
 
 class BoostingPersonalityData {
   final int personalityNumber;
   final String boostingDescription;
+  final String? boostingDescriptionHindi;
+  final String? boostingDescriptionMarathi;
 
   BoostingPersonalityData({
     required this.personalityNumber,
     required this.boostingDescription,
+    this.boostingDescriptionHindi,
+    this.boostingDescriptionMarathi,
   });
 
   factory BoostingPersonalityData.fromMap(Map<String, dynamic> map) {
     return BoostingPersonalityData(
       personalityNumber: map['personality_number'] as int,
       boostingDescription: map['boosting_description'] as String,
+      boostingDescriptionHindi: map['boosting_description_hindi'] as String?,
+      boostingDescriptionMarathi: map['boosting_description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return boostingDescriptionHindi ?? boostingDescription;
+      case AppLanguage.marathi:
+        return boostingDescriptionMarathi ?? boostingDescription;
+      case AppLanguage.english:
+      default:
+        return boostingDescription;
+    }
   }
 }
 

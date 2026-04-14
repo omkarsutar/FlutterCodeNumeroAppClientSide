@@ -1197,6 +1197,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final remediesAsync = ref.watch(missingNumberRemediesProvider);
     final numbersNotForRemedyAsync = ref.watch(numbersNotForRemedyProvider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return remediesAsync.when(
       data: (remedies) {
@@ -1243,7 +1244,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              remedy.description,
+                              remedy.getDescription(currentLang),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 height: 1.55,
@@ -1418,6 +1419,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   ) {
     final missingNumberTellsAsync = ref.watch(missingNumberTellsProvider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return missingNumberTellsAsync.when(
       data: (tells) {
@@ -1482,7 +1484,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              tell.description,
+                              tell.getDescription(currentLang),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 height: 1.45,
@@ -1594,6 +1596,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   ) {
     final careerInfoAsync = ref.watch(careerDataProvider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return careerInfoAsync.when(
       data: (info) {
@@ -1627,7 +1630,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        item.careerDescription,
+                        item.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
@@ -1759,6 +1762,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final boostingAsync = ref.watch(boostingPersonalityDataProvider);
     final theme = Theme.of(context);
 
+    final currentLang = ref.watch(languageProvider);
+
     return boostingAsync.when(
       data: (data) {
         if (data.isEmpty) return const SizedBox.shrink();
@@ -1793,7 +1798,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        item.boostingDescription,
+                        item.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
@@ -1826,6 +1831,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   ) {
     final lifePathAsync = ref.watch(lifePathNumberDataProvider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return lifePathAsync.when(
       data: (data) {
@@ -1860,7 +1866,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        item.description,
+                        item.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
@@ -1895,6 +1901,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   ) {
     final pinnacleAsync = ref.watch(provider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return pinnacleAsync.when(
       data: (pinnacles) {
@@ -1938,7 +1945,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        pinnacle.description,
+                        pinnacle.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
