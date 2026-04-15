@@ -199,7 +199,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           currentLang,
                         ),
                         _buildImportantPointsSection(context, ref, currentLang),
-                        _buildStockMarketInfoSection(context, ref),
+                        _buildStockMarketInfoSection(context, ref, currentLang),
                         _buildPinnacleSection(
                           context,
                           ref,
@@ -953,7 +953,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildStockMarketInfoSection(BuildContext context, WidgetRef ref) {
+  Widget _buildStockMarketInfoSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLanguage currentLang,
+  ) {
     final stockMarketInfoAsync = ref.watch(stockMarketInfoProvider);
     final theme = Theme.of(context);
 
@@ -997,13 +1001,28 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: Text(
-                          item.insight,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.55,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (item.includedNumbers.isNotEmpty) ...[
+                              Text(
+                                'Numbers: ${item.includedNumbers.join(", ")}',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                            Text(
+                              item.getDescription(currentLang),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.55,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

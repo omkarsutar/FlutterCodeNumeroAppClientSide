@@ -146,18 +146,18 @@ class PersonalityData {
 class LoshuPlane {
   final String gridPosition;
   final String title;
+  final String description;
   final String? titleHindi;
   final String? titleMarathi;
-  final String description;
   final String? descriptionHindi;
   final String? descriptionMarathi;
 
   LoshuPlane({
     required this.gridPosition,
     required this.title,
+    required this.description,
     this.titleHindi,
     this.titleMarathi,
-    required this.description,
     this.descriptionHindi,
     this.descriptionMarathi,
   });
@@ -166,9 +166,9 @@ class LoshuPlane {
     return LoshuPlane(
       gridPosition: map['grid_position'] as String,
       title: map['title'] as String,
+      description: map['description'] as String,
       titleHindi: map['title_hindi'] as String?,
       titleMarathi: map['title_marathi'] as String?,
-      description: map['description'] as String,
       descriptionHindi: map['description_hindi'] as String?,
       descriptionMarathi: map['description_marathi'] as String?,
     );
@@ -272,19 +272,19 @@ class StaticTestimonial {
   final int id;
   final String personName;
   final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
   final String image;
   final bool isActive;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   StaticTestimonial({
     required this.id,
     required this.personName,
     required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
     required this.image,
     required this.isActive,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory StaticTestimonial.fromMap(Map<String, dynamic> map) {
@@ -292,10 +292,10 @@ class StaticTestimonial {
       id: map['id'] as int,
       personName: map['person_name'] as String,
       description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
       image: map['image'] as String,
       isActive: map['is_active'] as bool? ?? true,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
   }
 
@@ -313,15 +313,15 @@ class StaticTestimonial {
 
 class ImportantPoint {
   final List<String> includedNumbers;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   ImportantPoint({
     required this.includedNumbers,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory ImportantPoint.fromMap(Map<String, dynamic> map) {
@@ -329,31 +329,58 @@ class ImportantPoint {
       includedNumbers: (map['included_numbers'] as List<dynamic>)
           .map((item) => item.toString())
           .toList(),
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: (map['description_en'] ?? map['description']) as String,
+      descriptionHi: (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr: (map['description_mr'] ?? map['description_marathi']) as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
 
 class StockMarketInfo {
-  final String insight;
+  final List<String> includedNumbers;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
-  StockMarketInfo({required this.insight});
+  StockMarketInfo({
+    required this.includedNumbers,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
+  });
 
   factory StockMarketInfo.fromMap(Map<String, dynamic> map) {
-    return StockMarketInfo(insight: map['get_stock_market_info'] as String);
+    return StockMarketInfo(
+      includedNumbers: (map['included_numbers'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      descriptionEn: map['description_en'] as String? ?? map['description'] as String? ?? map['get_stock_market_info'] as String? ?? '',
+      descriptionHi: map['description_hi'] as String?,
+      descriptionMr: map['description_mr'] as String?,
+    );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHi ?? descriptionEn;
+      case AppLanguage.marathi:
+        return descriptionMr ?? descriptionEn;
+      case AppLanguage.english:
+        return descriptionEn;
+    }
   }
 }
 

@@ -98,21 +98,9 @@ final stockMarketInfoProvider = FutureProvider<List<StockMarketInfo>>((
 
   final response = await ref
       .watch(numerologyRpcServiceProvider)
-      .fetchScalar('get_stock_market_info', birthdateId: birthdateId);
+      .fetchList('get_share_market_advice', birthdateId: birthdateId);
 
-  if (response == null) return [];
-  if (response is String) {
-    return [StockMarketInfo(insight: response)];
-  }
-  if (response is Map<String, dynamic>) {
-    return [StockMarketInfo.fromMap(response)];
-  }
-  if (response is List) {
-    return response
-        .map((item) => StockMarketInfo.fromMap(item as Map<String, dynamic>))
-        .toList();
-  }
-  return [];
+  return response.map(StockMarketInfo.fromMap).toList();
 });
 
 final remedyValuesProvider = FutureProvider<List<RemedyValues>>((ref) async {
@@ -121,7 +109,7 @@ final remedyValuesProvider = FutureProvider<List<RemedyValues>>((ref) async {
 
   final response = await ref
       .watch(numerologyRpcServiceProvider)
-      .fetchList('get_remedy_values', birthdateId: birthdateId);
+      .fetchList('get_lucky_unlucky_values', birthdateId: birthdateId);
   return response.map(RemedyValues.fromMap).toList();
 });
 
