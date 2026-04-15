@@ -29,170 +29,170 @@ class NumerologyState {
 class PersonalityData {
   final int personalityNumber;
   final String? bornOn;
-  final String? lord;
-  final String? lordHindi;
-  final String? lordMarathi;
-  final String? qualities;
-  final String? qualitiesHindi;
-  final String? qualitiesMarathi;
-  final String? weaknesses;
-  final String? weaknessesHindi;
-  final String? weaknessesMarathi;
-  final String? youShould;
-  final String? youShouldHindi;
-  final String? youShouldMarathi;
-  final String? description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String? lordEn;
+  final String? lordHi;
+  final String? lordMr;
+  final String? qualitiesEn;
+  final String? qualitiesHi;
+  final String? qualitiesMr;
+  final String? weaknessesEn;
+  final String? weaknessesHi;
+  final String? weaknessesMr;
+  final String? youShouldEn;
+  final String? youShouldHi;
+  final String? youShouldMr;
+  final String? descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   PersonalityData({
     required this.personalityNumber,
     this.bornOn,
-    this.lord,
-    this.lordHindi,
-    this.lordMarathi,
-    this.qualities,
-    this.qualitiesHindi,
-    this.qualitiesMarathi,
-    this.weaknesses,
-    this.weaknessesHindi,
-    this.weaknessesMarathi,
-    this.youShould,
-    this.youShouldHindi,
-    this.youShouldMarathi,
-    this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    this.lordEn,
+    this.lordHi,
+    this.lordMr,
+    this.qualitiesEn,
+    this.qualitiesHi,
+    this.qualitiesMr,
+    this.weaknessesEn,
+    this.weaknessesHi,
+    this.weaknessesMr,
+    this.youShouldEn,
+    this.youShouldHi,
+    this.youShouldMr,
+    this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory PersonalityData.fromMap(Map<String, dynamic> map) {
     return PersonalityData(
       personalityNumber: map['personality_number'] as int,
       bornOn: map['born_on'] as String?,
-      lord: map['lord'] as String?,
-      lordHindi: map['lord_hindi'] as String?,
-      lordMarathi: map['lord_marathi'] as String?,
-      qualities: map['qualities'] as String?,
-      qualitiesHindi: map['qualities_hindi'] as String?,
-      qualitiesMarathi: map['qualities_marathi'] as String?,
-      weaknesses: map['weaknesses'] as String?,
-      weaknessesHindi: map['weaknesses_hindi'] as String?,
-      weaknessesMarathi: map['weaknesses_marathi'] as String?,
-      youShould: map['you_should'] as String?,
-      youShouldHindi: map['you_should_hindi'] as String?,
-      youShouldMarathi: map['you_should_marathi'] as String?,
-      description: map['description'] as String?,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      lordEn: map['lord'] as String?,
+      lordHi: map['lord_hindi'] as String?,
+      lordMr: map['lord_marathi'] as String?,
+      qualitiesEn: map['qualities'] as String?,
+      qualitiesHi: map['qualities_hindi'] as String?,
+      qualitiesMr: map['qualities_marathi'] as String?,
+      weaknessesEn: map['weaknesses'] as String?,
+      weaknessesHi: map['weaknesses_hindi'] as String?,
+      weaknessesMr: map['weaknesses_marathi'] as String?,
+      youShouldEn: map['you_should'] as String?,
+      youShouldHi: map['you_should_hindi'] as String?,
+      youShouldMr: map['you_should_marathi'] as String?,
+      descriptionEn: map['description'] as String?,
+      descriptionHi: map['description_hindi'] as String?,
+      descriptionMr: map['description_marathi'] as String?,
     );
   }
 
   String getLord(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return lordHindi ?? lord ?? '';
+        return lordHi ?? lordEn ?? '';
       case AppLanguage.marathi:
-        return lordMarathi ?? lord ?? '';
+        return lordMr ?? lordEn ?? '';
       case AppLanguage.english:
-        return lord ?? '';
+        return lordEn ?? '';
     }
   }
 
   String getQualities(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return qualitiesHindi ?? qualities ?? '';
+        return qualitiesHi ?? qualitiesEn ?? '';
       case AppLanguage.marathi:
-        return qualitiesMarathi ?? qualities ?? '';
+        return qualitiesMr ?? qualitiesEn ?? '';
       case AppLanguage.english:
-        return qualities ?? '';
+        return qualitiesEn ?? '';
     }
   }
 
   String getWeaknesses(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return weaknessesHindi ?? weaknesses ?? '';
+        return weaknessesHi ?? weaknessesEn ?? '';
       case AppLanguage.marathi:
-        return weaknessesMarathi ?? weaknesses ?? '';
+        return weaknessesMr ?? weaknessesEn ?? '';
       case AppLanguage.english:
-        return weaknesses ?? '';
+        return weaknessesEn ?? '';
     }
   }
 
   String getYouShould(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return youShouldHindi ?? youShould ?? '';
+        return youShouldHi ?? youShouldEn ?? '';
       case AppLanguage.marathi:
-        return youShouldMarathi ?? youShould ?? '';
+        return youShouldMr ?? youShouldEn ?? '';
       case AppLanguage.english:
-        return youShould ?? '';
+        return youShouldEn ?? '';
     }
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description ?? '';
+        return descriptionHi ?? descriptionEn ?? '';
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description ?? '';
+        return descriptionMr ?? descriptionEn ?? '';
       case AppLanguage.english:
-        return description ?? '';
+        return descriptionEn ?? '';
     }
   }
 }
 
 class LoshuPlane {
   final String gridPosition;
-  final String title;
-  final String description;
-  final String? titleHindi;
-  final String? titleMarathi;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String titleEn;
+  final String descriptionEn;
+  final String? titleHi;
+  final String? titleMr;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   LoshuPlane({
     required this.gridPosition,
-    required this.title,
-    required this.description,
-    this.titleHindi,
-    this.titleMarathi,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.titleEn,
+    required this.descriptionEn,
+    this.titleHi,
+    this.titleMr,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory LoshuPlane.fromMap(Map<String, dynamic> map) {
     return LoshuPlane(
       gridPosition: map['grid_position'] as String,
-      title: map['title'] as String,
-      description: map['description'] as String,
-      titleHindi: map['title_hindi'] as String?,
-      titleMarathi: map['title_marathi'] as String?,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      titleEn: map['title'] as String,
+      descriptionEn: map['description'] as String,
+      titleHi: map['title_hindi'] as String?,
+      titleMr: map['title_marathi'] as String?,
+      descriptionHi: map['description_hindi'] as String?,
+      descriptionMr: map['description_marathi'] as String?,
     );
   }
 
   String getTitle(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return titleHindi ?? title;
+        return titleHi ?? titleEn;
       case AppLanguage.marathi:
-        return titleMarathi ?? title;
+        return titleMr ?? titleEn;
       case AppLanguage.english:
-        return title;
+        return titleEn;
     }
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
@@ -200,70 +200,70 @@ class LoshuPlane {
 class NumberOccurrenceDetail {
   final int number;
   final int occurrence;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   NumberOccurrenceDetail({
     required this.number,
     required this.occurrence,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory NumberOccurrenceDetail.fromMap(Map<String, dynamic> map) {
     return NumberOccurrenceDetail(
       number: map['number'] as int,
       occurrence: map['occurrence'] as int,
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi: map['description_hindi'] as String?,
+      descriptionMr: map['description_marathi'] as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
 
 class MissingNumberTell {
   final int missingNumber;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   MissingNumberTell({
     required this.missingNumber,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory MissingNumberTell.fromMap(Map<String, dynamic> map) {
     return MissingNumberTell(
       missingNumber: map['missing_number'] as int,
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi: map['description_hindi'] as String?,
+      descriptionMr: map['description_marathi'] as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
@@ -271,42 +271,42 @@ class MissingNumberTell {
 class StaticTestimonial {
   final int id;
   final String personName;
-  final String description;
+  final String descriptionEn;
   final String image;
   final bool isActive;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   StaticTestimonial({
     required this.id,
     required this.personName,
-    required this.description,
+    required this.descriptionEn,
     required this.image,
     required this.isActive,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory StaticTestimonial.fromMap(Map<String, dynamic> map) {
     return StaticTestimonial(
       id: map['id'] as int,
       personName: map['person_name'] as String,
-      description: map['description'] as String,
+      descriptionEn: map['description'] as String,
       image: map['image'] as String,
       isActive: map['is_active'] as bool? ?? true,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionHi: map['description_hindi'] as String?,
+      descriptionMr: map['description_marathi'] as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
@@ -330,8 +330,10 @@ class ImportantPoint {
           .map((item) => item.toString())
           .toList(),
       descriptionEn: (map['description_en'] ?? map['description']) as String,
-      descriptionHi: (map['description_hi'] ?? map['description_hindi']) as String?,
-      descriptionMr: (map['description_mr'] ?? map['description_marathi']) as String?,
+      descriptionHi:
+          (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr:
+          (map['description_mr'] ?? map['description_marathi']) as String?,
     );
   }
 
@@ -362,11 +364,16 @@ class StockMarketInfo {
 
   factory StockMarketInfo.fromMap(Map<String, dynamic> map) {
     return StockMarketInfo(
-      includedNumbers: (map['included_numbers'] as List<dynamic>?)
+      includedNumbers:
+          (map['included_numbers'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      descriptionEn: map['description_en'] as String? ?? map['description'] as String? ?? map['get_stock_market_info'] as String? ?? '',
+      descriptionEn:
+          map['description_en'] as String? ??
+          map['description'] as String? ??
+          map['get_stock_market_info'] as String? ??
+          '',
       descriptionHi: map['description_hi'] as String?,
       descriptionMr: map['description_mr'] as String?,
     );
@@ -386,19 +393,31 @@ class StockMarketInfo {
 
 class RemedyValues {
   final List<int> unluckyNumbers;
-  final List<String> unluckyColors;
+  final List<String> unluckyColorsEn;
+  final List<String>? unluckyColorsHi;
+  final List<String>? unluckyColorsMr;
   final List<int> luckyNumbers;
-  final List<String> luckyColors;
-  final List<String> luckyDays;
+  final List<String> luckyColorsEn;
+  final List<String>? luckyColorsHi;
+  final List<String>? luckyColorsMr;
+  final List<String> luckyDaysEn;
+  final List<String>? luckyDaysHi;
+  final List<String>? luckyDaysMr;
   final List<int> numbersForRemedy;
   final List<int> numbersNotForRemedy;
 
   RemedyValues({
     required this.unluckyNumbers,
-    required this.unluckyColors,
+    required this.unluckyColorsEn,
+    this.unluckyColorsHi,
+    this.unluckyColorsMr,
     required this.luckyNumbers,
-    required this.luckyColors,
-    required this.luckyDays,
+    required this.luckyColorsEn,
+    this.luckyColorsHi,
+    this.luckyColorsMr,
+    required this.luckyDaysEn,
+    this.luckyDaysHi,
+    this.luckyDaysMr,
     required this.numbersForRemedy,
     required this.numbersNotForRemedy,
   });
@@ -412,46 +431,99 @@ class RemedyValues {
 
     return RemedyValues(
       unluckyNumbers: intList('unlucky_numbers'),
-      unluckyColors: stringList('unlucky_colors'),
+      unluckyColorsEn: stringList('unlucky_colors'),
+      unluckyColorsHi: map['unlucky_colors_hindi'] != null
+          ? stringList('unlucky_colors_hindi')
+          : null,
+      unluckyColorsMr: map['unlucky_colors_marathi'] != null
+          ? stringList('unlucky_colors_marathi')
+          : null,
       luckyNumbers: intList('lucky_numbers'),
-      luckyColors: stringList('lucky_colors'),
-      luckyDays: stringList('lucky_days'),
+      luckyColorsEn: stringList('lucky_colors'),
+      luckyColorsHi: map['lucky_colors_hindi'] != null
+          ? stringList('lucky_colors_hindi')
+          : null,
+      luckyColorsMr: map['lucky_colors_marathi'] != null
+          ? stringList('lucky_colors_marathi')
+          : null,
+      luckyDaysEn: stringList('lucky_days'),
+      luckyDaysHi: map['lucky_days_hindi'] != null
+          ? stringList('lucky_days_hindi')
+          : null,
+      luckyDaysMr: map['lucky_days_marathi'] != null
+          ? stringList('lucky_days_marathi')
+          : null,
       numbersForRemedy: intList('numbers_for_remedy'),
       numbersNotForRemedy: intList('numbers_not_for_remedy'),
     );
+  }
+
+  List<String> getLuckyColors(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return luckyColorsHi ?? luckyColorsEn;
+      case AppLanguage.marathi:
+        return luckyColorsMr ?? luckyColorsEn;
+      case AppLanguage.english:
+        return luckyColorsEn;
+    }
+  }
+
+  List<String> getUnluckyColors(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return unluckyColorsHi ?? unluckyColorsEn;
+      case AppLanguage.marathi:
+        return unluckyColorsMr ?? unluckyColorsEn;
+      case AppLanguage.english:
+        return unluckyColorsEn;
+    }
+  }
+
+  List<String> getLuckyDays(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return luckyDaysHi ?? luckyDaysEn;
+      case AppLanguage.marathi:
+        return luckyDaysMr ?? luckyDaysEn;
+      case AppLanguage.english:
+        return luckyDaysEn;
+    }
   }
 }
 
 class MissingNumberRemedy {
   final int missingNumber;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   MissingNumberRemedy({
     required this.missingNumber,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory MissingNumberRemedy.fromMap(Map<String, dynamic> map) {
     return MissingNumberRemedy(
       missingNumber: (map['missing_number'] as num).toInt(),
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi:
+          (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr:
+          (map['description_mr'] ?? map['description_marathi']) as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
@@ -474,17 +546,17 @@ class PinnacleData {
   final String lifePeriodRange;
   final int pinnacleno;
   final int lifeperiod;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   PinnacleData({
     required this.lifePeriodRange,
     required this.pinnacleno,
     required this.lifeperiod,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory PinnacleData.fromMap(Map<String, dynamic> map) {
@@ -503,123 +575,135 @@ class PinnacleData {
       lifePeriodRange: range,
       pinnacleno: map['pinnacleno'] as int,
       lifeperiod: map['lifeperiod'] as int,
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi:
+          (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr:
+          (map['description_mr'] ?? map['description_marathi']) as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
 
 class LifePathData {
   final int lifePathNumber;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
 
   LifePathData({
     required this.lifePathNumber,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
   });
 
   factory LifePathData.fromMap(Map<String, dynamic> map) {
     return LifePathData(
       lifePathNumber: map['life_path_number'] as int,
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi:
+          (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr:
+          (map['description_mr'] ?? map['description_marathi']) as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
 
 class CareerData {
   final int lifePathNumber;
-  final String careerDescription;
-  final String? careerDescriptionHindi;
-  final String? careerDescriptionMarathi;
+  final String careerDescriptionEn;
+  final String? careerDescriptionHi;
+  final String? careerDescriptionMr;
 
   CareerData({
     required this.lifePathNumber,
-    required this.careerDescription,
-    this.careerDescriptionHindi,
-    this.careerDescriptionMarathi,
+    required this.careerDescriptionEn,
+    this.careerDescriptionHi,
+    this.careerDescriptionMr,
   });
 
   factory CareerData.fromMap(Map<String, dynamic> map) {
     return CareerData(
       lifePathNumber: map['life_path_number'] as int,
-      careerDescription: map['career_description'] as String,
-      careerDescriptionHindi: map['career_description_hindi'] as String?,
-      careerDescriptionMarathi: map['career_description_marathi'] as String?,
+      careerDescriptionEn: map['career_description'] as String,
+      careerDescriptionHi:
+          (map['career_description_hi'] ?? map['career_description_hindi'])
+              as String?,
+      careerDescriptionMr:
+          (map['career_description_mr'] ?? map['career_description_marathi'])
+              as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return careerDescriptionHindi ?? careerDescription;
+        return careerDescriptionHi ?? careerDescriptionEn;
       case AppLanguage.marathi:
-        return careerDescriptionMarathi ?? careerDescription;
+        return careerDescriptionMr ?? careerDescriptionEn;
       case AppLanguage.english:
-        return careerDescription;
+        return careerDescriptionEn;
     }
   }
 }
 
 class BoostingPersonalityData {
   final int personalityNumber;
-  final String boostingDescription;
-  final String? boostingDescriptionHindi;
-  final String? boostingDescriptionMarathi;
+  final String boostingDescriptionEn;
+  final String? boostingDescriptionHi;
+  final String? boostingDescriptionMr;
 
   BoostingPersonalityData({
     required this.personalityNumber,
-    required this.boostingDescription,
-    this.boostingDescriptionHindi,
-    this.boostingDescriptionMarathi,
+    required this.boostingDescriptionEn,
+    this.boostingDescriptionHi,
+    this.boostingDescriptionMr,
   });
 
   factory BoostingPersonalityData.fromMap(Map<String, dynamic> map) {
     return BoostingPersonalityData(
       personalityNumber: map['personality_number'] as int,
-      boostingDescription: map['boosting_description'] as String,
-      boostingDescriptionHindi: map['boosting_description_hindi'] as String?,
-      boostingDescriptionMarathi:
-          map['boosting_description_marathi'] as String?,
+      boostingDescriptionEn: map['boosting_description'] as String,
+      boostingDescriptionHi:
+          (map['boosting_description_hi'] ?? map['boosting_description_hindi'])
+              as String?,
+      boostingDescriptionMr:
+          (map['boosting_description_mr'] ??
+                  map['boosting_description_marathi'])
+              as String?,
     );
   }
 
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return boostingDescriptionHindi ?? boostingDescription;
+        return boostingDescriptionHi ?? boostingDescriptionEn;
       case AppLanguage.marathi:
-        return boostingDescriptionMarathi ?? boostingDescription;
+        return boostingDescriptionMr ?? boostingDescriptionEn;
       case AppLanguage.english:
-        return boostingDescription;
+        return boostingDescriptionEn;
     }
   }
 }
@@ -627,17 +711,17 @@ class BoostingPersonalityData {
 class CombinationData {
   final int personalityNumber;
   final int lifePathNumber;
-  final String description;
-  final String? descriptionHindi;
-  final String? descriptionMarathi;
+  final String descriptionEn;
+  final String? descriptionHi;
+  final String? descriptionMr;
   final String example;
 
   CombinationData({
     required this.personalityNumber,
     required this.lifePathNumber,
-    required this.description,
-    this.descriptionHindi,
-    this.descriptionMarathi,
+    required this.descriptionEn,
+    this.descriptionHi,
+    this.descriptionMr,
     required this.example,
   });
 
@@ -645,9 +729,11 @@ class CombinationData {
     return CombinationData(
       personalityNumber: map['personality_number'] as int,
       lifePathNumber: map['life_path_number'] as int,
-      description: map['description'] as String,
-      descriptionHindi: map['description_hindi'] as String?,
-      descriptionMarathi: map['description_marathi'] as String?,
+      descriptionEn: map['description'] as String,
+      descriptionHi:
+          (map['description_hi'] ?? map['description_hindi']) as String?,
+      descriptionMr:
+          (map['description_mr'] ?? map['description_marathi']) as String?,
       example: map['example'] as String,
     );
   }
@@ -655,12 +741,11 @@ class CombinationData {
   String getDescription(AppLanguage lang) {
     switch (lang) {
       case AppLanguage.hindi:
-        return descriptionHindi ?? description;
+        return descriptionHi ?? descriptionEn;
       case AppLanguage.marathi:
-        return descriptionMarathi ?? description;
+        return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
-        return description;
+        return descriptionEn;
     }
   }
 }
-

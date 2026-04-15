@@ -189,7 +189,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           l10n,
                           currentLang,
                         ),
-                        _buildRemedyValuesSection(context, ref),
+                        _buildRemedyValuesSection(context, ref, currentLang),
                         _buildMissingNumberTellsSection(context, ref, l10n),
                         _buildMissingNumberRemediesSection(context, ref),
                         _buildNumberOccurrenceDetailsSection(
@@ -1045,7 +1045,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildRemedyValuesSection(BuildContext context, WidgetRef ref) {
+  Widget _buildRemedyValuesSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLanguage lang,
+  ) {
     final remedyValuesAsync = ref.watch(remedyValuesProvider);
     final theme = Theme.of(context);
 
@@ -1080,19 +1084,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               _buildRemedyGroup(
                 context,
                 title: 'Lucky Colors',
-                values: remedy.luckyColors,
+                values: remedy.getLuckyColors(lang),
                 color: Colors.blue,
               ),
               _buildRemedyGroup(
                 context,
                 title: 'Unlucky Colors',
-                values: remedy.unluckyColors,
+                values: remedy.getUnluckyColors(lang),
                 color: Colors.orange,
               ),
               _buildRemedyGroup(
                 context,
                 title: 'Lucky Days',
-                values: remedy.luckyDays,
+                values: remedy.getLuckyDays(lang),
                 color: theme.colorScheme.secondary,
               ),
               _buildRemedyGroup(
@@ -2146,7 +2150,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 Colors.red[700]!,
               ),
               const SizedBox(height: 24),
-              if (data.youShould != null && data.youShould!.isNotEmpty) ...[
+              if (data.getYouShould(currentLang).isNotEmpty) ...[
                 _buildMysticContentCard(
                   borderColor: theme.colorScheme.secondary.withValues(
                     alpha: 0.2,
@@ -2188,7 +2192,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 ),
                 const SizedBox(height: 24),
               ],
-              if (data.description != null && data.description!.isNotEmpty) ...[
+              if (data.getDescription(currentLang).isNotEmpty) ...[
                 Text(
                   l10n['description_label'] ?? "Detailed Insight",
                   style: theme.textTheme.titleSmall?.copyWith(
