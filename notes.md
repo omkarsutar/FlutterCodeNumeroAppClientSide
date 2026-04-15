@@ -1,4 +1,68 @@
+https://zaenvrciiycqctpldldr.supabase.co/rest/v1/rpc/get_lucky_unlucky_values
 
+
+[
+    {
+        "unlucky_numbers": [
+            1,
+            2,
+            3
+        ],
+        "unlucky_colors": [
+            "Black",
+            "Red",
+            "Yellow"
+        ],
+        "unlucky_colors_hindi": [
+            "काला",
+            "पीला",
+            "लाल"
+        ],
+        "unlucky_colors_marathi": [
+            "काळा",
+            "पिवळा",
+            "लाल"
+        ],
+        "lucky_numbers": [
+            5,
+            8,
+            9,
+            7,
+            6
+        ],
+        "lucky_colors": [
+            "Green",
+            "White"
+        ],
+        "lucky_colors_hindi": [
+            "हरा",
+            "सफेद"
+        ],
+        "lucky_colors_marathi": [
+            "पांढरा",
+            "हिरवा"
+        ],
+        "lucky_days": [
+            "Friday",
+            "Saturday"
+        ],
+        "lucky_days_hindi": [
+            "शनिवार",
+            "शुक्रवार"
+        ],
+        "lucky_days_marathi": [
+            "शनिवार",
+            "शुक्रवार"
+        ],
+        "numbers_for_remedy": [
+            7,
+            5
+        ],
+        "numbers_not_for_remedy": [
+            3
+        ]
+    }
+]
 
 ---------------------------------------------------
 SELECT * FROM public.get_share_market_advice(
