@@ -30,19 +30,39 @@ class PersonalityData {
   final int personalityNumber;
   final String? bornOn;
   final String? lord;
+  final String? lordHindi;
+  final String? lordMarathi;
   final String? qualities;
+  final String? qualitiesHindi;
+  final String? qualitiesMarathi;
   final String? weaknesses;
+  final String? weaknessesHindi;
+  final String? weaknessesMarathi;
   final String? youShould;
+  final String? youShouldHindi;
+  final String? youShouldMarathi;
   final String? description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   PersonalityData({
     required this.personalityNumber,
     this.bornOn,
     this.lord,
+    this.lordHindi,
+    this.lordMarathi,
     this.qualities,
+    this.qualitiesHindi,
+    this.qualitiesMarathi,
     this.weaknesses,
+    this.weaknessesHindi,
+    this.weaknessesMarathi,
     this.youShould,
+    this.youShouldHindi,
+    this.youShouldMarathi,
     this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory PersonalityData.fromMap(Map<String, dynamic> map) {
@@ -50,31 +70,130 @@ class PersonalityData {
       personalityNumber: map['personality_number'] as int,
       bornOn: map['born_on'] as String?,
       lord: map['lord'] as String?,
+      lordHindi: map['lord_hindi'] as String?,
+      lordMarathi: map['lord_marathi'] as String?,
       qualities: map['qualities'] as String?,
+      qualitiesHindi: map['qualities_hindi'] as String?,
+      qualitiesMarathi: map['qualities_marathi'] as String?,
       weaknesses: map['weaknesses'] as String?,
+      weaknessesHindi: map['weaknesses_hindi'] as String?,
+      weaknessesMarathi: map['weaknesses_marathi'] as String?,
       youShould: map['you_should'] as String?,
+      youShouldHindi: map['you_should_hindi'] as String?,
+      youShouldMarathi: map['you_should_marathi'] as String?,
       description: map['description'] as String?,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getLord(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return lordHindi ?? lord ?? '';
+      case AppLanguage.marathi:
+        return lordMarathi ?? lord ?? '';
+      case AppLanguage.english:
+        return lord ?? '';
+    }
+  }
+
+  String getQualities(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return qualitiesHindi ?? qualities ?? '';
+      case AppLanguage.marathi:
+        return qualitiesMarathi ?? qualities ?? '';
+      case AppLanguage.english:
+        return qualities ?? '';
+    }
+  }
+
+  String getWeaknesses(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return weaknessesHindi ?? weaknesses ?? '';
+      case AppLanguage.marathi:
+        return weaknessesMarathi ?? weaknesses ?? '';
+      case AppLanguage.english:
+        return weaknesses ?? '';
+    }
+  }
+
+  String getYouShould(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return youShouldHindi ?? youShould ?? '';
+      case AppLanguage.marathi:
+        return youShouldMarathi ?? youShould ?? '';
+      case AppLanguage.english:
+        return youShould ?? '';
+    }
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description ?? '';
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description ?? '';
+      case AppLanguage.english:
+        return description ?? '';
+    }
   }
 }
 
 class LoshuPlane {
   final String gridPosition;
   final String title;
+  final String? titleHindi;
+  final String? titleMarathi;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   LoshuPlane({
     required this.gridPosition,
     required this.title,
+    this.titleHindi,
+    this.titleMarathi,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory LoshuPlane.fromMap(Map<String, dynamic> map) {
     return LoshuPlane(
       gridPosition: map['grid_position'] as String,
       title: map['title'] as String,
+      titleHindi: map['title_hindi'] as String?,
+      titleMarathi: map['title_marathi'] as String?,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getTitle(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return titleHindi ?? title;
+      case AppLanguage.marathi:
+        return titleMarathi ?? title;
+      case AppLanguage.english:
+        return title;
+    }
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+        return description;
+    }
   }
 }
 
@@ -82,11 +201,15 @@ class NumberOccurrenceDetail {
   final int number;
   final int occurrence;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   NumberOccurrenceDetail({
     required this.number,
     required this.occurrence,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory NumberOccurrenceDetail.fromMap(Map<String, dynamic> map) {
@@ -94,7 +217,20 @@ class NumberOccurrenceDetail {
       number: map['number'] as int,
       occurrence: map['occurrence'] as int,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+        return description;
+    }
   }
 }
 
@@ -127,7 +263,6 @@ class MissingNumberTell {
       case AppLanguage.marathi:
         return descriptionMarathi ?? description;
       case AppLanguage.english:
-      default:
         return description;
     }
   }
@@ -137,6 +272,8 @@ class StaticTestimonial {
   final int id;
   final String personName;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
   final String image;
   final bool isActive;
 
@@ -144,6 +281,8 @@ class StaticTestimonial {
     required this.id,
     required this.personName,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
     required this.image,
     required this.isActive,
   });
@@ -153,19 +292,36 @@ class StaticTestimonial {
       id: map['id'] as int,
       personName: map['person_name'] as String,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
       image: map['image'] as String,
       isActive: map['is_active'] as bool? ?? true,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+        return description;
+    }
   }
 }
 
 class ImportantPoint {
   final List<String> includedNumbers;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
 
   ImportantPoint({
     required this.includedNumbers,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
   });
 
   factory ImportantPoint.fromMap(Map<String, dynamic> map) {
@@ -174,7 +330,20 @@ class ImportantPoint {
           .map((item) => item.toString())
           .toList(),
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
     );
+  }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+        return description;
+    }
   }
 }
 
@@ -184,9 +353,7 @@ class StockMarketInfo {
   StockMarketInfo({required this.insight});
 
   factory StockMarketInfo.fromMap(Map<String, dynamic> map) {
-    return StockMarketInfo(
-      insight: map['get_stock_market_info'] as String,
-    );
+    return StockMarketInfo(insight: map['get_stock_market_info'] as String);
   }
 }
 
@@ -212,10 +379,9 @@ class RemedyValues {
   factory RemedyValues.fromMap(Map<String, dynamic> map) {
     List<int> intList(String key) =>
         (map[key] as List<dynamic>? ?? []).map((item) => item as int).toList();
-    List<String> stringList(String key) =>
-        (map[key] as List<dynamic>? ?? [])
-            .map((item) => item.toString())
-            .toList();
+    List<String> stringList(String key) => (map[key] as List<dynamic>? ?? [])
+        .map((item) => item.toString())
+        .toList();
 
     return RemedyValues(
       unluckyNumbers: intList('unlucky_numbers'),
@@ -258,7 +424,6 @@ class MissingNumberRemedy {
       case AppLanguage.marathi:
         return descriptionMarathi ?? description;
       case AppLanguage.english:
-      default:
         return description;
     }
   }
@@ -324,7 +489,6 @@ class PinnacleData {
       case AppLanguage.marathi:
         return descriptionMarathi ?? description;
       case AppLanguage.english:
-      default:
         return description;
     }
   }
@@ -359,7 +523,6 @@ class LifePathData {
       case AppLanguage.marathi:
         return descriptionMarathi ?? description;
       case AppLanguage.english:
-      default:
         return description;
     }
   }
@@ -394,7 +557,6 @@ class CareerData {
       case AppLanguage.marathi:
         return careerDescriptionMarathi ?? careerDescription;
       case AppLanguage.english:
-      default:
         return careerDescription;
     }
   }
@@ -418,7 +580,8 @@ class BoostingPersonalityData {
       personalityNumber: map['personality_number'] as int,
       boostingDescription: map['boosting_description'] as String,
       boostingDescriptionHindi: map['boosting_description_hindi'] as String?,
-      boostingDescriptionMarathi: map['boosting_description_marathi'] as String?,
+      boostingDescriptionMarathi:
+          map['boosting_description_marathi'] as String?,
     );
   }
 
@@ -429,7 +592,6 @@ class BoostingPersonalityData {
       case AppLanguage.marathi:
         return boostingDescriptionMarathi ?? boostingDescription;
       case AppLanguage.english:
-      default:
         return boostingDescription;
     }
   }
@@ -439,12 +601,16 @@ class CombinationData {
   final int personalityNumber;
   final int lifePathNumber;
   final String description;
+  final String? descriptionHindi;
+  final String? descriptionMarathi;
   final String example;
 
   CombinationData({
     required this.personalityNumber,
     required this.lifePathNumber,
     required this.description,
+    this.descriptionHindi,
+    this.descriptionMarathi,
     required this.example,
   });
 
@@ -453,7 +619,21 @@ class CombinationData {
       personalityNumber: map['personality_number'] as int,
       lifePathNumber: map['life_path_number'] as int,
       description: map['description'] as String,
+      descriptionHindi: map['description_hindi'] as String?,
+      descriptionMarathi: map['description_marathi'] as String?,
       example: map['example'] as String,
     );
   }
+
+  String getDescription(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return descriptionHindi ?? description;
+      case AppLanguage.marathi:
+        return descriptionMarathi ?? description;
+      case AppLanguage.english:
+        return description;
+    }
+  }
 }
+

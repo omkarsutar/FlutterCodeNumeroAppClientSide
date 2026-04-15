@@ -181,9 +181,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       children: [
                         _buildAgeIndicatorTile(context, birthdate, l10n),
                         _buildNumerologyCoreDetailsTile(context, ref),
-                        _buildPersonalityDetails(context, ref),
+                        _buildPersonalityDetails(context, ref, currentLang),
                         _buildNumerologyAnalysisSection(context, ref),
-                        _buildLoshuPlanesSection(context, ref, l10n),
+                        _buildLoshuPlanesSection(
+                          context,
+                          ref,
+                          l10n,
+                          currentLang,
+                        ),
                         _buildRemedyValuesSection(context, ref),
                         _buildMissingNumberTellsSection(context, ref, l10n),
                         _buildMissingNumberRemediesSection(context, ref),
@@ -191,8 +196,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           context,
                           ref,
                           l10n,
+                          currentLang,
                         ),
-                        _buildImportantPointsSection(context, ref),
+                        _buildImportantPointsSection(context, ref, currentLang),
                         _buildStockMarketInfoSection(context, ref),
                         _buildPinnacleSection(
                           context,
@@ -225,8 +231,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         _buildLifePathSection(context, ref, l10n),
                         _buildCareerSection(context, ref, l10n),
                         _buildBoostingPersonalitySection(context, ref, l10n),
-                        _buildCombinationSection(context, ref, l10n),
-                        _buildTestimonialsSection(context),
+                        _buildCombinationSection(
+                          context,
+                          ref,
+                          l10n,
+                          currentLang,
+                        ),
+                        _buildTestimonialsSection(context, currentLang),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -256,7 +267,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: theme.colorScheme.surface, // Keep background to prevent overlap issues
+      color: theme
+          .colorScheme
+          .surface, // Keep background to prevent overlap issues
       child: SafeArea(
         top: false,
         child: SizedBox(
@@ -708,56 +721,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildNumerologyMetricItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    final theme = Theme.of(context);
-
-    return _buildMysticContentCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  value,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTestimonialsSection(BuildContext context) {
+  Widget _buildTestimonialsSection(BuildContext context, AppLanguage lang) {
     final testimonialsAsync = ref.watch(staticTestimonialsProvider);
     final theme = Theme.of(context);
 
@@ -862,7 +826,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               child: SingleChildScrollView(
                                 physics: const BouncingScrollPhysics(),
                                 child: Text(
-                                  testimonial.description,
+                                  testimonial.getDescription(lang),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                     height: 1.55,
@@ -912,7 +876,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildImportantPointsSection(BuildContext context, WidgetRef ref) {
+  Widget _buildImportantPointsSection(
+    BuildContext context,
+    WidgetRef ref,
+    AppLanguage currentLang,
+  ) {
     final importantPointsAsync = ref.watch(importantPointsProvider);
     final theme = Theme.of(context);
 
@@ -959,7 +927,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        point.description,
+                        point.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.5,
@@ -1319,6 +1287,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     BuildContext context,
     WidgetRef ref,
     Map<String, String> l10n,
+    AppLanguage lang,
   ) {
     final occurrenceDetailsAsync = ref.watch(numberOccurrenceDetailsProvider);
     final theme = Theme.of(context);
@@ -1383,7 +1352,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              detail.description,
+                              detail.getDescription(lang),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 height: 1.55,
@@ -1517,6 +1486,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     BuildContext context,
     WidgetRef ref,
     Map<String, String> l10n,
+    AppLanguage lang,
   ) {
     final loShuPlanesAsync = ref.watch(loshuPlanesProvider);
     final theme = Theme.of(context);
@@ -1548,7 +1518,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              plane.title,
+                              plane.getTitle(lang),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
@@ -1563,7 +1533,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        plane.description,
+                        plane.getDescription(lang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
@@ -1660,6 +1630,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     BuildContext context,
     WidgetRef ref,
     Map<String, String> l10n,
+    AppLanguage currentLang,
   ) {
     final combinationAsync = ref.watch(combinationDataProvider);
     final theme = Theme.of(context);
@@ -1691,7 +1662,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       _buildCombinationGrid(context, l10n, item),
                       const SizedBox(height: 20),
                       Text(
-                        item.description,
+                        item.getDescription(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.6,
@@ -2108,7 +2079,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildPersonalityDetails(BuildContext context, WidgetRef ref) {
+  Widget _buildPersonalityDetails(
+    BuildContext context,
+    WidgetRef ref,
+    AppLanguage currentLang,
+  ) {
     final personalityAsync = ref.watch(personalityDataProvider);
     final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
@@ -2132,7 +2107,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 context,
                 Icons.stars_rounded,
                 l10n['lord_label'] ?? "Lord",
-                data.lord ?? "Unknown",
+                data.getLord(currentLang),
                 Colors.amber[800]!,
               ),
               const SizedBox(height: 16),
@@ -2140,7 +2115,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 context,
                 Icons.thumb_up_rounded,
                 l10n['qualities_label'] ?? "Qualities",
-                data.qualities ?? "Not specified",
+                data.getQualities(currentLang),
                 Colors.green[700]!,
               ),
               const SizedBox(height: 16),
@@ -2148,7 +2123,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 context,
                 Icons.warning_amber_rounded,
                 l10n['weaknesses_label'] ?? "Weaknesses",
-                data.weaknesses ?? "Not specified",
+                data.getWeaknesses(currentLang),
                 Colors.red[700]!,
               ),
               const SizedBox(height: 24),
@@ -2183,7 +2158,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        data.youShould!,
+                        data.getYouShould(currentLang),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.55,
@@ -2204,7 +2179,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  data.description!,
+                  data.getDescription(currentLang),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.6,
