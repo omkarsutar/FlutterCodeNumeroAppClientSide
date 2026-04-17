@@ -14,6 +14,8 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../model/numerology_help_content.dart';
+import '../model/numerology_ui_content.dart';
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
@@ -190,7 +192,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           currentLang,
                         ),
                         _buildRemedyValuesSection(context, ref, currentLang),
-                        _buildMissingNumberTellsSection(context, ref, l10n),
+                        _buildMissingNumberTellsSection(context, ref),
                         _buildMissingNumberRemediesSection(context, ref),
                         _buildNumberOccurrenceDetailsSection(
                           context,
@@ -203,30 +205,26 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         _buildPinnacleSection(
                           context,
                           ref,
-                          l10n,
                           pinnacleData1Provider,
-                          "1st Pinnacle stage of Life",
+                          "pinnacle_1",
                         ),
                         _buildPinnacleSection(
                           context,
                           ref,
-                          l10n,
                           pinnacleData2Provider,
-                          "2nd Pinnacle stage of Life",
+                          "pinnacle_2",
                         ),
                         _buildPinnacleSection(
                           context,
                           ref,
-                          l10n,
                           pinnacleData3Provider,
-                          "3rd Pinnacle stage of Life",
+                          "pinnacle_3",
                         ),
                         _buildPinnacleSection(
                           context,
                           ref,
-                          l10n,
                           pinnacleData4Provider,
-                          "4th Pinnacle stage of Life",
+                          "pinnacle_4",
                         ),
                         _buildLifePathSection(context, ref, l10n),
                         _buildCareerSection(context, ref, l10n),
@@ -398,6 +396,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     final ageComponents = ref.watch(ageComponentsProvider);
     if (ageComponents == null) return const SizedBox.shrink();
 
+    final currentLang = ref.watch(languageProvider);
     final birthdateRecord = ref.watch(currentBirthdateRecordProvider);
     final fullName = birthdateRecord?['full_name'] as String? ?? 'Age Snapshot';
     final birthdateId = birthdateRecord?['id'] as String?;
@@ -481,7 +480,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 child: _buildAgeMetricChip(
                   context,
                   value: ageComponents['years']!,
-                  label: l10n['years'] ?? 'years',
+                  label: NumerologyUIContent.getLabel('years', currentLang),
                   icon: Icons.workspace_premium_rounded,
                 ),
               ),
@@ -490,7 +489,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 child: _buildAgeMetricChip(
                   context,
                   value: ageComponents['months']!,
-                  label: l10n['months'] ?? 'months',
+                  label: NumerologyUIContent.getLabel('months', currentLang),
                   icon: Icons.calendar_view_month_rounded,
                 ),
               ),
@@ -499,7 +498,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 child: _buildAgeMetricChip(
                   context,
                   value: ageComponents['days']!,
-                  label: l10n['days'] ?? 'days',
+                  label: NumerologyUIContent.getLabel('days', currentLang),
                   icon: Icons.today_rounded,
                 ),
               ),
@@ -561,28 +560,32 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
 
     final numerology = ref.watch(numerologyProvider);
-    final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     return _buildMysticSection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: _buildMysticHeader(
-                  title: l10n['numerology_summary'] ?? 'Numerical Analysis',
-                  icon: Icons.grid_view_rounded,
-                  subtitle: 'Ancient secrets revealed through numbers',
-                ),
+          _buildMysticHeader(
+            title: NumerologyUIContent.getHeaderTitle(
+              'numerical_analysis',
+              ref.read(languageProvider),
+            ),
+            icon: Icons.grid_view_rounded,
+            subtitle: NumerologyUIContent.getHeaderTitle(
+              'lo_shu_grid_subtitle',
+              ref.read(languageProvider),
+            ),
+            trailing: _buildMysticChip(
+              label: NumerologyUIContent.getLabel(
+                'lo_shu_grid',
+                ref.read(languageProvider),
               ),
-              _buildMysticChip(
-                label: 'Lo Shu Grid',
-                color: theme.colorScheme.secondary,
-              ),
-            ],
+              color: theme.colorScheme.secondary,
+            ),
+            onHelp: () =>
+                _showHelpDialog('lo_shu_grid', ref.read(languageProvider)),
           ),
           if (numerology.loShuGrid != null) ...[
             const SizedBox(height: 24),
@@ -594,8 +597,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
             const SizedBox(height: 20),
             Text(
-              l10n['absent_numbers_label'] ??
-                  "Missing Numbers (from Lo Shu Grid)",
+              NumerologyUIContent.getLabel('missing_numbers_grid', currentLang),
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w800,
@@ -619,7 +621,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
             const SizedBox(height: 20),
             Text(
-              l10n['occurrence_label'] ?? "Number Occurrences",
+              NumerologyUIContent.getLabel('occurrences_grid', currentLang),
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w800,
@@ -633,7 +635,25 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   .where((e) => e.value > 0)
                   .map((e) {
                     return _buildMysticChip(
-                      label: "${e.key} : ${e.value} times",
+                      label:
+                          NumerologyUIContent.getLabel(
+                                'occurrence_chip_format',
+                                currentLang,
+                              )
+                              .replaceAll('{number}', e.key.toString())
+                              .replaceAll('{count}', e.value.toString())
+                              .replaceAll(
+                                '{times}',
+                                e.value == 1
+                                    ? NumerologyUIContent.getLabel(
+                                        'time_singular',
+                                        currentLang,
+                                      )
+                                    : NumerologyUIContent.getLabel(
+                                        'time_plural',
+                                        currentLang,
+                                      ),
+                              ),
                       color: theme.colorScheme.primary,
                       icon: Icons.repeat_rounded,
                     );
@@ -893,11 +913,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Important Points',
-                subtitle: 'Based on present numbers in your Lo Shu Grid',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'important_points',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'important_points_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.tips_and_updates_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('important_points', currentLang),
               ),
               const SizedBox(height: 20),
               ...points.map(
@@ -970,10 +997,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Stock Market Insight',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'stock_market',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'stock_market_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.trending_up_rounded,
                 iconColor: Colors.green,
                 iconBgColor: Colors.green.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('stock_market', currentLang),
               ),
               const SizedBox(height: 20),
               ...items.map(
@@ -1063,45 +1098,49 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Lucky - Unlucky',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'lucky_unlucky',
+                  lang,
+                ),
                 icon: Icons.auto_fix_high_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('lucky_unlucky', lang),
               ),
               const SizedBox(height: 24),
               _buildRemedyGroup(
                 context,
-                title: 'Lucky Numbers',
+                title: NumerologyUIContent.getLabel('lucky_number', lang),
                 values: remedy.luckyNumbers.map((e) => e.toString()).toList(),
                 color: Colors.green,
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Unlucky Numbers',
+                title: NumerologyUIContent.getLabel('unlucky_number', lang),
                 values: remedy.unluckyNumbers.map((e) => e.toString()).toList(),
                 color: Colors.red,
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Lucky Colors',
+                title: NumerologyUIContent.getLabel('lucky_color', lang),
                 values: remedy.getLuckyColors(lang),
                 color: Colors.blue,
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Unlucky Colors',
+                title: NumerologyUIContent.getLabel('unlucky_color', lang),
                 values: remedy.getUnluckyColors(lang),
                 color: Colors.orange,
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Lucky Days',
+                title: NumerologyUIContent.getLabel('lucky_day', lang),
                 values: remedy.getLuckyDays(lang),
                 color: theme.colorScheme.secondary,
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Numbers For Remedy',
+                title: NumerologyUIContent.getLabel('numbers_for_remedy', lang),
                 values: remedy.numbersForRemedy
                     .map((e) => e.toString())
                     .toList(),
@@ -1109,7 +1148,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ),
               _buildRemedyGroup(
                 context,
-                title: 'Numbers Not For Remedy',
+                title: NumerologyUIContent.getLabel(
+                  'numbers_not_for_remedy',
+                  lang,
+                ),
                 values: remedy.numbersNotForRemedy
                     .map((e) => e.toString())
                     .toList(),
@@ -1203,12 +1245,17 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMysticHeader(
-                    title: 'Missing Number Remedies',
+                    title: NumerologyUIContent.getHeaderTitle(
+                      'missing_number_remedies',
+                      currentLang,
+                    ),
                     icon: Icons.healing_rounded,
                     iconColor: theme.colorScheme.secondary,
                     iconBgColor: theme.colorScheme.secondary.withValues(
                       alpha: 0.1,
                     ),
+                    onHelp: () =>
+                        _showHelpDialog('missing_number_remedies', currentLang),
                   ),
                   const SizedBox(height: 8),
                   Divider(
@@ -1227,7 +1274,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Remedy for number ${remedy.missingNumber}',
+                              NumerologyUIContent.getLabel(
+                                'remedy_for_number',
+                                currentLang,
+                              ).replaceAll(
+                                '{number}',
+                                remedy.missingNumber.toString(),
+                              ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
@@ -1256,7 +1309,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         theme.colorScheme.surface,
                       ],
                       child: Text(
-                        'No remedy to number ${_formatNumberList(numbersNotForRemedy)} as ${numbersNotForRemedy.length == 1 ? 'this is' : 'they are'} enemy to you',
+                        NumerologyUIContent.getLabel(
+                          'no_remedy_instruction',
+                          currentLang,
+                        ).replaceAll(
+                          '{numbers}',
+                          _formatNumberList(numbersNotForRemedy),
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.error,
                           fontStyle: FontStyle.italic,
@@ -1268,7 +1327,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     const SizedBox(height: 12),
                   ],
                   Text(
-                    '[Multiple remedies are given for each number, do any 1 remedy for 1 number as per your convenience]',
+                    NumerologyUIContent.getLabel(
+                      'remedy_instruction',
+                      currentLang,
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
@@ -1324,11 +1386,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: l10n['occurrence_label'] ?? "Number Occurrences Details",
-                subtitle: 'Deep insight into repeated numbers in your grid',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'occurrence_details',
+                  lang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'occurrence_details_subtitle',
+                  lang,
+                ),
                 icon: Icons.auto_graph_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('number_occurrences', lang),
               ),
               const SizedBox(height: 24),
               ...details.map(
@@ -1367,7 +1436,30 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Number ${detail.number} (${detail.occurrence} ${detail.occurrence == 1 ? 'time' : 'times'})',
+                              NumerologyUIContent.getLabel(
+                                    'occurrence_format',
+                                    lang,
+                                  )
+                                  .replaceAll(
+                                    '{number}',
+                                    detail.number.toString(),
+                                  )
+                                  .replaceAll(
+                                    '{count}',
+                                    detail.occurrence.toString(),
+                                  )
+                                  .replaceAll(
+                                    '{times}',
+                                    detail.occurrence == 1
+                                        ? NumerologyUIContent.getLabel(
+                                            'time_singular',
+                                            lang,
+                                          )
+                                        : NumerologyUIContent.getLabel(
+                                            'time_plural',
+                                            lang,
+                                          ),
+                                  ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
@@ -1404,11 +1496,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     );
   }
 
-  Widget _buildMissingNumberTellsSection(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, String> l10n,
-  ) {
+  Widget _buildMissingNumberTellsSection(BuildContext context, WidgetRef ref) {
     final missingNumberTellsAsync = ref.watch(missingNumberTellsProvider);
     final theme = Theme.of(context);
     final currentLang = ref.watch(languageProvider);
@@ -1422,11 +1510,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Missing Number Tells',
-                subtitle: 'Based on absent numbers in your Lo Shu Grid',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'missing_number_tells',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'missing_number_tells_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.remove_circle_outline_rounded,
                 iconColor: theme.colorScheme.error,
                 iconBgColor: theme.colorScheme.error.withValues(alpha: 0.1),
+                onHelp: () =>
+                    _showHelpDialog('missing_number_tells', currentLang),
               ),
               const SizedBox(height: 24),
               ...tells.map(
@@ -1468,7 +1564,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Missing Number ${tell.missingNumber}',
+                              NumerologyUIContent.getLabel(
+                                'missing_number_label',
+                                currentLang,
+                              ).replaceAll(
+                                '{number}',
+                                tell.missingNumber.toString(),
+                              ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
@@ -1523,11 +1625,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Lo Shu Planes',
-                subtitle: 'Horizontal, Vertical and Diagonal planes analysis',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'lo_shu_planes',
+                  lang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'lo_shu_planes_subtitle',
+                  lang,
+                ),
                 icon: Icons.layers_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('lo_shu_planes', lang),
               ),
               const SizedBox(height: 24),
               ...planes.map(
@@ -1547,10 +1656,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                 color: theme.colorScheme.primary,
                               ),
                             ),
-                          ),
-                          _buildMysticChip(
-                            label: plane.gridPosition,
-                            color: theme.colorScheme.secondary,
                           ),
                         ],
                       ),
@@ -1600,11 +1705,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: 'Career & Destiny',
-                subtitle: 'Your professional path and life purpose',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'career_destiny',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'career_destiny_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.work_history_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('career_destiny', currentLang),
               ),
               const SizedBox(height: 24),
               ...info.map(
@@ -1667,13 +1779,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title:
-                    l10n['combination_analysis_label'] ??
-                    "Personality & Life Path Combination",
-                subtitle: 'Synergy between your numbers',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'combination_analysis',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'combination_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.hub_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () =>
+                    _showHelpDialog('combination_analysis', currentLang),
               ),
               const SizedBox(height: 24),
               ...data.map(
@@ -1682,7 +1800,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildCombinationGrid(context, l10n, item),
+                      _buildCombinationGrid(context, item, currentLang),
                       const SizedBox(height: 20),
                       Text(
                         item.getDescription(currentLang),
@@ -1717,7 +1835,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  "Example: ${item.example}",
+                                  "${NumerologyUIContent.getLabel('example', currentLang)}: ${item.example}",
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.secondary,
                                     fontStyle: FontStyle.italic,
@@ -1767,13 +1885,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title:
-                    l10n['boosting_personality_label'] ??
-                    "Boosting Personality",
-                subtitle: 'Practical tips to enhance your vibrational energy',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'boosting_personality',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'boosting_personality_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.rocket_launch_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () =>
+                    _showHelpDialog('boosting_personality', currentLang),
               ),
               const SizedBox(height: 24),
               ...data.map(
@@ -1836,11 +1960,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: l10n['life_path_details_label'] ?? "Life Path Details",
-                subtitle: 'Understanding your soul\'s journey through numbers',
+                title: NumerologyUIContent.getHeaderTitle(
+                  'life_path_details',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'life_path_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.auto_stories_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('life_path_number', currentLang),
               ),
               const SizedBox(height: 24),
               ...data.map(
@@ -1889,7 +2020,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   Widget _buildPinnacleSection(
     BuildContext context,
     WidgetRef ref,
-    Map<String, String> l10n,
     FutureProvider<List<PinnacleData>> provider,
     String title,
   ) {
@@ -1906,11 +2036,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title: title,
-                subtitle: 'Life cycle analysis for specific age periods',
+                title: NumerologyUIContent.getHeaderTitle(title, currentLang),
+                subtitle: NumerologyUIContent.getHeaderTitle(
+                  'pinnacle_subtitle',
+                  currentLang,
+                ),
                 icon: Icons.query_stats_rounded,
                 iconColor: theme.colorScheme.secondary,
                 iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                onHelp: () => _showHelpDialog('pinnacles', currentLang),
               ),
               const SizedBox(height: 24),
               ...pinnacles.map(
@@ -1924,7 +2058,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              "Age: ${pinnacle.lifePeriodRange}",
+                              "${NumerologyUIContent.getLabel('age_prefix', currentLang)}: ${pinnacle.lifePeriodRange}",
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: theme.colorScheme.primary,
@@ -1973,61 +2107,82 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     Map<String, String> l10n,
   ) {
     final theme = Theme.of(context);
+    final currentLang = ref.watch(languageProvider);
 
     final items = [
       {
-        'label': l10n['personality_number_label'] ?? 'Personality',
+        'label': NumerologyUIContent.getLabel('personality', currentLang),
         'val': data.personality,
         'icon': Icons.person_3_rounded,
+        'key': 'personality_number',
       },
       {
-        'label': l10n['life_path_number_label'] ?? 'Life Path',
+        'label': NumerologyUIContent.getLabel('life_path', currentLang),
         'val': data.lifePath,
         'icon': Icons.directions_rounded,
+        'key': 'life_path_number',
       },
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
+    return Row(
       children: items.map((item) {
-        if (item['val'] == null) return const SizedBox.shrink();
-        return SizedBox(
-          width: (MediaQuery.of(context).size.width - 44) / 2,
-          child: _buildMysticContentCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      item['icon'] as IconData,
-                      size: 14,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      item['label'] as String,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+        if (item['val'] == null) return const Expanded(child: SizedBox());
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: items.indexOf(item) == 0 ? 6 : 0,
+              left: items.indexOf(item) == 1 ? 6 : 0,
+            ),
+            child: _buildMysticContentCard(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        item['icon'] as IconData,
+                        size: 14,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  item['val'].toString(),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w900,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item['label'] as String,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () =>
+                            _showHelpDialog(item['key'] as String, currentLang),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Icon(
+                          Icons.help_outline_rounded,
+                          size: 14,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    item['val'].toString(),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -2037,64 +2192,70 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
   Widget _buildCombinationGrid(
     BuildContext context,
-    Map<String, String> l10n,
     CombinationData data,
+    AppLanguage currentLang,
   ) {
     final theme = Theme.of(context);
     final items = [
       {
-        'label': l10n['personality_number_label'] ?? 'Personality',
+        'label': NumerologyUIContent.getLabel('personality', currentLang),
         'val': data.personalityNumber,
         'icon': Icons.person_3_rounded,
       },
       {
-        'label': l10n['life_path_number_label'] ?? 'Life Path',
+        'label': NumerologyUIContent.getLabel('life_path', currentLang),
         'val': data.lifePathNumber,
         'icon': Icons.directions_rounded,
       },
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
+    return Row(
       children: items.map((item) {
         if (item['val'] == null) return const SizedBox.shrink();
-        return SizedBox(
-          width: (MediaQuery.of(context).size.width - 44) / 2,
-          child: _buildMysticContentCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      item['icon'] as IconData,
-                      size: 14,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      item['label'] as String,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+        final isFirst = item == items.first;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: isFirst ? 6 : 0,
+              left: isFirst ? 0 : 6,
+            ),
+            child: _buildMysticContentCard(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        item['icon'] as IconData,
+                        size: 14,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  item['val'].toString(),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w900,
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          item['label'] as String,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    item['val'].toString(),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -2108,7 +2269,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     AppLanguage currentLang,
   ) {
     final personalityAsync = ref.watch(personalityDataProvider);
-    final l10n = ref.watch(birthdateL10nProvider);
     final theme = Theme.of(context);
 
     return personalityAsync.when(
@@ -2120,16 +2280,23 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMysticHeader(
-                title:
-                    l10n['personality_analysis_title'] ??
-                    "Personality Analysis",
+                title: NumerologyUIContent.getHeaderTitle(
+                  'personality_analysis',
+                  currentLang,
+                ),
+                subtitle: NumerologyUIContent.getLabel(
+                  'personality_analysis_label',
+                  currentLang,
+                ).replaceAll('{number}', data.personalityNumber.toString()),
                 icon: Icons.psychology_rounded,
+                onHelp: () =>
+                    _showHelpDialog('personality_number', currentLang),
               ),
               const SizedBox(height: 24),
               _buildDetailRow(
                 context,
                 Icons.stars_rounded,
-                l10n['lord_label'] ?? "Lord",
+                NumerologyUIContent.getLabel('lord', currentLang),
                 data.getLord(currentLang),
                 Colors.amber[800]!,
               ),
@@ -2137,7 +2304,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               _buildDetailRow(
                 context,
                 Icons.thumb_up_rounded,
-                l10n['qualities_label'] ?? "Qualities",
+                NumerologyUIContent.getLabel('qualities', currentLang),
                 data.getQualities(currentLang),
                 Colors.green[700]!,
               ),
@@ -2145,7 +2312,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               _buildDetailRow(
                 context,
                 Icons.warning_amber_rounded,
-                l10n['weaknesses_label'] ?? "Weaknesses",
+                NumerologyUIContent.getLabel('weaknesses', currentLang),
                 data.getWeaknesses(currentLang),
                 Colors.red[700]!,
               ),
@@ -2171,7 +2338,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            l10n['recommendation_label'] ?? "You Should",
+                            NumerologyUIContent.getLabel(
+                              'recommendation',
+                              currentLang,
+                            ),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: theme.colorScheme.secondary,
@@ -2194,7 +2364,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               ],
               if (data.getDescription(currentLang).isNotEmpty) ...[
                 Text(
-                  l10n['description_label'] ?? "Detailed Insight",
+                  NumerologyUIContent.getLabel('detailed_insight', currentLang),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     color: theme.colorScheme.primary,
@@ -2399,6 +2569,73 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     }
   }
 
+  Future<void> _showHelpDialog(String conceptKey, AppLanguage lang) {
+    final help = NumerologyHelpRepository.helpData[conceptKey];
+    if (help == null) return Future.value();
+
+    final theme = Theme.of(context);
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: theme.colorScheme.surface,
+        titlePadding: const EdgeInsets.all(0),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 20,
+        ),
+        title: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  help.getTitle(lang),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Text(
+          help.getContent(lang),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            height: 1.6,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Understood',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showThankYouDialog() {
     return showDialog<void>(
       context: context,
@@ -2533,6 +2770,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     String? subtitle,
     Color? iconColor,
     Color? iconBgColor,
+    VoidCallback? onHelp,
+    Widget? trailing,
   }) {
     final theme = Theme.of(context);
     return Row(
@@ -2555,13 +2794,40 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
-                  letterSpacing: 0.3,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) ...[const SizedBox(width: 8), trailing],
+                  if (onHelp != null) ...[
+                    const SizedBox(width: 4),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onHelp,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.help_outline_rounded,
+                            size: 20,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
