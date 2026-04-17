@@ -13,14 +13,16 @@ ThemeData buildDarkTheme() {
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color(0xFF6366F1),
       brightness: Brightness.dark,
-      primary: const Color(0xFF818CF8),       // Lighter indigo for dark bg readability
-      secondary: const Color(0xFFFBBF24),     // Warm amber gold
-      surface: const Color(0xFF0F172A),       // Deep navy-black
-      onSurface: const Color(0xFFF1F5F9),     // Near-white for text
+      primary: const Color(
+        0xFF818CF8,
+      ), // Lighter indigo for dark bg readability
+      secondary: const Color(0xFFFBBF24), // Warm amber gold
+      surface: const Color(0xFF0F172A), // Deep navy-black
+      onSurface: const Color(0xFFF1F5F9), // Near-white for text
       onSurfaceVariant: const Color(0xFFCBD5E1), // Lighter slate for body text
       surfaceContainerHighest: const Color(0xFF1E293B),
       outlineVariant: const Color(0xFF334155),
-      error: const Color(0xFFF87171),         // Lighter red for dark mode
+      error: const Color(0xFFF87171), // Lighter red for dark mode
     ),
     scaffoldBackgroundColor: const Color(0xFF0F172A),
     cardTheme: CardThemeData(
@@ -97,52 +99,56 @@ ThemeData buildLightTheme() {
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color(0xFF4F46E5),
       brightness: Brightness.light,
-      primary: const Color(0xFF4F46E5),       // Deep indigo
-      secondary: const Color(0xFFD97706),     // Warm amber
-      surface: const Color(0xFFF8FAFC),       // Softened background (lighter than slate, darker than pure white)
-      onSurface: const Color(0xFF0F172A),     // Darker navy for better contrast
-      onSurfaceVariant: const Color(0xFF334155), // Darker slate for body/secondary text
-      surfaceContainerHighest: const Color(0xFFF1F5F9),
-      outlineVariant: const Color(0xFFE2E8F0),
-      error: const Color(0xFFDC2626),
+      primary: const Color(0xFF4338CA), // Slightly deeper indigo
+      secondary: const Color(0xFFB45309), // Slightly deeper amber
+      surface: const Color(
+        0xFFF0F2F5,
+      ), // WhatsApp-style low brightness background
+      onSurface: const Color(0xFF111827), // Soft black/navy for text
+      onSurfaceVariant: const Color(0xFF4B5563), // Muted grey for body text
+      surfaceContainerHighest: const Color(
+        0xFFE5E7EB,
+      ), // Darker grey for card backgrounds/accents
+      outlineVariant: const Color(0xFFD1D5DB),
+      error: const Color(0xFFB91C1C),
     ),
-    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    scaffoldBackgroundColor: const Color(0xFFF0F2F5),
     cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+        side: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
       ),
       color: Colors.white,
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 2),
+        borderSide: const BorderSide(color: Color(0xFF4338CA), width: 2),
       ),
       filled: true,
       fillColor: Colors.white,
-      labelStyle: const TextStyle(color: Color(0xFF475569)),
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+      labelStyle: const TextStyle(color: Color(0xFF4B5563)),
+      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,
       elevation: 0,
       backgroundColor: Colors.transparent,
-      foregroundColor: Color(0xFF0F172A),
+      foregroundColor: Color(0xFF111827),
       titleTextStyle: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.8,
-        color: Color(0xFF0F172A),
+        color: Color(0xFF111827),
       ),
     ),
     snackBarTheme: SnackBarThemeData(
@@ -155,19 +161,23 @@ ThemeData buildLightTheme() {
       behavior: SnackBarBehavior.floating,
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: const Color(0xFF4F46E5),
+      backgroundColor: const Color(0xFF4338CA),
       foregroundColor: Colors.white,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     dividerTheme: const DividerThemeData(
-      color: Color(0xFFE2E8F0),
+      color: Color(0xFFE5E7EB),
       thickness: 1,
     ),
     textTheme: const TextTheme(
-      bodyLarge: TextStyle(fontSize: 17, height: 1.6, color: Color(0xFF0F172A)),
-      bodyMedium: TextStyle(fontSize: 15.5, height: 1.55, color: Color(0xFF334155)),
-      bodySmall: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF475569)),
+      bodyLarge: TextStyle(fontSize: 17, height: 1.6, color: Color(0xFF111827)),
+      bodyMedium: TextStyle(
+        fontSize: 15.5,
+        height: 1.55,
+        color: Color(0xFF4B5563),
+      ),
+      bodySmall: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF6B7280)),
     ),
   );
 }
