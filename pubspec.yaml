@@ -65,6 +65,22 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   riverpod_lint: ^2.3.10
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_logo.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#F0F2F5"
+  image: "assets/images/app_logo.png"
+  android_12:
+    image: "assets/images/app_logo.png"
+    color: "#F0F2F5"
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

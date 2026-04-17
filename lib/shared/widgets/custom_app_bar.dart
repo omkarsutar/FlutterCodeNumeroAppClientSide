@@ -32,7 +32,20 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
               },
             )
           : null,
-      title: Text(title),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/app_logo.png',
+            height: 32,
+            width: 32,
+            errorBuilder: (context, error, stackTrace) =>
+                const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 10),
+          Text(title),
+        ],
+      ),
       automaticallyImplyLeading: !effectivelyShowBack,
       actions: [
         Padding(

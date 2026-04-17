@@ -66,10 +66,15 @@ class WelcomePage extends ConsumerWidget {
                         width: 2,
                       ),
                     ),
-                    child: const Icon(
-                      Icons.shopping_basket_rounded,
-                      size: 80,
-                      color: Color(0xFFFFC107), // Amber Icon
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      height: 80,
+                      width: 80,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 80,
+                        color: Color(0xFFFFC107),
+                      ),
                     ),
                   ),
 
@@ -124,7 +129,9 @@ class WelcomePage extends ConsumerWidget {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          ref.read(analyticsServiceProvider).logClickEvent('get_started');
+                          ref
+                              .read(analyticsServiceProvider)
+                              .logClickEvent('get_started');
                           context.goNamed('login');
                         },
                         style: ElevatedButton.styleFrom(
