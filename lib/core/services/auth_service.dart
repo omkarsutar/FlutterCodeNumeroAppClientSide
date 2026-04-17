@@ -13,6 +13,7 @@ import '../exceptions/app_exceptions.dart';
 import '../interfaces/connectivity_service_interface.dart';
 import 'rbac_service.dart';
 import 'error_handler.dart';
+import 'analytics_service.dart';
 
 class AuthService {
   final SupabaseClient _client;
@@ -72,6 +73,7 @@ class AuthService {
           initializeUserProfileStream();
           break;
         case AuthChangeEvent.signedOut:
+          _ref.read(analyticsServiceProvider).setUserId(null);
           disposeProfileStream();
           _ref.read(userProfileStateProvider.notifier).clearProfile();
           break;
@@ -110,6 +112,7 @@ class AuthService {
       await _rbacService.initializeRbac(userId);
       debugPrint('[AuthService] RBAC initialized successfully');
 
+      _ref.read(analyticsServiceProvider).setUserId(userId);
       _ref.read(userProfileStateProvider.notifier).setProfile(profile);
       debugPrint('[AuthService] Profile state updated');
     } catch (e, st) {
@@ -168,6 +171,7 @@ class AuthService {
   Future<void> signOut() async {
     _rbacService.clearCache();
     await _client.auth.signOut();
+    _ref.read(analyticsServiceProvider).setUserId(null);
     disposeProfileStream();
     _ref.read(userProfileStateProvider.notifier).clearProfile();
   }

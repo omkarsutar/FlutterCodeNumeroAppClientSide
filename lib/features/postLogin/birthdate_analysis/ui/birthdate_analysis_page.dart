@@ -2570,6 +2570,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }
 
   Future<void> _showHelpDialog(String conceptKey, AppLanguage lang) {
+    // Track help interaction
+    ref
+        .read(analyticsServiceProvider)
+        .logClickEvent(
+          'help_icon_clicked',
+          parameters: {'concept': conceptKey, 'language': lang.name},
+        );
     final help = NumerologyHelpRepository.helpData[conceptKey];
     if (help == null) return Future.value();
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/localization_provider.dart';
+import '../../core/services/analytics_service.dart';
 
 class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
@@ -37,8 +38,16 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: TextButton(
-            onPressed: () =>
-                ref.read(languageProvider.notifier).toggleLanguage(),
+            onPressed: () {
+              ref.read(languageProvider.notifier).toggleLanguage();
+              final newLang = ref.read(languageProvider);
+              ref
+                  .read(analyticsServiceProvider)
+                  .logClickEvent(
+                    'language_toggled',
+                    parameters: {'new_language': newLang.name},
+                  );
+            },
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
               backgroundColor: Theme.of(

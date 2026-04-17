@@ -11,16 +11,16 @@ class AnalyticsService {
   AnalyticsService(this._analytics);
 
   /// Log a custom click event.
-  /// 
+  ///
   /// [buttonName] is the name of the button or action performed.
   /// [parameters] provide additional context for the event.
-  Future<void> logClickEvent(String buttonName, {Map<String, Object>? parameters}) async {
+  Future<void> logClickEvent(
+    String buttonName, {
+    Map<String, Object>? parameters,
+  }) async {
     await _analytics.logEvent(
       name: 'button_click',
-      parameters: {
-        'button_name': buttonName,
-        ...?parameters,
-      },
+      parameters: {'button_name': buttonName, ...?parameters},
     );
   }
 
@@ -32,6 +32,16 @@ class AnalyticsService {
   /// Utility to get the analytics observer for navigation tracking.
   FirebaseAnalyticsObserver getObserver() {
     return FirebaseAnalyticsObserver(analytics: _analytics);
+  }
+
+  /// Link Supabase User ID to Analytics for journey tracking.
+  Future<void> setUserId(String? userId) async {
+    await _analytics.setUserId(id: userId);
+  }
+
+  /// Explicitly log a screen view.
+  Future<void> logScreenView(String screenName) async {
+    await _analytics.logScreenView(screenName: screenName);
   }
 
   /// Log when an analysis is viewed for a specific birthdate.
@@ -48,13 +58,13 @@ class AnalyticsService {
   }
 
   /// Log cart interactions (add, remove, select).
-  Future<void> logCartAction(String action, {Map<String, Object>? parameters}) async {
+  Future<void> logCartAction(
+    String action, {
+    Map<String, Object>? parameters,
+  }) async {
     await _analytics.logEvent(
       name: 'cart_action',
-      parameters: {
-        'action_type': action,
-        ...?parameters,
-      },
+      parameters: {'action_type': action, ...?parameters},
     );
   }
 
