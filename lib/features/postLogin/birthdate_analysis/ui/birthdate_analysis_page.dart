@@ -32,6 +32,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   );
   int _testimonialPage = 0;
 
+  Color _analysisAccent(ThemeData theme) {
+    return theme.brightness == Brightness.dark
+        ? const Color(0xFF8EA2D6)
+        : const Color(0xFF5F78A8);
+  }
+
+  Color _analysisBodyText(ThemeData theme) {
+    return theme.brightness == Brightness.dark
+        ? const Color(0xFFD9E2F2)
+        : const Color(0xFF55627A);
+  }
+
   @override
   void dispose() {
     _testimonialController.dispose();
@@ -89,163 +101,177 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = ref.watch(birthdateL10nProvider);
-    final birthdate = ref.watch(birthdateProvider);
-    final cartStatus = ref.watch(cartStatusProvider);
-    final currentLang = ref.watch(languageProvider);
-    final theme = Theme.of(context);
+    final baseTheme = Theme.of(context);
+    final pageTheme = baseTheme.copyWith(
+      colorScheme: baseTheme.colorScheme.copyWith(
+        onSurfaceVariant: _analysisBodyText(baseTheme),
+      ),
+    );
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: const CustomDrawer(),
-      body: Column(
-        children: [
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshAnalysisData,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: [
-                  SliverAppBar(
-                    pinned: true,
-                    stretch: true,
-                    expandedHeight: 0,
-                    toolbarHeight: 70,
-                    backgroundColor: theme.colorScheme.surface,
-                    foregroundColor: theme.colorScheme.onSurface,
-                    elevation: 0,
-                    centerTitle: true,
-                    leading: IconButton(
-                      icon: const Icon(Icons.menu_rounded),
-                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    ),
-                    title: Text(
-                      l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+    return Theme(
+      data: pageTheme,
+      child: Builder(
+        builder: (context) {
+          final l10n = ref.watch(birthdateL10nProvider);
+          final birthdate = ref.watch(birthdateProvider);
+          final cartStatus = ref.watch(cartStatusProvider);
+          final currentLang = ref.watch(languageProvider);
+          final theme = Theme.of(context);
+
+          return Scaffold(
+            key: _scaffoldKey,
+            drawer: const CustomDrawer(),
+            body: Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refreshAnalysisData,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
                       ),
-                    ),
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: TextButton(
-                          onPressed: () {
-                            ref
-                                .read(languageProvider.notifier)
-                                .toggleLanguage();
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.primary,
-                            backgroundColor: theme.colorScheme.primary
-                                .withValues(alpha: 0.1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      slivers: [
+                        SliverAppBar(
+                          pinned: true,
+                          stretch: true,
+                          expandedHeight: 0,
+                          toolbarHeight: 70,
+                          backgroundColor: theme.colorScheme.surface,
+                          foregroundColor: theme.colorScheme.onSurface,
+                          elevation: 0,
+                          centerTitle: true,
+                          leading: IconButton(
+                            icon: const Icon(Icons.menu_rounded),
+                            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                          ),
+                          title: Text(
+                            l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
-                          child: Text(
-                            currentLang == AppLanguage.english
-                                ? 'EN'
-                                : currentLang == AppLanguage.hindi
-                                ? '\u0939\u093f'
-                                : '\u092e',
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          actions: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: TextButton(
+                                onPressed: () {
+                                  ref
+                                      .read(languageProvider.notifier)
+                                      .toggleLanguage();
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: _analysisAccent(theme),
+                                  backgroundColor: _analysisAccent(theme)
+                                      .withValues(alpha: 0.1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                ),
+                                child: Text(
+                                  currentLang == AppLanguage.english
+                                      ? 'EN'
+                                      : currentLang == AppLanguage.hindi
+                                      ? '\u0939\u093f'
+                                      : '\u092e',
+                                  style: const TextStyle(fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                            ),
+                          ],
+                          bottom: PreferredSize(
+                            preferredSize: const Size.fromHeight(1),
+                            child: Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: _analysisAccent(theme).withValues(alpha: 0.12),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                    bottom: PreferredSize(
-                      preferredSize: const Size.fromHeight(1),
-                      child: Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                  ),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _BirthdateHeaderDelegate(
-                      child: _buildBirthdatePickerTile(
-                        context,
-                        birthdate,
-                        l10n,
-                        integrated: true,
-                      ),
-                      backgroundColor: theme.colorScheme.surface,
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        _buildAgeIndicatorTile(context, birthdate, l10n),
-                        _buildNumerologyCoreDetailsTile(context, ref),
-                        _buildPersonalityDetails(context, ref, currentLang),
-                        _buildNumerologyAnalysisSection(context, ref),
-                        _buildLoshuPlanesSection(
-                          context,
-                          ref,
-                          l10n,
-                          currentLang,
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _BirthdateHeaderDelegate(
+                            child: _buildBirthdatePickerTile(
+                              context,
+                              birthdate,
+                              l10n,
+                              integrated: true,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                          ),
                         ),
-                        _buildRemedyValuesSection(context, ref, currentLang),
-                        _buildMissingNumberTellsSection(context, ref),
-                        _buildMissingNumberRemediesSection(context, ref),
-                        _buildNumberOccurrenceDetailsSection(
-                          context,
-                          ref,
-                          l10n,
-                          currentLang,
+                        SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              _buildAgeIndicatorTile(context, birthdate, l10n),
+                              _buildNumerologyCoreDetailsTile(context, ref),
+                              _buildPersonalityDetails(context, ref, currentLang),
+                              _buildNumerologyAnalysisSection(context, ref),
+                              _buildLoshuPlanesSection(
+                                context,
+                                ref,
+                                l10n,
+                                currentLang,
+                              ),
+                              _buildRemedyValuesSection(context, ref, currentLang),
+                              _buildMissingNumberTellsSection(context, ref),
+                              _buildMissingNumberRemediesSection(context, ref),
+                              _buildNumberOccurrenceDetailsSection(
+                                context,
+                                ref,
+                                l10n,
+                                currentLang,
+                              ),
+                              _buildImportantPointsSection(context, ref, currentLang),
+                              _buildStockMarketInfoSection(context, ref, currentLang),
+                              _buildPinnacleSection(
+                                context,
+                                ref,
+                                pinnacleData1Provider,
+                                "pinnacle_1",
+                              ),
+                              _buildPinnacleSection(
+                                context,
+                                ref,
+                                pinnacleData2Provider,
+                                "pinnacle_2",
+                              ),
+                              _buildPinnacleSection(
+                                context,
+                                ref,
+                                pinnacleData3Provider,
+                                "pinnacle_3",
+                              ),
+                              _buildPinnacleSection(
+                                context,
+                                ref,
+                                pinnacleData4Provider,
+                                "pinnacle_4",
+                              ),
+                              _buildLifePathSection(context, ref, l10n),
+                              _buildCareerSection(context, ref, l10n),
+                              _buildBoostingPersonalitySection(context, ref, l10n),
+                              _buildCombinationSection(
+                                context,
+                                ref,
+                                l10n,
+                                currentLang,
+                              ),
+                              _buildTestimonialsSection(context, currentLang),
+                              const SizedBox(height: 32),
+                            ],
+                          ),
                         ),
-                        _buildImportantPointsSection(context, ref, currentLang),
-                        _buildStockMarketInfoSection(context, ref, currentLang),
-                        _buildPinnacleSection(
-                          context,
-                          ref,
-                          pinnacleData1Provider,
-                          "pinnacle_1",
-                        ),
-                        _buildPinnacleSection(
-                          context,
-                          ref,
-                          pinnacleData2Provider,
-                          "pinnacle_2",
-                        ),
-                        _buildPinnacleSection(
-                          context,
-                          ref,
-                          pinnacleData3Provider,
-                          "pinnacle_3",
-                        ),
-                        _buildPinnacleSection(
-                          context,
-                          ref,
-                          pinnacleData4Provider,
-                          "pinnacle_4",
-                        ),
-                        _buildLifePathSection(context, ref, l10n),
-                        _buildCareerSection(context, ref, l10n),
-                        _buildBoostingPersonalitySection(context, ref, l10n),
-                        _buildCombinationSection(
-                          context,
-                          ref,
-                          l10n,
-                          currentLang,
-                        ),
-                        _buildTestimonialsSection(context, currentLang),
-                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                _buildActionFooter(context, l10n, birthdate, cartStatus),
+              ],
             ),
-          ),
-          _buildActionFooter(context, l10n, birthdate, cartStatus),
-        ],
+          );
+        },
       ),
     );
   }
@@ -305,7 +331,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: isPending
                   ? theme.colorScheme.secondary
-                  : theme.colorScheme.primary,
+                  : _analysisAccent(theme),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
               elevation: 0,
@@ -353,12 +379,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: _analysisAccent(theme).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.auto_awesome_rounded,
-                  color: theme.colorScheme.primary,
+                  color: _analysisAccent(theme),
                   size: 24,
                 ),
               ),
@@ -368,13 +394,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.primary,
+                    color: _analysisAccent(theme),
                   ),
                 ),
               ),
               Icon(
                 Icons.calendar_month_rounded,
-                color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                color: _analysisAccent(theme).withValues(alpha: 0.6),
                 size: 20,
               ),
             ],
@@ -410,12 +436,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: _analysisAccent(theme).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.hourglass_top_rounded,
-                  color: theme.colorScheme.primary,
+                  color: _analysisAccent(theme),
                   size: 24,
                 ),
               ),
@@ -431,7 +457,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             fullName,
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: theme.colorScheme.primary,
+                              color: _analysisAccent(theme),
                               letterSpacing: 0.5,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -445,7 +471,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               fullName == 'Age Snapshot' ? '' : fullName,
                             ),
                             tooltip: 'Edit Name',
-                            color: theme.colorScheme.primary,
+                            color: _analysisAccent(theme),
                           ),
                       ],
                     ),
@@ -594,12 +620,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           if (numerology.absentNumbers != null &&
               numerology.absentNumbers!.isNotEmpty) ...[
             const SizedBox(height: 24),
-            Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+            Divider(color: _analysisAccent(theme).withValues(alpha: 0.1)),
             const SizedBox(height: 20),
             Text(
               NumerologyUIContent.getLabel('missing_numbers_grid', currentLang),
               style: theme.textTheme.titleSmall?.copyWith(
-                color: theme.colorScheme.primary,
+                color: _analysisAccent(theme),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -618,12 +644,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           ],
           if (numerology.numberOccurrences != null) ...[
             const SizedBox(height: 24),
-            Divider(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+            Divider(color: _analysisAccent(theme).withValues(alpha: 0.1)),
             const SizedBox(height: 20),
             Text(
               NumerologyUIContent.getLabel('occurrences_grid', currentLang),
               style: theme.textTheme.titleSmall?.copyWith(
-                color: theme.colorScheme.primary,
+                color: _analysisAccent(theme),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -652,9 +678,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                     : NumerologyUIContent.getLabel(
                                         'time_plural',
                                         currentLang,
-                                      ),
+                      ),
                               ),
-                      color: theme.colorScheme.primary,
+                      color: _analysisAccent(theme),
                       icon: Icons.repeat_rounded,
                     );
                   })
@@ -672,10 +698,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        color: _analysisAccent(theme).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          color: _analysisAccent(theme).withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -708,19 +734,19 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     return Container(
       decoration: BoxDecoration(
         color: isPresent
-            ? theme.colorScheme.primary.withValues(alpha: 0.15)
+            ? _analysisAccent(theme).withValues(alpha: 0.15)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isPresent
-              ? theme.colorScheme.primary.withValues(alpha: 0.3)
-              : theme.colorScheme.primary.withValues(alpha: 0.05),
+              ? _analysisAccent(theme).withValues(alpha: 0.3)
+              : _analysisAccent(theme).withValues(alpha: 0.05),
           width: isPresent ? 2 : 1,
         ),
         boxShadow: isPresent
             ? [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: _analysisAccent(theme).withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -733,7 +759,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             color: isPresent
-                ? theme.colorScheme.primary
+                ? _analysisAccent(theme)
                 : theme.colorScheme.onSurface.withValues(alpha: 0.1),
           ),
         ),
@@ -780,7 +806,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: _buildMysticContentCard(
                         gradientColors: [
-                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                          _analysisAccent(theme).withValues(alpha: 0.1),
                           theme.colorScheme.surface,
                         ],
                         child: Column(
@@ -792,7 +818,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
-                                      color: theme.colorScheme.primary
+                                      color: _analysisAccent(theme)
                                           .withValues(alpha: 0.2),
                                       width: 2,
                                     ),
@@ -809,12 +835,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                               Container(
                                                 width: 60,
                                                 height: 60,
-                                                color: theme.colorScheme.primary
+                                                color: _analysisAccent(theme)
                                                     .withValues(alpha: 0.1),
                                                 child: Icon(
                                                   Icons.person_rounded,
-                                                  color:
-                                                      theme.colorScheme.primary,
+                                                  color: _analysisAccent(theme),
                                                 ),
                                               ),
                                     ),
@@ -827,7 +852,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(
                                           fontWeight: FontWeight.w900,
-                                          color: theme.colorScheme.primary,
+                                          color: _analysisAccent(theme),
                                         ),
                                   ),
                                 ),
@@ -837,7 +862,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                             Icon(
                               Icons.format_quote_rounded,
                               size: 28,
-                              color: theme.colorScheme.primary.withValues(
+                              color: _analysisAccent(theme).withValues(
                                 alpha: 0.35,
                               ),
                             ),
@@ -873,8 +898,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: isActive
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.primary.withValues(alpha: 0.2),
+                          ? _analysisAccent(theme)
+                          : _analysisAccent(theme).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   );
@@ -1044,7 +1069,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                 'Numbers: ${item.includedNumbers.join(", ")}',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
+                                  color: _analysisAccent(theme),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -1144,7 +1169,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 values: remedy.numbersForRemedy
                     .map((e) => e.toString())
                     .toList(),
-                color: theme.colorScheme.primary,
+                color: _analysisAccent(theme),
               ),
               _buildRemedyGroup(
                 context,
@@ -1204,7 +1229,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                 title,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.primary,
+                  color: color,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -1259,7 +1284,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   ),
                   const SizedBox(height: 8),
                   Divider(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    color: _analysisAccent(theme).withValues(alpha: 0.12),
                     height: 24,
                   ),
                   if (remedies.isNotEmpty) ...[
@@ -1283,7 +1308,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: _analysisAccent(theme),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -1411,12 +1436,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
+                          color: _analysisAccent(theme).withValues(
                             alpha: 0.1,
                           ),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(
+                            color: _analysisAccent(theme).withValues(
                               alpha: 0.2,
                             ),
                             width: 2,
@@ -1425,7 +1450,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         child: Text(
                           '${detail.number}',
                           style: theme.textTheme.titleLarge?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: _analysisAccent(theme),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -1462,7 +1487,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                   ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: _analysisAccent(theme),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -1573,7 +1598,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               ),
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: _analysisAccent(theme),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -1653,7 +1678,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               plane.getTitle(lang),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: _analysisAccent(theme),
                               ),
                             ),
                           ),
@@ -1729,7 +1754,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         children: [
                           _buildMysticChip(
                             label: 'Life Path No: ${item.lifePathNumber}',
-                            color: theme.colorScheme.primary,
+                            color: _analysisAccent(theme),
                           ),
                         ],
                       ),
@@ -1910,7 +1935,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         children: [
                           _buildMysticChip(
                             label: 'Personality No: ${item.personalityNumber}',
-                            color: theme.colorScheme.primary,
+                            color: _analysisAccent(theme),
                           ),
                         ],
                       ),
@@ -1984,7 +2009,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         children: [
                           _buildMysticChip(
                             label: 'Life Path No: ${item.lifePathNumber}',
-                            color: theme.colorScheme.primary,
+                            color: _analysisAccent(theme),
                             icon: Icons.explore_rounded,
                           ),
                         ],
@@ -2061,7 +2086,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                               "${NumerologyUIContent.getLabel('age_prefix', currentLang)}: ${pinnacle.lifePeriodRange}",
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: _analysisAccent(theme),
                               ),
                             ),
                           ),
@@ -2143,7 +2168,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Icon(
                         item['icon'] as IconData,
                         size: 14,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                        color: _analysisAccent(theme).withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -2166,7 +2191,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         child: Icon(
                           Icons.help_outline_rounded,
                           size: 14,
-                          color: theme.colorScheme.primary.withValues(
+                          color: _analysisAccent(theme).withValues(
                             alpha: 0.4,
                           ),
                         ),
@@ -2177,7 +2202,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   Text(
                     item['val'].toString(),
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.primary,
+                      color: _analysisAccent(theme),
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -2229,7 +2254,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                       Icon(
                         item['icon'] as IconData,
                         size: 14,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                        color: _analysisAccent(theme).withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 6),
                       Flexible(
@@ -2250,7 +2275,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   Text(
                     item['val'].toString(),
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.primary,
+                      color: _analysisAccent(theme),
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -2367,7 +2392,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   NumerologyUIContent.getLabel('detailed_insight', currentLang),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.primary,
+                    color: _analysisAccent(theme),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -2518,7 +2543,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
+              backgroundColor: _analysisAccent(theme),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2570,6 +2595,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }
 
   Future<void> _showHelpDialog(String conceptKey, AppLanguage lang) {
+    final l10n = ref.read(birthdateL10nProvider);
     // Track help interaction
     ref
         .read(analyticsServiceProvider)
@@ -2595,7 +2621,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         title: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: _analysisAccent(theme).withValues(alpha: 0.1),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -2605,7 +2631,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
             children: [
               Icon(
                 Icons.info_outline_rounded,
-                color: theme.colorScheme.primary,
+                color: _analysisAccent(theme),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2613,7 +2639,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                   help.getTitle(lang),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.primary,
+                    color: _analysisAccent(theme),
                   ),
                 ),
               ),
@@ -2631,10 +2657,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Understood',
+              l10n['understood'] ?? 'Understood',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+                color: _analysisAccent(theme),
               ),
             ),
           ),
@@ -2748,7 +2774,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color:
-              borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.15),
+              borderColor ?? _analysisAccent(theme).withValues(alpha: 0.15),
           width: 1.5,
         ),
         gradient: LinearGradient(
@@ -2761,7 +2787,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            color: _analysisAccent(theme).withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -2787,12 +2813,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color:
-                iconBgColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+                iconBgColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: iconColor ?? theme.colorScheme.primary,
+            color: iconColor ?? _analysisAccent(theme),
             size: 24,
           ),
         ),
@@ -2826,7 +2852,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                           child: Icon(
                             Icons.help_outline_rounded,
                             size: 20,
-                            color: theme.colorScheme.primary.withValues(
+                            color: _analysisAccent(theme).withValues(
                               alpha: 0.6,
                             ),
                           ),
@@ -2869,7 +2895,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color:
-              borderColor ?? theme.colorScheme.primary.withValues(alpha: 0.1),
+              borderColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2894,7 +2920,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
     IconData? icon,
   }) {
     final theme = Theme.of(context);
-    final baseColor = color ?? theme.colorScheme.primary;
+    final baseColor = color ?? _analysisAccent(theme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
