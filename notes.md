@@ -86,3 +86,7 @@ SELECT * FROM public.get_share_market_advice(
 ----------------------------------------------------
 
 protect static tables on supabase
+
+
+
+h
