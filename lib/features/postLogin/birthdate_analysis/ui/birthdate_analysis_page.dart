@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -25,12 +26,17 @@ class BirthdateAnalysisPage extends ConsumerStatefulWidget {
       _BirthdateAnalysisPageState();
 }
 
-class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
+class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
+    with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _testimonialController = PageController(
     viewportFraction: 0.88,
   );
+  final FlutterTts _flutterTts = FlutterTts();
+  late AnimationController _pulseController;
   int _testimonialPage = 0;
+  bool _isNarrationPlaying = false;
+  bool _isNarrationPaused = false;
 
   Color _analysisAccent(ThemeData theme) {
     return theme.brightness == Brightness.dark
@@ -45,7 +51,66 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _configureTts();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  Future<void> _configureTts() async {
+    await _flutterTts.setSpeechRate(0.42);
+    await _flutterTts.setVolume(1.0);
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.awaitSpeakCompletion(true);
+
+    _flutterTts.setStartHandler(() {
+      if (!mounted) return;
+      setState(() {
+        _isNarrationPlaying = true;
+        _isNarrationPaused = false;
+      });
+    });
+
+    _flutterTts.setCompletionHandler(() {
+      if (!mounted) return;
+      setState(() {
+        _isNarrationPlaying = false;
+        _isNarrationPaused = false;
+      });
+    });
+
+    _flutterTts.setCancelHandler(() {
+      if (!mounted) return;
+      setState(() {
+        _isNarrationPlaying = false;
+        _isNarrationPaused = false;
+      });
+    });
+
+    _flutterTts.setPauseHandler(() {
+      if (!mounted) return;
+      setState(() {
+        _isNarrationPlaying = false;
+        _isNarrationPaused = true;
+      });
+    });
+
+    _flutterTts.setErrorHandler((message) {
+      if (!mounted) return;
+      setState(() {
+        _isNarrationPlaying = false;
+        _isNarrationPaused = false;
+      });
+    });
+  }
+
+  @override
   void dispose() {
+    _flutterTts.stop();
+    _pulseController.dispose();
     _testimonialController.dispose();
     super.dispose();
   }
@@ -79,6 +144,281 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       ref.refresh(boostingPersonalityDataProvider.future),
       ref.refresh(combinationDataProvider.future),
     ]);
+  }
+
+  Future<void> _setNarrationLanguage(AppLanguage lang) async {
+    switch (lang) {
+      case AppLanguage.hindi:
+        await _flutterTts.setLanguage('hi-IN');
+        break;
+      case AppLanguage.marathi:
+        await _flutterTts.setLanguage('mr-IN');
+        break;
+      case AppLanguage.english:
+        await _flutterTts.setLanguage('en-IN');
+        break;
+    }
+  }
+
+  String _joinList<T>(Iterable<T> values) {
+    return values.map((value) => value.toString()).join(', ');
+  }
+
+  String _safeNarrationDate(DateTime birthdate, AppLanguage lang) {
+    final monthNames = switch (lang) {
+      AppLanguage.hindi => const [
+          'जनवरी',
+          'फरवरी',
+          'मार्च',
+          'अप्रैल',
+          'मई',
+          'जून',
+          'जुलाई',
+          'अगस्त',
+          'सितंबर',
+          'अक्टूबर',
+          'नवंबर',
+          'दिसंबर',
+        ],
+      AppLanguage.marathi => const [
+          'जानेवारी',
+          'फेब्रुवारी',
+          'मार्च',
+          'एप्रिल',
+          'मे',
+          'जून',
+          'जुलै',
+          'ऑगस्ट',
+          'सप्टेंबर',
+          'ऑक्टोबर',
+          'नोव्हेंबर',
+          'डिसेंबर',
+        ],
+      AppLanguage.english => const [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ],
+    };
+
+    return '${birthdate.day} ${monthNames[birthdate.month - 1]} ${birthdate.year}';
+  }
+
+  String _narrationText(AppLanguage lang) {
+    final birthdate = ref.read(birthdateProvider);
+    final ageText = ref.read(ageProvider);
+    final numerology = ref.read(numerologyProvider);
+    final personality = ref.read(personalityDataProvider).valueOrNull;
+    final planes =
+        ref.read(loshuPlanesProvider).valueOrNull ?? const <LoshuPlane>[];
+    final remedies =
+        ref.read(remedyValuesProvider).valueOrNull ?? const <RemedyValues>[];
+    final missingTells = ref.read(missingNumberTellsProvider).valueOrNull ??
+        const <MissingNumberTell>[];
+    final missingRemedies =
+        ref.read(missingNumberRemediesProvider).valueOrNull ??
+            const <MissingNumberRemedy>[];
+    final numberDetails =
+        ref.read(numberOccurrenceDetailsProvider).valueOrNull ??
+            const <NumberOccurrenceDetail>[];
+    final importantPoints = ref.read(importantPointsProvider).valueOrNull ??
+        const <ImportantPoint>[];
+    final stockInfo =
+        ref.read(stockMarketInfoProvider).valueOrNull ?? const <StockMarketInfo>[];
+    final lifePathItems =
+        ref.read(lifePathNumberDataProvider).valueOrNull ?? const <LifePathData>[];
+    final careerItems =
+        ref.read(careerDataProvider).valueOrNull ?? const <CareerData>[];
+    final boostingItems = ref.read(boostingPersonalityDataProvider).valueOrNull ??
+        const <BoostingPersonalityData>[];
+    final combinations = ref.read(combinationDataProvider).valueOrNull ??
+        const <CombinationData>[];
+    final pinnacle1 =
+        ref.read(pinnacleData1Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle2 =
+        ref.read(pinnacleData2Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle3 =
+        ref.read(pinnacleData3Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle4 =
+        ref.read(pinnacleData4Provider).valueOrNull ?? const <PinnacleData>[];
+
+    final intro = switch (lang) {
+      AppLanguage.hindi =>
+        'यह आपकी जन्मतिथि का व्यक्तिगत विश्लेषण है। मैं अब आपके लिए मुख्य संकेत पढ़ रहा हूँ।',
+      AppLanguage.marathi =>
+        'हे तुमच्या जन्मतारखेचे वैयक्तिक विश्लेषण आहे. आता मी तुमच्यासाठी मुख्य संकेत वाचत आहे.',
+      AppLanguage.english =>
+        'This is your personal birthdate analysis. I will now read the key insights for you.',
+    };
+
+    final lines = <String>[intro];
+
+    if (birthdate != null) {
+      lines.add(
+        switch (lang) {
+          AppLanguage.hindi =>
+            'जन्मतिथि ${_safeNarrationDate(birthdate, lang)} है।',
+          AppLanguage.marathi =>
+            'जन्मतारीख ${_safeNarrationDate(birthdate, lang)} आहे.',
+          AppLanguage.english =>
+            'The selected birthdate is ${_safeNarrationDate(birthdate, lang)}.',
+        },
+      );
+    }
+
+    if (ageText != null && ageText.isNotEmpty) {
+      lines.add(ageText);
+    }
+
+    if (numerology.personality != null || numerology.lifePath != null) {
+      lines.add(
+        switch (lang) {
+          AppLanguage.hindi =>
+            'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
+          AppLanguage.marathi =>
+            'तुमचा पर्सनॅलिटी नंबर ${numerology.personality ?? '-'} आणि लाईफ पाथ नंबर ${numerology.lifePath ?? '-'} आहे.',
+          AppLanguage.english =>
+            'Your personality number is ${numerology.personality ?? '-'} and your life path number is ${numerology.lifePath ?? '-'}.',
+        },
+      );
+    }
+
+    if (personality != null) {
+      if (personality.getLord(lang).isNotEmpty) {
+        lines.add(
+          switch (lang) {
+            AppLanguage.hindi => 'आपके व्यक्तित्व के अधिपति ${personality.getLord(lang)} हैं।',
+            AppLanguage.marathi => 'तुमच्या व्यक्तिमत्त्वाचे अधिपती ${personality.getLord(lang)} आहेत.',
+            AppLanguage.english => 'The ruling influence for your personality is ${personality.getLord(lang)}.',
+          },
+        );
+      }
+      if (personality.getQualities(lang).isNotEmpty) {
+        lines.add(personality.getQualities(lang));
+      }
+      if (personality.getWeaknesses(lang).isNotEmpty) {
+        lines.add(personality.getWeaknesses(lang));
+      }
+      if (personality.getYouShould(lang).isNotEmpty) {
+        lines.add(personality.getYouShould(lang));
+      }
+      if (personality.getDescription(lang).isNotEmpty) {
+        lines.add(personality.getDescription(lang));
+      }
+    }
+
+    if (numerology.absentNumbers != null && numerology.absentNumbers!.isNotEmpty) {
+      lines.add(
+        switch (lang) {
+          AppLanguage.hindi =>
+            'लापता नंबर हैं: ${_joinList(numerology.absentNumbers!)}।',
+          AppLanguage.marathi =>
+            'गहाळ अंक आहेत: ${_joinList(numerology.absentNumbers!)}.',
+          AppLanguage.english =>
+            'Your missing numbers are ${_joinList(numerology.absentNumbers!)}.',
+        },
+      );
+    }
+
+    if (planes.isNotEmpty) {
+      for (final plane in planes.take(3)) {
+        lines.add('${plane.getTitle(lang)}. ${plane.getDescription(lang)}');
+      }
+    }
+
+    if (remedies.isNotEmpty) {
+      final remedy = remedies.first;
+      lines.add(
+        switch (lang) {
+          AppLanguage.hindi =>
+            'शुभ नंबर ${_joinList(remedy.luckyNumbers)} हैं। शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(remedy.getLuckyDays(lang))} हैं।',
+          AppLanguage.marathi =>
+            'शुभ अंक ${_joinList(remedy.luckyNumbers)} आहेत. शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(remedy.getLuckyDays(lang))} आहेत.',
+          AppLanguage.english =>
+            'Your lucky numbers are ${_joinList(remedy.luckyNumbers)}. Your lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Your lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
+        },
+      );
+    }
+
+    for (final tell in missingTells.take(3)) {
+      lines.add(tell.getDescription(lang));
+    }
+
+    for (final remedy in missingRemedies.take(3)) {
+      lines.add(remedy.getDescription(lang));
+    }
+
+    for (final detail in numberDetails.take(3)) {
+      lines.add(detail.getDescription(lang));
+    }
+
+    for (final point in importantPoints.take(3)) {
+      lines.add(point.getDescription(lang));
+    }
+
+    for (final item in stockInfo.take(2)) {
+      lines.add(item.getDescription(lang));
+    }
+
+    for (final item in lifePathItems.take(1)) {
+      lines.add(item.getDescription(lang));
+    }
+
+    for (final item in careerItems.take(1)) {
+      lines.add(item.getDescription(lang));
+    }
+
+    for (final item in boostingItems.take(1)) {
+      lines.add(item.getDescription(lang));
+    }
+
+    for (final item in combinations.take(1)) {
+      lines.add(item.getDescription(lang));
+    }
+
+    for (final pinnacle in [...pinnacle1, ...pinnacle2, ...pinnacle3, ...pinnacle4].take(4)) {
+      lines.add(pinnacle.getDescription(lang));
+    }
+
+    return lines
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .join(' ');
+  }
+
+  Future<void> _playNarration(AppLanguage lang) async {
+    final script = _narrationText(lang);
+    if (script.trim().isEmpty) return;
+
+    await _setNarrationLanguage(lang);
+    await _flutterTts.stop();
+    await _flutterTts.speak(script);
+  }
+
+  Future<void> _pauseNarration() async {
+    try {
+      await _flutterTts.pause();
+    } catch (_) {
+      await _flutterTts.stop();
+    }
+  }
+
+  Future<void> _stopNarration() async {
+    await _flutterTts.stop();
+    if (!mounted) return;
+    setState(() {
+      _isNarrationPlaying = false;
+      _isNarrationPaused = false;
+    });
   }
 
   void _navigateToCartAndSelect(DateTime birthdate) async {
@@ -259,6 +599,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                                 currentLang,
                               ),
                               _buildTestimonialsSection(context, currentLang),
+                              _buildNarrationGuideTile(context, currentLang),
                               const SizedBox(height: 32),
                             ],
                           ),
@@ -2285,6 +2626,313 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildNarrationGuideTile(BuildContext context, AppLanguage currentLang) {
+    if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final accent = _analysisAccent(theme);
+    final canPlay = ref.watch(birthdateProvider) != null;
+    final playLabel = switch (currentLang) {
+      AppLanguage.hindi => 'सुनिए',
+      AppLanguage.marathi => 'ऐका',
+      AppLanguage.english => 'Listen',
+    };
+    final title = switch (currentLang) {
+      AppLanguage.hindi => 'आपकी व्यक्तिगत आवाज़ी व्याख्या',
+      AppLanguage.marathi => 'तुमचे वैयक्तिक आवाजातील विश्लेषण',
+      AppLanguage.english => 'Your Personal Voice Reading',
+    };
+    final subtitle = switch (currentLang) {
+      AppLanguage.hindi =>
+        'यह मार्गदर्शक आपकी जन्मतिथि की मुख्य बातें चुनी हुई भाषा में पढ़कर सुनाएगा।',
+      AppLanguage.marathi =>
+        'हा मार्गदर्शक तुमच्या जन्मतारखेचे मुख्य विश्लेषण निवडलेल्या भाषेत वाचून दाखवेल.',
+      AppLanguage.english =>
+        'This guide reads the key birthdate analysis aloud in your selected language.',
+    };
+
+    return _buildMysticSection(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.05),
+                border: Border(
+                  bottom: BorderSide(color: accent.withValues(alpha: 0.1), width: 1),
+                ),
+              ),
+              child: _buildMysticHeader(
+                title: title,
+                subtitle: subtitle,
+                icon: Icons.record_voice_over_rounded,
+                iconColor: theme.colorScheme.secondary,
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
+              ),
+            ),
+            _buildMysticContentCard(
+              margin: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              gradientColors: [
+                theme.brightness == Brightness.dark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.7),
+                theme.brightness == Brightness.dark
+                    ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                    : accent.withValues(alpha: 0.05),
+              ],
+              borderColor: accent.withValues(alpha: 0.15),
+              child: Row(
+                children: [
+                  // Premium Oracle Avatar with Pulse
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (_isNarrationPlaying)
+                        ScaleTransition(
+                          scale: Tween(begin: 1.0, end: 1.3).animate(
+                            CurvedAnimation(
+                              parent: _pulseController,
+                              curve: Curves.easeInOutSine,
+                            ),
+                          ),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      Container(
+                        width: 90,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              theme.colorScheme.secondary.withValues(alpha: 0.2),
+                              accent.withValues(alpha: 0.1),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Positioned(
+                              top: 15,
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondary,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 55,
+                              child: Container(
+                                width: 55,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: 0.8),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
+                                    bottomLeft: Radius.circular(16),
+                                    bottomRight: Radius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Wave Indicator
+                            if (_isNarrationPlaying)
+                              Positioned(
+                                bottom: 12,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(3, (index) {
+                                    return ScaleTransition(
+                                      scale: Tween(begin: 0.6, end: 1.2).animate(
+                                        CurvedAnimation(
+                                          parent: _pulseController,
+                                          curve: Interval(
+                                            index * 0.2,
+                                            1.0,
+                                            curve: Curves.easeInOut,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                                        width: 5,
+                                        height: 15,
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.secondary,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          switch (currentLang) {
+                            AppLanguage.hindi => 'ज्योतिष मार्गदर्शक',
+                            AppLanguage.marathi => 'मार्गदर्शक आवाज',
+                            AppLanguage.english => 'Oracle Guide',
+                          },
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: theme.colorScheme.secondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          switch (currentLang) {
+                            AppLanguage.hindi => _isNarrationPlaying
+                                ? 'आपकी रिपोर्ट अभी पढ़ी जा रही है।'
+                                : _isNarrationPaused
+                                    ? 'पठन रोका गया है।'
+                                    : 'अपनी रिपोर्ट को आवाज़ में सुनें।',
+                            AppLanguage.marathi => _isNarrationPlaying
+                                ? 'अहवाल वाचला जात आहे.'
+                                : _isNarrationPaused
+                                    ? 'वाचन थांबवले आहे.'
+                                    : 'अहवाल आवाजात ऐका.',
+                            AppLanguage.english => _isNarrationPlaying
+                                ? 'Reading report aloud...'
+                                : _isNarrationPaused
+                                    ? 'Reading is paused.'
+                                    : 'Listen to your analysis.',
+                          },
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            _buildOracleButton(
+                              onPressed: canPlay ? () => _playNarration(currentLang) : null,
+                              icon: _isNarrationPaused
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.volume_up_rounded,
+                              label: playLabel,
+                              isPrimary: true,
+                              theme: theme,
+                            ),
+                            const SizedBox(width: 8),
+                            if (_isNarrationPlaying || _isNarrationPaused) ...[
+                              _buildOracleButton(
+                                onPressed: _pauseNarration,
+                                icon: Icons.pause_rounded,
+                                theme: theme,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildOracleButton(
+                                onPressed: _stopNarration,
+                                icon: Icons.stop_rounded,
+                                theme: theme,
+                                isError: true,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOracleButton({
+    required VoidCallback? onPressed,
+    required IconData icon,
+    String? label,
+    bool isPrimary = false,
+    bool isError = false,
+    required ThemeData theme,
+  }) {
+    final accent = _analysisAccent(theme);
+    final baseColor = isPrimary
+        ? theme.colorScheme.secondary
+        : isError
+            ? theme.colorScheme.error
+            : accent;
+
+    if (label != null) {
+      return FilledButton.icon(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: baseColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
+        ),
+        icon: Icon(icon, size: 20),
+        label: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      );
+    }
+
+    return IconButton.filled(
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: baseColor.withValues(alpha: isError ? 0.1 : 0.15),
+        foregroundColor: baseColor,
+        padding: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        side: BorderSide(color: baseColor.withValues(alpha: 0.2)),
+      ),
+      icon: Icon(icon, size: 20),
     );
   }
 
