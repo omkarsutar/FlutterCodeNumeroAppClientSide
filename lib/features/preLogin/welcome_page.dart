@@ -27,7 +27,7 @@ class WelcomePage extends ConsumerWidget {
                 colors: [
                   theme.colorScheme.primary,
                   theme.colorScheme.primary.withValues(alpha: 0.8),
-                  const Color(0xFF311B92), // Deeper purple
+                  const Color(0xFF001C7A), // Deeper blue to match #003BFF
                 ],
               ),
             ),
@@ -73,7 +73,7 @@ class WelcomePage extends ConsumerWidget {
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.auto_awesome_rounded,
                         size: 80,
-                        color: Color(0xFFFFC107),
+                        color: Color(0xFFFBBF24),
                       ),
                     ),
                   ),
@@ -83,7 +83,7 @@ class WelcomePage extends ConsumerWidget {
                   // App Title
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Colors.white, Color(0xFFFFD54F)],
+                      colors: [Colors.white, Color(0xFFFBBF24)],
                     ).createShader(bounds),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
@@ -135,8 +135,8 @@ class WelcomePage extends ConsumerWidget {
                           context.goNamed('login');
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFC107), // Amber
-                          foregroundColor: Colors.black87,
+                          backgroundColor: const Color(0xFFFBBF24), // Gold
+                          foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

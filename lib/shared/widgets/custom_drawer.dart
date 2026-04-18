@@ -1,18 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:go_router/go_router.dart';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../core/providers/app_localization_provider.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../core/providers/core_providers.dart';
-
-import '../../core/utils/dialogs.dart';
-import '../../core/providers/app_localization_provider.dart';
-import '../../router/app_routes.dart';
-import '../../core/services/analytics_service.dart';
 import '../../core/providers/theme_provider.dart';
-
+import '../../core/services/analytics_service.dart';
+import '../../core/utils/dialogs.dart';
+import '../../router/app_routes.dart';
 
 class CustomDrawer extends ConsumerStatefulWidget {
   const CustomDrawer({super.key});
@@ -30,17 +28,16 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
     final currentUser = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
-      // Fallback to metadata if profile not yet loaded/available or in error state
       final name = currentUser?.userMetadata?['name']?.toString();
       if (name != null && name.isNotEmpty) return name;
       return currentUser?.email;
     }
+
     return user.fullName ?? currentUser?.email;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch initialization state to trigger rebuilds for Role display, etc.
     ref.watch(rbacInitializationProvider);
 
     final authService = ref.watch(authServiceProvider);
@@ -48,8 +45,10 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
     final avatarUrl = ref.watch(userAvatarUrlProvider);
     final displayName = _userDisplayName();
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final l10n = ref.watch(appL10nProvider);
     final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+    final isDark = theme.brightness == Brightness.dark;
 
     final initials = displayName != null && displayName.isNotEmpty
         ? displayName
@@ -61,206 +60,342 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               .toUpperCase()
         : '?';
 
+    final drawerTextColor = colorScheme.onSurface;
+    final drawerMutedTextColor = colorScheme.onSurfaceVariant;
+    final drawerAccentColor = colorScheme.secondary;
+    final drawerDividerColor = colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.65 : 0.9,
+    );
+    final drawerTileColor = isDark
+        ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.36)
+        : colorScheme.primaryContainer.withValues(alpha: 0.42);
+    final drawerShellGradient = isDark
+        ? const [
+            AppPalette.darkBackground,
+            AppPalette.darkSurface,
+            AppPalette.darkSurfaceRaised,
+          ]
+        : const [
+            AppPalette.lightSurface,
+            AppPalette.lightBackground,
+            AppPalette.lightPrimaryContainer,
+          ];
+    final drawerHeaderGradient = isDark
+        ? const [
+            AppPalette.darkPrimaryContainer,
+            AppPalette.darkSurfaceRaised,
+            AppPalette.darkBackground,
+          ]
+        : const [
+            AppPalette.logoBlue,
+            Color(0xFF365DFF),
+            AppPalette.lightPrimaryContainer,
+          ];
+
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: theme.colorScheme.primary),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipOval(
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        color: theme.colorScheme.primaryContainer,
-                        child: avatarUrl != null && !_hasImageError
-                            ? CachedNetworkImage(
-                                imageUrl: avatarUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Center(
-                                  child: Text(
-                                    initials,
-                                    style: TextStyle(
-                                      color:
-                                          theme.colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.bold,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: drawerShellGradient,
+          ),
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: drawerHeaderGradient,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: drawerAccentColor.withValues(alpha: 0.45),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: drawerAccentColor.withValues(alpha: 0.12),
+                              blurRadius: 16,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            color: colorScheme.primaryContainer,
+                            child: avatarUrl != null && !_hasImageError
+                                ? CachedNetworkImage(
+                                    imageUrl: avatarUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Center(
+                                      child: Text(
+                                        initials,
+                                        style: TextStyle(
+                                          color: colorScheme.onPrimaryContainer,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) {
-                                  // Defer setState to avoid "Build scheduled during frame"
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted && !_hasImageError) {
-                                      setState(() => _hasImageError = true);
-                                    }
-                                  });
-                                  return Center(
+                                    errorWidget: (context, url, error) {
+                                      WidgetsBinding.instance.addPostFrameCallback((
+                                        _,
+                                      ) {
+                                        if (mounted && !_hasImageError) {
+                                          setState(() => _hasImageError = true);
+                                        }
+                                      });
+                                      return Center(
+                                        child: Text(
+                                          initials,
+                                          style: TextStyle(
+                                            color: colorScheme.onPrimaryContainer,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Center(
                                     child: Text(
                                       initials,
                                       style: TextStyle(
-                                        color: theme
-                                            .colorScheme
-                                            .onPrimaryContainer,
+                                        color: colorScheme.onPrimaryContainer,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  initials,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
                                   ),
-                                ),
-                              ),
+                          ),
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Numero Shastra",
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            color: drawerAccentColor,
+                            size: 20,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Numero Shastra',
+                            style: TextStyle(
+                              color: drawerTextColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  displayName != null
-                      ? (l10n['welcome_user'] ?? 'Welcome, {name}').replaceAll(
-                          '{name}',
-                          displayName,
-                        )
-                      : l10n['welcome_numeroshastra'] ??
-                            'Welcome to Numero Shastra',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: theme.colorScheme.onPrimary,
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (rbacService.roleName != null)
+                  const SizedBox(height: 14),
                   Text(
-                    '${l10n['role'] ?? 'Role'}: ${rbacService.roleName!}',
+                    displayName != null
+                        ? (l10n['welcome_user'] ?? 'Welcome, {name}').replaceAll(
+                            '{name}',
+                            displayName,
+                          )
+                        : l10n['welcome_numeroshastra'] ??
+                              'Welcome to Numero Shastra',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: drawerTextColor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                  if (rbacService.roleName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '${l10n['role'] ?? 'Role'}: ${rbacService.roleName!}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: drawerMutedTextColor,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.auto_awesome_rounded),
-            title: Text(l10n['birthdate_analysis'] ?? 'Birthdate Analysis'),
-            onTap: () {
-              ref.read(analyticsServiceProvider).logClickEvent('drawer_analysis_clicked');
-              Navigator.pop(context);
-              context.goNamed(AppRoute.birthdateAnalysisName);
-            },
-
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_cart),
-            title: Text(l10n['my_cart'] ?? 'My Cart'),
-            onTap: () {
-              ref.read(analyticsServiceProvider).logClickEvent('drawer_cart_clicked');
-              Navigator.pop(context);
-              context.goNamed(AppRoute.cartName);
-            },
-
-          ),
-
-          // Purchase Orders by Shop
-          if (isLoggedIn)
-            ListTile(
-              leading: const Icon(Icons.receipt_long),
-              title: Text(l10n['purchase_history'] ?? 'Purchase History'),
+            _DrawerTile(
+              icon: Icons.auto_awesome_rounded,
+              title: l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
+              iconColor: drawerAccentColor,
+              textColor: drawerTextColor,
+              tileColor: drawerTileColor,
               onTap: () {
-                ref.read(analyticsServiceProvider).logClickEvent('drawer_history_clicked');
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent('drawer_analysis_clicked');
                 Navigator.pop(context);
-                context.goNamed(AppRoute.purchaseOrdersName);
-              },
-
-            ),
-
-          if (isLoggedIn)
-            ListTile(
-              leading: const Icon(Icons.person), // 👤 Profile
-              title: Text(l10n['profile'] ?? 'Profile'),
-              onTap: () {
-                ref.read(analyticsServiceProvider).logClickEvent('drawer_profile_clicked');
-                Navigator.pop(context);
-                context.goNamed(AppRoute.profileName);
-              },
-
-            ),
-
-          if (!isLoggedIn)
-            ListTile(
-              leading: const Icon(Icons.login), // 🔑 Login
-              title: Text(l10n['login'] ?? 'Login'),
-              onTap: () {
-                Navigator.pop(context);
-                context.goNamed(AppRoute.loginName);
+                context.goNamed(AppRoute.birthdateAnalysisName);
               },
             ),
-
-          /* if (!isLoggedIn)
-            ListTile(
-              leading: const Icon(Icons.waving_hand), // 👋 Welcome
-              title: const Text('Welcome'),
-              onTap: () => context.goNamed(AppRoute.welcomeName),
-            ), */
-          const Divider(),
-          SwitchListTile(
-            secondary: Icon(
-              ref.watch(themeModeProvider) == ThemeMode.dark
-                  ? Icons.dark_mode_rounded
-                  : Icons.light_mode_rounded,
+            _DrawerTile(
+              icon: Icons.shopping_cart,
+              title: l10n['my_cart'] ?? 'My Cart',
+              iconColor: drawerAccentColor,
+              textColor: drawerTextColor,
+              tileColor: drawerTileColor,
+              onTap: () {
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent('drawer_cart_clicked');
+                Navigator.pop(context);
+                context.goNamed(AppRoute.cartName);
+              },
             ),
-            title: Text(l10n['dark_mode'] ?? 'Dark Mode'),
-            value: ref.watch(themeModeProvider) == ThemeMode.dark,
-            onChanged: (isDark) {
-              ref.read(themeModeProvider.notifier).state =
-                  isDark ? ThemeMode.dark : ThemeMode.light;
-            },
-          ),
-          if (Supabase.instance.client.auth.currentSession != null)
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: Text(l10n['logout'] ?? 'Logout'),
-              onTap: () async {
-                final confirmed = await showConfirmationDialog(
-                  context: context,
-                  title: l10n['logout'] ?? 'Logout',
-                  content: 'Are you sure you want to Logout?',
-                  confirmLabel: l10n['logout'] ?? 'Logout',
-                );
-                if (confirmed) {
+            if (isLoggedIn)
+              _DrawerTile(
+                icon: Icons.receipt_long,
+                title: l10n['purchase_history'] ?? 'Purchase History',
+                iconColor: drawerAccentColor,
+                textColor: drawerTextColor,
+                tileColor: drawerTileColor,
+                onTap: () {
                   ref
                       .read(analyticsServiceProvider)
-                      .logClickEvent('logout_confirmed');
-                  await authService.signOut();
-                }
-              },
+                      .logClickEvent('drawer_history_clicked');
+                  Navigator.pop(context);
+                  context.goNamed(AppRoute.purchaseOrdersName);
+                },
+              ),
+            if (isLoggedIn)
+              _DrawerTile(
+                icon: Icons.person,
+                title: l10n['profile'] ?? 'Profile',
+                iconColor: drawerAccentColor,
+                textColor: drawerTextColor,
+                tileColor: drawerTileColor,
+                onTap: () {
+                  ref
+                      .read(analyticsServiceProvider)
+                      .logClickEvent('drawer_profile_clicked');
+                  Navigator.pop(context);
+                  context.goNamed(AppRoute.profileName);
+                },
+              ),
+            if (!isLoggedIn)
+              _DrawerTile(
+                icon: Icons.login,
+                title: l10n['login'] ?? 'Login',
+                iconColor: drawerAccentColor,
+                textColor: drawerTextColor,
+                tileColor: drawerTileColor,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.goNamed(AppRoute.loginName);
+                },
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              child: Divider(color: drawerDividerColor),
             ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: SwitchListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                tileColor: drawerTileColor,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                secondary: Icon(
+                  ref.watch(themeModeProvider) == ThemeMode.dark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  color: drawerAccentColor,
+                ),
+                title: Text(
+                  l10n['dark_mode'] ?? 'Dark Mode',
+                  style: TextStyle(color: drawerTextColor),
+                ),
+                value: ref.watch(themeModeProvider) == ThemeMode.dark,
+                onChanged: (value) {
+                  ref.read(themeModeProvider.notifier).state =
+                      value ? ThemeMode.dark : ThemeMode.light;
+                },
+              ),
+            ),
+            if (Supabase.instance.client.auth.currentSession != null)
+              _DrawerTile(
+                icon: Icons.logout,
+                title: l10n['logout'] ?? 'Logout',
+                iconColor: drawerAccentColor,
+                textColor: drawerTextColor,
+                tileColor: drawerTileColor,
+                onTap: () async {
+                  final confirmed = await showConfirmationDialog(
+                    context: context,
+                    title: l10n['logout'] ?? 'Logout',
+                    content: 'Are you sure you want to Logout?',
+                    confirmLabel: l10n['logout'] ?? 'Logout',
+                  );
+                  if (confirmed) {
+                    ref
+                        .read(analyticsServiceProvider)
+                        .logClickEvent('logout_confirmed');
+                    await authService.signOut();
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  const _DrawerTile({
+    required this.icon,
+    required this.title,
+    required this.iconColor,
+    required this.textColor,
+    required this.tileColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color iconColor;
+  final Color textColor;
+  final Color tileColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        tileColor: tileColor,
+        leading: Icon(icon, color: iconColor),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        onTap: onTap,
       ),
     );
   }

@@ -89,4 +89,4 @@ protect static tables on supabase
 
 
 
-h
+logo color code is   #003BFF

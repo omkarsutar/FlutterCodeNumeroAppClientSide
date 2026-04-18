@@ -439,7 +439,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
                         ),
                         if (birthdateId != null)
                           IconButton(
-                            icon: const Icon(Icons.edit_note_rounded, size: 22),
+                            icon: const Icon(Icons.edit, size: 22),
                             onPressed: () => _updateBirthdateName(
                               birthdateId,
                               fullName == 'Age Snapshot' ? '' : fullName,
@@ -521,13 +521,13 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          Icon(icon, size: 18, color: theme.colorScheme.secondary),
           const SizedBox(height: 8),
           Text(
             '$value',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
-              color: theme.colorScheme.primary,
+              color: theme.colorScheme.secondary,
             ),
           ),
           const SizedBox(height: 4),
