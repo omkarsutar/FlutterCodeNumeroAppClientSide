@@ -61,42 +61,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   }
 
   Future<void> _configureTts() async {
-    await _flutterTts.setSpeechRate(0.42);
+    await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setVolume(1.0);
     await _flutterTts.setPitch(1.0);
     await _flutterTts.awaitSpeakCompletion(true);
-
-    _flutterTts.setStartHandler(() {
-      if (!mounted) return;
-      setState(() {
-        _isNarrationPlaying = true;
-        _isNarrationPaused = false;
-      });
-    });
-
-    _flutterTts.setCompletionHandler(() {
-      if (!mounted) return;
-      setState(() {
-        _isNarrationPlaying = false;
-        _isNarrationPaused = false;
-      });
-    });
-
-    _flutterTts.setCancelHandler(() {
-      if (!mounted) return;
-      setState(() {
-        _isNarrationPlaying = false;
-        _isNarrationPaused = false;
-      });
-    });
-
-    _flutterTts.setPauseHandler(() {
-      if (!mounted) return;
-      setState(() {
-        _isNarrationPlaying = false;
-        _isNarrationPaused = true;
-      });
-    });
 
     _flutterTts.setErrorHandler((message) {
       if (!mounted) return;
@@ -167,47 +135,47 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   String _safeNarrationDate(DateTime birthdate, AppLanguage lang) {
     final monthNames = switch (lang) {
       AppLanguage.hindi => const [
-          'जनवरी',
-          'फरवरी',
-          'मार्च',
-          'अप्रैल',
-          'मई',
-          'जून',
-          'जुलाई',
-          'अगस्त',
-          'सितंबर',
-          'अक्टूबर',
-          'नवंबर',
-          'दिसंबर',
-        ],
+        'जनवरी',
+        'फरवरी',
+        'मार्च',
+        'अप्रैल',
+        'मई',
+        'जून',
+        'जुलाई',
+        'अगस्त',
+        'सितंबर',
+        'अक्टूबर',
+        'नवंबर',
+        'दिसंबर',
+      ],
       AppLanguage.marathi => const [
-          'जानेवारी',
-          'फेब्रुवारी',
-          'मार्च',
-          'एप्रिल',
-          'मे',
-          'जून',
-          'जुलै',
-          'ऑगस्ट',
-          'सप्टेंबर',
-          'ऑक्टोबर',
-          'नोव्हेंबर',
-          'डिसेंबर',
-        ],
+        'जानेवारी',
+        'फेब्रुवारी',
+        'मार्च',
+        'एप्रिल',
+        'मे',
+        'जून',
+        'जुलै',
+        'ऑगस्ट',
+        'सप्टेंबर',
+        'ऑक्टोबर',
+        'नोव्हेंबर',
+        'डिसेंबर',
+      ],
       AppLanguage.english => const [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December',
-        ],
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ],
     };
 
     return '${birthdate.day} ${monthNames[birthdate.month - 1]} ${birthdate.year}';
@@ -222,25 +190,31 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         ref.read(loshuPlanesProvider).valueOrNull ?? const <LoshuPlane>[];
     final remedies =
         ref.read(remedyValuesProvider).valueOrNull ?? const <RemedyValues>[];
-    final missingTells = ref.read(missingNumberTellsProvider).valueOrNull ??
+    final missingTells =
+        ref.read(missingNumberTellsProvider).valueOrNull ??
         const <MissingNumberTell>[];
     final missingRemedies =
         ref.read(missingNumberRemediesProvider).valueOrNull ??
-            const <MissingNumberRemedy>[];
+        const <MissingNumberRemedy>[];
     final numberDetails =
         ref.read(numberOccurrenceDetailsProvider).valueOrNull ??
-            const <NumberOccurrenceDetail>[];
-    final importantPoints = ref.read(importantPointsProvider).valueOrNull ??
+        const <NumberOccurrenceDetail>[];
+    final importantPoints =
+        ref.read(importantPointsProvider).valueOrNull ??
         const <ImportantPoint>[];
     final stockInfo =
-        ref.read(stockMarketInfoProvider).valueOrNull ?? const <StockMarketInfo>[];
+        ref.read(stockMarketInfoProvider).valueOrNull ??
+        const <StockMarketInfo>[];
     final lifePathItems =
-        ref.read(lifePathNumberDataProvider).valueOrNull ?? const <LifePathData>[];
+        ref.read(lifePathNumberDataProvider).valueOrNull ??
+        const <LifePathData>[];
     final careerItems =
         ref.read(careerDataProvider).valueOrNull ?? const <CareerData>[];
-    final boostingItems = ref.read(boostingPersonalityDataProvider).valueOrNull ??
+    final boostingItems =
+        ref.read(boostingPersonalityDataProvider).valueOrNull ??
         const <BoostingPersonalityData>[];
-    final combinations = ref.read(combinationDataProvider).valueOrNull ??
+    final combinations =
+        ref.read(combinationDataProvider).valueOrNull ??
         const <CombinationData>[];
     final pinnacle1 =
         ref.read(pinnacleData1Provider).valueOrNull ?? const <PinnacleData>[];
@@ -263,16 +237,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     final lines = <String>[intro];
 
     if (birthdate != null) {
-      lines.add(
-        switch (lang) {
-          AppLanguage.hindi =>
-            'जन्मतिथि ${_safeNarrationDate(birthdate, lang)} है।',
-          AppLanguage.marathi =>
-            'जन्मतारीख ${_safeNarrationDate(birthdate, lang)} आहे.',
-          AppLanguage.english =>
-            'The selected birthdate is ${_safeNarrationDate(birthdate, lang)}.',
-        },
-      );
+      lines.add(switch (lang) {
+        AppLanguage.hindi =>
+          'जन्मतिथि ${_safeNarrationDate(birthdate, lang)} है।',
+        AppLanguage.marathi =>
+          'जन्मतारीख ${_safeNarrationDate(birthdate, lang)} आहे.',
+        AppLanguage.english =>
+          'The selected birthdate is ${_safeNarrationDate(birthdate, lang)}.',
+      });
     }
 
     if (ageText != null && ageText.isNotEmpty) {
@@ -280,27 +252,26 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     }
 
     if (numerology.personality != null || numerology.lifePath != null) {
-      lines.add(
-        switch (lang) {
-          AppLanguage.hindi =>
-            'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
-          AppLanguage.marathi =>
-            'तुमचा पर्सनॅलिटी नंबर ${numerology.personality ?? '-'} आणि लाईफ पाथ नंबर ${numerology.lifePath ?? '-'} आहे.',
-          AppLanguage.english =>
-            'Your personality number is ${numerology.personality ?? '-'} and your life path number is ${numerology.lifePath ?? '-'}.',
-        },
-      );
+      lines.add(switch (lang) {
+        AppLanguage.hindi =>
+          'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
+        AppLanguage.marathi =>
+          'तुमचा पर्सनॅलिटी नंबर ${numerology.personality ?? '-'} आणि लाईफ पाथ नंबर ${numerology.lifePath ?? '-'} आहे.',
+        AppLanguage.english =>
+          'Your personality number is ${numerology.personality ?? '-'} and your life path number is ${numerology.lifePath ?? '-'}.',
+      });
     }
 
     if (personality != null) {
       if (personality.getLord(lang).isNotEmpty) {
-        lines.add(
-          switch (lang) {
-            AppLanguage.hindi => 'आपके व्यक्तित्व के अधिपति ${personality.getLord(lang)} हैं।',
-            AppLanguage.marathi => 'तुमच्या व्यक्तिमत्त्वाचे अधिपती ${personality.getLord(lang)} आहेत.',
-            AppLanguage.english => 'The ruling influence for your personality is ${personality.getLord(lang)}.',
-          },
-        );
+        lines.add(switch (lang) {
+          AppLanguage.hindi =>
+            'आपके व्यक्तित्व के अधिपति ${personality.getLord(lang)} हैं।',
+          AppLanguage.marathi =>
+            'तुमच्या व्यक्तिमत्त्वाचे अधिपती ${personality.getLord(lang)} आहेत.',
+          AppLanguage.english =>
+            'The ruling influence for your personality is ${personality.getLord(lang)}.',
+        });
       }
       if (personality.getQualities(lang).isNotEmpty) {
         lines.add(personality.getQualities(lang));
@@ -316,17 +287,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       }
     }
 
-    if (numerology.absentNumbers != null && numerology.absentNumbers!.isNotEmpty) {
-      lines.add(
-        switch (lang) {
-          AppLanguage.hindi =>
-            'लापता नंबर हैं: ${_joinList(numerology.absentNumbers!)}।',
-          AppLanguage.marathi =>
-            'गहाळ अंक आहेत: ${_joinList(numerology.absentNumbers!)}.',
-          AppLanguage.english =>
-            'Your missing numbers are ${_joinList(numerology.absentNumbers!)}.',
-        },
-      );
+    if (numerology.absentNumbers != null &&
+        numerology.absentNumbers!.isNotEmpty) {
+      lines.add(switch (lang) {
+        AppLanguage.hindi =>
+          'लापता नंबर हैं: ${_joinList(numerology.absentNumbers!)}।',
+        AppLanguage.marathi =>
+          'गहाळ अंक आहेत: ${_joinList(numerology.absentNumbers!)}.',
+        AppLanguage.english =>
+          'Your missing numbers are ${_joinList(numerology.absentNumbers!)}.',
+      });
     }
 
     if (planes.isNotEmpty) {
@@ -337,16 +307,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
 
     if (remedies.isNotEmpty) {
       final remedy = remedies.first;
-      lines.add(
-        switch (lang) {
-          AppLanguage.hindi =>
-            'शुभ नंबर ${_joinList(remedy.luckyNumbers)} हैं। शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(remedy.getLuckyDays(lang))} हैं।',
-          AppLanguage.marathi =>
-            'शुभ अंक ${_joinList(remedy.luckyNumbers)} आहेत. शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(remedy.getLuckyDays(lang))} आहेत.',
-          AppLanguage.english =>
-            'Your lucky numbers are ${_joinList(remedy.luckyNumbers)}. Your lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Your lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
-        },
-      );
+      lines.add(switch (lang) {
+        AppLanguage.hindi =>
+          'शुभ नंबर ${_joinList(remedy.luckyNumbers)} हैं। शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(remedy.getLuckyDays(lang))} हैं।',
+        AppLanguage.marathi =>
+          'शुभ अंक ${_joinList(remedy.luckyNumbers)} आहेत. शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(remedy.getLuckyDays(lang))} आहेत.',
+        AppLanguage.english =>
+          'Your lucky numbers are ${_joinList(remedy.luckyNumbers)}. Your lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Your lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
+      });
     }
 
     for (final tell in missingTells.take(3)) {
@@ -385,7 +353,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       lines.add(item.getDescription(lang));
     }
 
-    for (final pinnacle in [...pinnacle1, ...pinnacle2, ...pinnacle3, ...pinnacle4].take(4)) {
+    for (final pinnacle in [
+      ...pinnacle1,
+      ...pinnacle2,
+      ...pinnacle3,
+      ...pinnacle4,
+    ].take(4)) {
       lines.add(pinnacle.getDescription(lang));
     }
 
@@ -395,13 +368,60 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         .join(' ');
   }
 
+  bool _isNarrationStopped = false;
+
   Future<void> _playNarration(AppLanguage lang) async {
     final script = _narrationText(lang);
     if (script.trim().isEmpty) return;
 
     await _setNarrationLanguage(lang);
     await _flutterTts.stop();
-    await _flutterTts.speak(script);
+    _isNarrationStopped = false;
+
+    // chunking logic to prevent Android TTS crashing (max length 4000)
+    final List<String> chunks = [];
+    int start = 0;
+    while (start < script.length) {
+      if (start + 3000 < script.length) {
+        int end = start + 3000;
+        while (end > start &&
+            script[end] != ' ' &&
+            script[end] != '.' &&
+            script[end] != '।') {
+          end--;
+        }
+        if (end == start) end = start + 3000;
+        chunks.add(script.substring(start, end).trim());
+        start = end;
+      } else {
+        chunks.add(script.substring(start).trim());
+        start = script.length;
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isNarrationPlaying = true;
+      _isNarrationPaused = false;
+    });
+
+    for (final chunk in chunks) {
+      if (_isNarrationStopped) break;
+
+      while (_isNarrationPaused && !_isNarrationStopped) {
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      if (_isNarrationStopped) break;
+      await _flutterTts.speak(chunk);
+    }
+
+    if (mounted && !_isNarrationStopped) {
+      setState(() {
+        _isNarrationPlaying = false;
+        _isNarrationPaused = false;
+      });
+    }
   }
 
   Future<void> _pauseNarration() async {
@@ -410,9 +430,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     } catch (_) {
       await _flutterTts.stop();
     }
+    if (!mounted) return;
+    setState(() {
+      _isNarrationPlaying = false;
+      _isNarrationPaused = true;
+    });
   }
 
   Future<void> _stopNarration() async {
+    _isNarrationStopped = true;
     await _flutterTts.stop();
     if (!mounted) return;
     setState(() {
@@ -482,7 +508,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                           centerTitle: true,
                           leading: IconButton(
                             icon: const Icon(Icons.menu_rounded),
-                            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                            onPressed: () =>
+                                _scaffoldKey.currentState?.openDrawer(),
                           ),
                           title: Text(
                             l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
@@ -502,12 +529,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                 },
                                 style: TextButton.styleFrom(
                                   foregroundColor: _analysisAccent(theme),
-                                  backgroundColor: _analysisAccent(theme)
-                                      .withValues(alpha: 0.1),
+                                  backgroundColor: _analysisAccent(
+                                    theme,
+                                  ).withValues(alpha: 0.1),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                 ),
                                 child: Text(
                                   currentLang == AppLanguage.english
@@ -515,7 +545,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                       : currentLang == AppLanguage.hindi
                                       ? '\u0939\u093f'
                                       : '\u092e',
-                                  style: const TextStyle(fontWeight: FontWeight.w900),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
                             ),
@@ -525,7 +557,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                             child: Divider(
                               height: 1,
                               thickness: 1,
-                              color: _analysisAccent(theme).withValues(alpha: 0.12),
+                              color: _analysisAccent(
+                                theme,
+                              ).withValues(alpha: 0.12),
                             ),
                           ),
                         ),
@@ -546,7 +580,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                             children: [
                               _buildAgeIndicatorTile(context, birthdate, l10n),
                               _buildNumerologyCoreDetailsTile(context, ref),
-                              _buildPersonalityDetails(context, ref, currentLang),
+                              _buildPersonalityDetails(
+                                context,
+                                ref,
+                                currentLang,
+                              ),
                               _buildNumerologyAnalysisSection(context, ref),
                               _buildLoshuPlanesSection(
                                 context,
@@ -554,7 +592,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                 l10n,
                                 currentLang,
                               ),
-                              _buildRemedyValuesSection(context, ref, currentLang),
+                              _buildRemedyValuesSection(
+                                context,
+                                ref,
+                                currentLang,
+                              ),
                               _buildMissingNumberTellsSection(context, ref),
                               _buildMissingNumberRemediesSection(context, ref),
                               _buildNumberOccurrenceDetailsSection(
@@ -563,8 +605,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                 l10n,
                                 currentLang,
                               ),
-                              _buildImportantPointsSection(context, ref, currentLang),
-                              _buildStockMarketInfoSection(context, ref, currentLang),
+                              _buildImportantPointsSection(
+                                context,
+                                ref,
+                                currentLang,
+                              ),
+                              _buildStockMarketInfoSection(
+                                context,
+                                ref,
+                                currentLang,
+                              ),
                               _buildPinnacleSection(
                                 context,
                                 ref,
@@ -591,7 +641,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                               ),
                               _buildLifePathSection(context, ref, l10n),
                               _buildCareerSection(context, ref, l10n),
-                              _buildBoostingPersonalitySection(context, ref, l10n),
+                              _buildBoostingPersonalitySection(
+                                context,
+                                ref,
+                                l10n,
+                              ),
                               _buildCombinationSection(
                                 context,
                                 ref,
@@ -1019,7 +1073,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                     : NumerologyUIContent.getLabel(
                                         'time_plural',
                                         currentLang,
-                      ),
+                                      ),
                               ),
                       color: _analysisAccent(theme),
                       icon: Icons.repeat_rounded,
@@ -1159,8 +1213,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
-                                      color: _analysisAccent(theme)
-                                          .withValues(alpha: 0.2),
+                                      color: _analysisAccent(
+                                        theme,
+                                      ).withValues(alpha: 0.2),
                                       width: 2,
                                     ),
                                   ),
@@ -1176,8 +1231,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                               Container(
                                                 width: 60,
                                                 height: 60,
-                                                color: _analysisAccent(theme)
-                                                    .withValues(alpha: 0.1),
+                                                color: _analysisAccent(
+                                                  theme,
+                                                ).withValues(alpha: 0.1),
                                                 child: Icon(
                                                   Icons.person_rounded,
                                                   color: _analysisAccent(theme),
@@ -1203,9 +1259,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                             Icon(
                               Icons.format_quote_rounded,
                               size: 28,
-                              color: _analysisAccent(theme).withValues(
-                                alpha: 0.35,
-                              ),
+                              color: _analysisAccent(
+                                theme,
+                              ).withValues(alpha: 0.35),
                             ),
                             const SizedBox(height: 8),
                             Expanded(
@@ -1777,14 +1833,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                         height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: _analysisAccent(theme).withValues(
-                            alpha: 0.1,
-                          ),
+                          color: _analysisAccent(theme).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: _analysisAccent(theme).withValues(
-                              alpha: 0.2,
-                            ),
+                            color: _analysisAccent(
+                              theme,
+                            ).withValues(alpha: 0.2),
                             width: 2,
                           ),
                         ),
@@ -2532,9 +2586,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                         child: Icon(
                           Icons.help_outline_rounded,
                           size: 14,
-                          color: _analysisAccent(theme).withValues(
-                            alpha: 0.4,
-                          ),
+                          color: _analysisAccent(theme).withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -2629,7 +2681,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
   }
 
-  Widget _buildNarrationGuideTile(BuildContext context, AppLanguage currentLang) {
+  Widget _buildNarrationGuideTile(
+    BuildContext context,
+    AppLanguage currentLang,
+  ) {
     if (ref.watch(birthdateProvider) == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
@@ -2666,7 +2721,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.05),
                 border: Border(
-                  bottom: BorderSide(color: accent.withValues(alpha: 0.1), width: 1),
+                  bottom: BorderSide(
+                    color: accent.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
                 ),
               ),
               child: _buildMysticHeader(
@@ -2674,7 +2732,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                 subtitle: subtitle,
                 icon: Icons.record_voice_over_rounded,
                 iconColor: theme.colorScheme.secondary,
-                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                iconBgColor: theme.colorScheme.secondary.withValues(
+                  alpha: 0.12,
+                ),
               ),
             ),
             _buildMysticContentCard(
@@ -2710,7 +2770,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                                  color: theme.colorScheme.secondary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 20,
                                   spreadRadius: 5,
                                 ),
@@ -2727,12 +2789,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              theme.colorScheme.secondary.withValues(alpha: 0.2),
+                              theme.colorScheme.secondary.withValues(
+                                alpha: 0.2,
+                              ),
                               accent.withValues(alpha: 0.1),
                             ],
                           ),
                           border: Border.all(
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.3,
+                            ),
                             width: 1.5,
                           ),
                         ),
@@ -2749,7 +2815,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                                      color: theme.colorScheme.secondary
+                                          .withValues(alpha: 0.4),
                                       blurRadius: 10,
                                     ),
                                   ],
@@ -2780,23 +2847,28 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                   mainAxisSize: MainAxisSize.min,
                                   children: List.generate(3, (index) {
                                     return ScaleTransition(
-                                      scale: Tween(begin: 0.6, end: 1.2).animate(
-                                        CurvedAnimation(
-                                          parent: _pulseController,
-                                          curve: Interval(
-                                            index * 0.2,
-                                            1.0,
-                                            curve: Curves.easeInOut,
+                                      scale: Tween(begin: 0.6, end: 1.2)
+                                          .animate(
+                                            CurvedAnimation(
+                                              parent: _pulseController,
+                                              curve: Interval(
+                                                index * 0.2,
+                                                1.0,
+                                                curve: Curves.easeInOut,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
                                       child: Container(
-                                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 2,
+                                        ),
                                         width: 5,
                                         height: 15,
                                         decoration: BoxDecoration(
                                           color: theme.colorScheme.secondary,
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                       ),
                                     );
@@ -2828,21 +2900,24 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                         const SizedBox(height: 6),
                         Text(
                           switch (currentLang) {
-                            AppLanguage.hindi => _isNarrationPlaying
-                                ? 'आपकी रिपोर्ट अभी पढ़ी जा रही है।'
-                                : _isNarrationPaused
-                                    ? 'पठन रोका गया है।'
-                                    : 'अपनी रिपोर्ट को आवाज़ में सुनें।',
-                            AppLanguage.marathi => _isNarrationPlaying
-                                ? 'अहवाल वाचला जात आहे.'
-                                : _isNarrationPaused
-                                    ? 'वाचन थांबवले आहे.'
-                                    : 'अहवाल आवाजात ऐका.',
-                            AppLanguage.english => _isNarrationPlaying
-                                ? 'Reading report aloud...'
-                                : _isNarrationPaused
-                                    ? 'Reading is paused.'
-                                    : 'Listen to your analysis.',
+                            AppLanguage.hindi =>
+                              _isNarrationPlaying
+                                  ? 'आपकी रिपोर्ट अभी पढ़ी जा रही है।'
+                                  : _isNarrationPaused
+                                  ? 'पठन रोका गया है।'
+                                  : 'अपनी रिपोर्ट को आवाज़ में सुनें।',
+                            AppLanguage.marathi =>
+                              _isNarrationPlaying
+                                  ? 'अहवाल वाचला जात आहे.'
+                                  : _isNarrationPaused
+                                  ? 'वाचन थांबवले आहे.'
+                                  : 'अहवाल आवाजात ऐका.',
+                            AppLanguage.english =>
+                              _isNarrationPlaying
+                                  ? 'Reading report aloud...'
+                                  : _isNarrationPaused
+                                  ? 'Reading is paused.'
+                                  : 'Listen to your analysis.',
                           },
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -2850,10 +2925,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             _buildOracleButton(
-                              onPressed: canPlay ? () => _playNarration(currentLang) : null,
+                              onPressed: canPlay
+                                  ? () => _playNarration(currentLang)
+                                  : null,
                               icon: _isNarrationPaused
                                   ? Icons.play_arrow_rounded
                                   : Icons.volume_up_rounded,
@@ -2861,14 +2940,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                               isPrimary: true,
                               theme: theme,
                             ),
-                            const SizedBox(width: 8),
                             if (_isNarrationPlaying || _isNarrationPaused) ...[
                               _buildOracleButton(
                                 onPressed: _pauseNarration,
                                 icon: Icons.pause_rounded,
                                 theme: theme,
                               ),
-                              const SizedBox(width: 8),
                               _buildOracleButton(
                                 onPressed: _stopNarration,
                                 icon: Icons.stop_rounded,
@@ -2902,8 +2979,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     final baseColor = isPrimary
         ? theme.colorScheme.secondary
         : isError
-            ? theme.colorScheme.error
-            : accent;
+        ? theme.colorScheme.error
+        : accent;
 
     if (label != null) {
       return FilledButton.icon(
@@ -2912,7 +2989,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           backgroundColor: baseColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           elevation: 0,
         ),
         icon: Icon(icon, size: 20),
@@ -3277,10 +3356,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.info_outline_rounded,
-                color: _analysisAccent(theme),
-              ),
+              Icon(Icons.info_outline_rounded, color: _analysisAccent(theme)),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -3421,8 +3497,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color:
-              borderColor ?? _analysisAccent(theme).withValues(alpha: 0.15),
+          color: borderColor ?? _analysisAccent(theme).withValues(alpha: 0.15),
           width: 1.5,
         ),
         gradient: LinearGradient(
@@ -3460,8 +3535,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color:
-                iconBgColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
+            color: iconBgColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -3500,9 +3574,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                           child: Icon(
                             Icons.help_outline_rounded,
                             size: 20,
-                            color: _analysisAccent(theme).withValues(
-                              alpha: 0.6,
-                            ),
+                            color: _analysisAccent(
+                              theme,
+                            ).withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -3542,8 +3616,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color:
-              borderColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
+          color: borderColor ?? _analysisAccent(theme).withValues(alpha: 0.1),
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
