@@ -11,6 +11,7 @@ class ModelUserFields {
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
   static const String userLanguage = 'user_language';
+  static const String fcmToken = 'fcm_token';
 }
 
 class ModelUser {
@@ -21,6 +22,7 @@ class ModelUser {
   final DateTime? createdAt; // nullable, DB default
   final DateTime? updatedAt; // nullable, DB default
   final String? userLanguage; // nullable
+  final String? fcmToken; // nullable
   final Map<String, dynamic> _resolvedLabels;
 
   ModelUser({
@@ -31,6 +33,7 @@ class ModelUser {
     this.createdAt,
     this.updatedAt,
     this.userLanguage,
+    this.fcmToken,
     Map<String, dynamic>? resolvedLabels,
   }) : _resolvedLabels = resolvedLabels ?? const {};
 
@@ -52,6 +55,7 @@ class ModelUser {
       createdAt: _parseDate(map[ModelUserFields.createdAt]),
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
       userLanguage: map[ModelUserFields.userLanguage],
+      fcmToken: map[ModelUserFields.fcmToken],
       resolvedLabels: labelEntries,
     );
   }
@@ -68,6 +72,7 @@ class ModelUser {
       if (updatedAt != null)
         ModelUserFields.updatedAt: updatedAt!.toIso8601String(),
       if (userLanguage != null) ModelUserFields.userLanguage: userLanguage,
+      if (fcmToken != null) ModelUserFields.fcmToken: fcmToken,
     };
   }
 
@@ -80,6 +85,7 @@ class ModelUser {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'userLanguage': userLanguage,
+      'fcmToken': fcmToken,
       'resolvedLabels': resolvedLabels,
     };
   }
@@ -93,6 +99,7 @@ class ModelUser {
       createdAt: DateTime.tryParse(json['createdAt'] ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
       userLanguage: json['userLanguage'] as String?,
+      fcmToken: json['fcmToken'] as String?,
       resolvedLabels: json['resolvedLabels'] ?? {},
     );
   }

@@ -1,15 +1,22 @@
+import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../providers/core_providers.dart';
+import '../../features/postLogin/users/user_barrel.dart';
 
 final messagingServiceProvider = Provider<MessagingService>((ref) {
-  return MessagingService(FirebaseMessaging.instance);
+  final client = ref.watch(supabaseClientProvider);
+  return MessagingService(FirebaseMessaging.instance, client);
 });
 
 class MessagingService {
   final FirebaseMessaging _messaging;
+  final SupabaseClient _supabase;
 
-  MessagingService(this._messaging);
+  MessagingService(this._messaging, this._supabase);
+  StreamSubscription<AuthState>? _authSubscription;
 
   /// Initialize messaging settings and request permissions.
   Future<void> initialize() async {
@@ -61,7 +68,8 @@ class MessagingService {
               },
             );
             if (token != null) {
-              debugPrint('FCM Token: $token');
+              debugPrint('FCM Token retrieved successfully');
+              await _syncTokenToDatabase(token);
             } else {
               debugPrint('MessagingService: Token received was null');
             }
@@ -79,11 +87,62 @@ class MessagingService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('MessagingService: Received foreground message: ${message.notification?.title}');
       });
+
+      // Handle token refresh
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        debugPrint('MessagingService: FCM Token refreshed');
+        _syncTokenToDatabase(newToken);
+      });
+
+      // Handle auth state changes to sync token on login
+      _authSubscription?.cancel();
+      _authSubscription = _supabase.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.signedIn) {
+          debugPrint('MessagingService: User signed in, triggering token sync');
+          syncCurrentToken();
+        }
+      });
     } catch (e) {
       debugPrint('MessagingService: Error initializing Firebase Messaging: $e');
     }
   }
 
+  /// Manually trigger a sync of the current FCM token to the database.
+  Future<void> syncCurrentToken() async {
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) {
+        await _syncTokenToDatabase(token);
+      }
+    } catch (e) {
+      debugPrint('MessagingService: Error during manual token sync: $e');
+    }
+  }
+
+  /// Syncs the token to the Supabase users table if a user is logged in.
+  Future<void> _syncTokenToDatabase(String token) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      debugPrint('MessagingService: No authenticated user, skipping token sync');
+      return;
+    }
+
+    try {
+      debugPrint('MessagingService: Syncing FCM token for user ${user.id}...');
+      await _supabase
+          .from(ModelUserFields.table)
+          .update({ModelUserFields.fcmToken: token})
+          .eq(ModelUserFields.userId, user.id);
+      debugPrint('MessagingService: FCM token synced successfully');
+    } catch (e) {
+      debugPrint('MessagingService: Error syncing FCM token to database: $e');
+    }
+  }
+
   /// Optional: Get current token for specific troubleshooting or manual targeting.
   Future<String?> getToken() => _messaging.getToken();
+
+  void dispose() {
+    _authSubscription?.cancel();
+  }
 }
