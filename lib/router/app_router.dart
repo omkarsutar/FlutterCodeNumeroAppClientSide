@@ -18,6 +18,8 @@ import '../core/models/route_permission.dart';
 import 'route_guards.dart';
 import '../core/services/analytics_service.dart';
 
+import '../core/globals.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   // Register permissions for non-generic modules
   ModuleRouteRegistry.registerRoutePermission(
@@ -31,6 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 
   return GoRouter(
+    navigatorKey: navigatorKey,
     routes: [
       ...authRoutes,
       GoRoute(

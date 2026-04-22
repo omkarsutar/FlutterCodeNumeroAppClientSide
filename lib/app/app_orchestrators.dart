@@ -45,7 +45,8 @@ class LanguageOrchestrator extends ConsumerWidget {
       if (!next) {
         // Delay slightly to ensure context is ready and other orchestrators settled
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          LanguageSelectionDialog.show(context);
+          final targetContext = navigatorKey.currentContext ?? context;
+          LanguageSelectionDialog.show(targetContext);
         });
       }
     });
@@ -54,7 +55,8 @@ class LanguageOrchestrator extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isSet = ref.read(isLanguageSetProvider);
       if (!isSet) {
-        LanguageSelectionDialog.show(context);
+        final targetContext = navigatorKey.currentContext ?? context;
+        LanguageSelectionDialog.show(targetContext);
       }
     });
 

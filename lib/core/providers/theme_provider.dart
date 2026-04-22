@@ -6,8 +6,13 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 /// Shared palette for the Numero Shastra visual language.
 class AppPalette {
-  static const Color logoBlue = Color(0xFF003BFF);
+  static const Color logoBlue = Color(0xFF3492FF);
   static const Color sacredGold = Color(0xFFFBBF24);
+
+  // Semantic Blue Shades (Now all aligned to #3492FF or variations)
+  static const Color primaryBlue = Color(0xFF3492FF);
+  static Color get accentBlue => const Color(0xFF3492FF).withValues(alpha: 0.8);
+  static Color get softBlue => const Color(0xFF3492FF).withValues(alpha: 0.1);
 
   static const Color darkBackground = Color(0xFF090F1F);
   static const Color darkSurface = Color(0xFF121A2F);
@@ -49,10 +54,10 @@ ThemeData buildDarkTheme() {
       onSecondary: const Color(0xFF1C1504),
       secondaryContainer: AppPalette.darkGoldContainer,
       onSecondaryContainer: const Color(0xFFFFF4CC),
-      tertiary: const Color(0xFF8EA2FF),
-      onTertiary: const Color(0xFF0C1331),
-      tertiaryContainer: const Color(0xFF1F2C57),
-      onTertiaryContainer: const Color(0xFFE1E7FF),
+      tertiary: const Color(0xFF8BA5FF), // Slightly lighter blue
+      onTertiary: const Color(0xFF002966),
+      tertiaryContainer: const Color(0xFF0044AA),
+      onTertiaryContainer: const Color(0xFFD6E3FF),
       error: AppPalette.darkError,
       onError: Colors.white,
       errorContainer: const Color(0xFF4C1D1D),
@@ -64,7 +69,7 @@ ThemeData buildDarkTheme() {
       outlineVariant: AppPalette.darkOutline,
       inverseSurface: const Color(0xFFE8ECFA),
       onInverseSurface: const Color(0xFF151B2E),
-      inversePrimary: const Color(0xFF7C97FF),
+      inversePrimary: AppPalette.logoBlue,
       surfaceContainerHighest: AppPalette.darkSurfaceSoft,
     ),
     scaffoldBackgroundColor: AppPalette.darkBackground,
@@ -169,10 +174,10 @@ ThemeData buildLightTheme() {
       onSecondary: Colors.white,
       secondaryContainer: AppPalette.lightGoldContainer,
       onSecondaryContainer: const Color(0xFF4D3500),
-      tertiary: const Color(0xFF405CCF),
+      tertiary: const Color(0xFF3492FF).withValues(alpha: 0.8),
       onTertiary: Colors.white,
-      tertiaryContainer: const Color(0xFFE1E7FF),
-      onTertiaryContainer: const Color(0xFF1D2D6F),
+      tertiaryContainer: const Color(0xFFD6E3FF),
+      onTertiaryContainer: const Color(0xFF001B3D),
       error: AppPalette.lightError,
       onError: Colors.white,
       errorContainer: const Color(0xFFFEE2E2),
@@ -184,7 +189,7 @@ ThemeData buildLightTheme() {
       outlineVariant: AppPalette.lightOutline,
       inverseSurface: const Color(0xFF1A223A),
       onInverseSurface: const Color(0xFFF6F7FB),
-      inversePrimary: const Color(0xFF8AA2FF),
+      inversePrimary: const Color(0xFF8BA5FF),
       surfaceContainerHighest: AppPalette.lightSurfaceRaised,
     ),
     scaffoldBackgroundColor: AppPalette.lightBackground,
