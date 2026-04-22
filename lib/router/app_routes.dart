@@ -26,6 +26,8 @@ class AppRoute {
   static const String loadingName = 'loading';
   static const String cartName = 'cart';
   static const String birthdateAnalysisName = 'birthdate-analysis';
+  static const String notificationAdmin = '/notification-admin';
+  static const String notificationAdminName = 'notification-admin';
   static const String unauthorizedName = 'unauthorized';
   static const String vacationName = 'vacation';
 

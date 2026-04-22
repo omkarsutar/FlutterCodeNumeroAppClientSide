@@ -5,13 +5,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
+import '../../birthdate_analysis/ui/utils/analysis_theme.dart';
+import '../../birthdate_analysis/ui/widgets/mystic_widgets.dart';
+import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../providers/cart_controller.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/services/analytics_service.dart';
-
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -47,13 +49,14 @@ class _CartPageState extends ConsumerState<CartPage> {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      
-      ref.read(analyticsServiceProvider).logPaymentEvent(
-        status: 'success',
-        itemCount: 1, // poId indicates specific order
-      );
-      _showSuccessDialog(poId);
 
+      ref
+          .read(analyticsServiceProvider)
+          .logPaymentEvent(
+            status: 'success',
+            itemCount: 1, // poId indicates specific order
+          );
+      _showSuccessDialog(poId);
     }
   }
 
@@ -64,7 +67,9 @@ class _CartPageState extends ConsumerState<CartPage> {
       builder: (context) {
         final theme = Theme.of(context);
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
           child: Container(
             padding: const EdgeInsets.all(32),
             child: Column(
@@ -76,7 +81,11 @@ class _CartPageState extends ConsumerState<CartPage> {
                     color: Colors.green.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                    size: 64,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -100,9 +109,14 @@ class _CartPageState extends ConsumerState<CartPage> {
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: const Text('View Analysis', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'View Analysis',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -118,12 +132,10 @@ class _CartPageState extends ConsumerState<CartPage> {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
-      ref.read(analyticsServiceProvider).logPaymentEvent(
-        status: 'failure',
-        error: error,
-      );
+      ref
+          .read(analyticsServiceProvider)
+          .logPaymentEvent(status: 'failure', error: error);
       ScaffoldMessenger.of(context).showSnackBar(
-
         SnackBar(
           content: Text(
             'Payment Failed: $error',
@@ -198,14 +210,24 @@ class _CartPageState extends ConsumerState<CartPage> {
                         parent: BouncingScrollPhysics(),
                       ),
                       padding: const EdgeInsets.all(16),
-                      itemCount: unpaidOrders.length,
+                      // +1 for the premium features tile appended at the end
+                      itemCount: unpaidOrders.length + 1,
                       itemBuilder: (context, index) {
+                        // Last item: show the "What you get" premium features tile
+                        if (index == unpaidOrders.length) {
+                          final cartL10n = ref.read(birthdateL10nProvider);
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8, bottom: 16),
+                            child: _buildPremiumFeaturesTile(context, cartL10n),
+                          );
+                        }
+
                         final order = unpaidOrders[index];
                         final recordId = order.id ?? '';
                         final isSelected = selectedIds.contains(recordId);
-                        final dateDisplay = DateFormat('dd-MMM-yyyy').format(
-                          order.birthdate,
-                        );
+                        final dateDisplay = DateFormat(
+                          'dd-MMM-yyyy',
+                        ).format(order.birthdate);
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16),
@@ -215,8 +237,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                             side: BorderSide(
                               color: isSelected
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.primary
-                                      .withValues(alpha: 0.1),
+                                  : theme.colorScheme.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
                               width: isSelected ? 2 : 1.5,
                             ),
                           ),
@@ -259,8 +282,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                                         width: 1.5,
                                       ),
                                       onChanged: (val) {
-                                        final current =
-                                            Set<String>.from(selectedIds);
+                                        final current = Set<String>.from(
+                                          selectedIds,
+                                        );
                                         if (val == true) {
                                           current.add(recordId);
                                           ref
@@ -273,10 +297,12 @@ class _CartPageState extends ConsumerState<CartPage> {
                                               .logCartAction('item_deselected');
                                         }
                                         ref
-                                            .read(
-                                              selectedOrdersProvider.notifier,
-                                            )
-                                            .state = current;
+                                                .read(
+                                                  selectedOrdersProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            current;
                                       },
                                     ),
                                   ),
@@ -292,8 +318,8 @@ class _CartPageState extends ConsumerState<CartPage> {
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
                                                 fontWeight: FontWeight.bold,
-                                                color: theme
-                                                    .colorScheme.onSurface,
+                                                color:
+                                                    theme.colorScheme.onSurface,
                                                 letterSpacing: 0.5,
                                               ),
                                         ),
@@ -302,7 +328,8 @@ class _CartPageState extends ConsumerState<CartPage> {
                                           order.fullName ?? '',
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                                color: theme.colorScheme
+                                                color: theme
+                                                    .colorScheme
                                                     .onSurfaceVariant,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -353,7 +380,6 @@ class _CartPageState extends ConsumerState<CartPage> {
         await ref.read(cartControllerProvider).deleteBirthdate(id);
         ref.read(analyticsServiceProvider).logCartAction('item_deleted');
 
-
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
@@ -384,7 +410,6 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   Future<void> _handlePaymentAction(List<String> poIds) async {
-    final l10n = ref.read(appL10nProvider);
     final user = ref.read(supabaseClientProvider).auth.currentUser;
 
     if (user == null) {
@@ -394,15 +419,17 @@ class _CartPageState extends ConsumerState<CartPage> {
       return;
     }
 
-    final count = poIds.length;
+    final allUnpaid = ref.read(unpaidOrdersProvider);
+    final selectedOrders = allUnpaid
+        .where((o) => poIds.contains(o.id))
+        .toList();
+    final count = selectedOrders.length;
     final totalAmount = count == 1 ? 299 : count * 249;
 
-    final confirm = await showConfirmationDialog(
+    final confirm = await _showPaymentConfirmationDialog(
       context: context,
-      title: l10n['pay_now'] ?? 'Pay Now',
-      content:
-          'Are you sure you want to pay \u20B9$totalAmount for $count ${count == 1 ? "order" : "orders"}?',
-      confirmLabel: l10n['pay_now'] ?? 'Pay Now',
+      orders: selectedOrders,
+      totalAmount: totalAmount,
     );
 
     if (confirm == true) {
@@ -412,11 +439,15 @@ class _CartPageState extends ConsumerState<CartPage> {
             context: context,
             builder: (context) => AlertDialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              title: const Text('Mobile App Required',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Text(
+                'Mobile App Required',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: const Text(
-                  'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.'),
+                'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -439,19 +470,22 @@ class _CartPageState extends ConsumerState<CartPage> {
         final email = user.email ?? '';
         final contact = user.userMetadata?['phone'] ?? '';
 
-        ref.read(analyticsServiceProvider).logPaymentEvent(
-          status: 'initiated',
-          amount: totalAmount.toDouble(),
-          itemCount: poIds.length,
-        );
+        ref
+            .read(analyticsServiceProvider)
+            .logPaymentEvent(
+              status: 'initiated',
+              amount: totalAmount.toDouble(),
+              itemCount: poIds.length,
+            );
 
-        await ref.read(cartControllerProvider).startPaymentFlow(
-          poIds: poIds,
-
-          totalAmount: totalAmount.toDouble(),
-          email: email,
-          contact: contact,
-        );
+        await ref
+            .read(cartControllerProvider)
+            .startPaymentFlow(
+              poIds: poIds,
+              totalAmount: totalAmount.toDouble(),
+              email: email,
+              contact: contact,
+            );
       } catch (e) {
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
@@ -469,6 +503,192 @@ class _CartPageState extends ConsumerState<CartPage> {
     }
   }
 
+  Future<bool?> _showPaymentConfirmationDialog({
+    required BuildContext context,
+    required List<dynamic> orders,
+    required int totalAmount,
+  }) {
+    final theme = Theme.of(context);
+    final count = orders.length;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.shopping_bag_outlined,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    'Confirm Purchase',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'You are unlocking $count ${count == 1 ? "birthdate analysis" : "birthdate analyses"}:',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(12),
+                    itemCount: orders.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 16, indent: 8, endIndent: 8),
+                    itemBuilder: (context, index) {
+                      final order = orders[index];
+                      return Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat(
+                                    'dd-MMM-yyyy',
+                                  ).format(order.birthdate),
+
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  order.fullName ?? 'Unnamed',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total Amount',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      '\u20B9$totalAmount',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Pay Now',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPaymentFooter(
     BuildContext context,
     Set<String> selectedIds,
@@ -476,29 +696,144 @@ class _CartPageState extends ConsumerState<CartPage> {
   ) {
     final theme = Theme.of(context);
     final count = selectedIds.length;
+    final birthdateL10n = ref.watch(birthdateL10nProvider);
 
     // Pricing logic: 1 -> 299, 1+ -> 249 each (e.g., 2=498, 3=747)
     final totalAmount = count == 1 ? 299 : count * 249;
     final originalAmount = count * 1000;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(
           top: BorderSide(
             color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            width: 1,
+            width: 1.5,
           ),
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Add Birthdate and special offer row
+            // Row 1: Special Offer Title and Add Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.local_offer_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      birthdateL10n['special_offer'] ?? 'Special Offer',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(analyticsServiceProvider)
+                        .logClickEvent('add_more_from_cart');
+                    context.pushNamed(AppRoute.birthdateAnalysisName);
+                  },
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                  label: Text(
+                    birthdateL10n['add_birthdate'] ?? 'Add Birthdate',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.08,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Row 2: Pricing Details (Full Width)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
+                    theme.colorScheme.primary.withValues(alpha: 0.02),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${birthdateL10n['for_limited_time'] ?? 'For 1+ analysis only'} ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '\u20B9299',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.6,
+                      ),
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                  Text(
+                    ' \u20B9249 ${birthdateL10n['each'] ?? 'each'}.',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Row 3: Selection Count and Pay Button
             Row(
               children: [
                 Expanded(
@@ -506,84 +841,25 @@ class _CartPageState extends ConsumerState<CartPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Special Offer:',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                        count == 0
+                            ? (l10n['select'] ?? 'Select')
+                            : '$count ${count == 1 ? "birthdate" : "birthdates"}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            'For 1+ analysis only ',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '\u20B9299',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                          Text(
-                            ' \u20B9249 each.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Selected',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    ref.read(analyticsServiceProvider).logClickEvent('add_more_from_cart');
-                    context.pushNamed(AppRoute.birthdateAnalysisName);
-                  },
-                  icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-
-                  label: const Text('Add'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.primary,
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Bottom row with selection count and Pay button
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    count == 0
-                        ? 'Select a Birthdate'
-                        : '$count ${count == 1 ? "birthdate" : "birthdates"} selected',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: count == 0
                       ? null
@@ -592,12 +868,15 @@ class _CartPageState extends ConsumerState<CartPage> {
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                      horizontal: 32,
+                      vertical: 18,
                     ),
-                    elevation: 0,
+                    elevation: 4,
+                    shadowColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.3,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   child: Row(
@@ -606,20 +885,21 @@ class _CartPageState extends ConsumerState<CartPage> {
                       if (count > 0) ...[
                         Text(
                           '\u20B9$originalAmount',
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             decoration: TextDecoration.lineThrough,
-                            color: Colors.white70,
+                            color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                       ],
                       Text(
                         count == 0 ? 'Pay' : 'Pay \u20B9$totalAmount',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 16,
+                          fontSize: 18,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -635,49 +915,166 @@ class _CartPageState extends ConsumerState<CartPage> {
 
   Widget _buildPromoFooter(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+    final l10n = ref.watch(birthdateL10nProvider);
+    final unpaidOrders = ref.watch(unpaidOrdersProvider);
+
+    // Check if any order in the cart is 'pending'
+    // Temporarily always show the tile for debugging
+    final hasPendingOrder = unpaidOrders.any(
+      (order) => order.status.toLowerCase() == 'pending',
+    );
+
+    return Column(
+      children: [
+        // Always show the tile for debugging - remove this condition later
+        _buildPremiumFeaturesTile(context, l10n),
+        // if (hasPendingOrder) _buildPremiumFeaturesTile(context, l10n),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Special Offers',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildOfferRow(
+                context,
+                title: '1 Birthdate Analysis',
+                price: '\u20B9299',
+                originalPrice: '\u20B9999',
+              ),
+              const Divider(height: 24),
+              _buildOfferRow(
+                context,
+                title: '2+ Birthdate Analysis',
+                price: '\u20B9249 each',
+                originalPrice: '\u20B9299',
+                isSpecial: true,
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildPremiumFeaturesTile(
+    BuildContext context,
+    Map<String, String> l10n,
+  ) {
+    final theme = Theme.of(context);
+    final features = [
+      l10n['premium_feature_1'] ?? 'Detailed Lo Shu Grid Analysis',
+      l10n['premium_feature_2'] ?? 'Career Insights',
+      l10n['premium_feature_3'] ?? 'Personalized Remedies for Missing Numbers',
+      l10n['premium_feature_4'] ?? 'Advanced Personality & Strength Mapping',
+      l10n['premium_feature_5'] ?? 'Life Path & Pinnacle Phase Guidance',
+      l10n['premium_feature_6'] ?? 'Oracle Voice Guide for Deeper Insights',
+    ];
+
+    return MysticSection(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.auto_awesome,
-                color: theme.colorScheme.primary,
-                size: 20,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.stars_rounded,
+                  color: Colors.amber,
+                  size: 28,
+                ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Special Offers',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.primary,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  l10n['premium_title'] ?? 'What you get in Detailed Analysis',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AnalysisTheme.getAccent(theme),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildOfferRow(
-            context,
-            title: '1 Birthdate Analysis',
-            price: '\u20B9299',
-            originalPrice: '\u20B9999',
+          const SizedBox(height: 20),
+          ...features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 20,
+                    color: AnalysisTheme.getAccent(
+                      theme,
+                    ).withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const Divider(height: 24),
-          _buildOfferRow(
-            context,
-            title: '2+ Birthdate Analysis',
-            price: '\u20B9249 each',
-            originalPrice: '\u20B9299',
-            isSpecial: true,
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AnalysisTheme.getAccent(theme).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AnalysisTheme.getAccent(theme).withValues(alpha: 0.1),
+              ),
+            ),
+            child: Text(
+              l10n['premium_footer'] ??
+                  'Unlock the full potential of your birthdate today!',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w700,
+                color: AnalysisTheme.getAccent(theme),
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),

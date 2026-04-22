@@ -18,7 +18,9 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final effectivelyShowBack = showBack && context.canPop();
+    final effectivelyShowBack =
+        (showBack || ModalRoute.of(context)?.canPop == true) &&
+        context.canPop();
     final currentLang = ref.watch(languageProvider);
 
     return AppBar(

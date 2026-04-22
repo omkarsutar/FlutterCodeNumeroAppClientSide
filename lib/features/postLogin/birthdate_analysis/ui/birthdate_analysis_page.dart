@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../cart/providers/cart_controller.dart';
 import '../providers/numerology_content_providers.dart';
-import '../providers/numerology_providers.dart';
-import '../providers/narration_provider.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
@@ -19,7 +17,6 @@ import '../model/numerology_help_content.dart';
 
 import 'utils/analysis_theme.dart';
 import 'widgets/mystic_widgets.dart';
-import 'widgets/oracle_widgets.dart';
 import 'sections/narration_guide_section.dart';
 import 'sections/age_indicator_section.dart';
 import 'sections/numerology_core_details_section.dart';
@@ -52,8 +49,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -64,29 +59,25 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     )..repeat(reverse: true);
   }
 
-
   @override
   void dispose() {
-
     _pulseController.dispose();
     super.dispose();
   }
 
   Future<void> _refreshAnalysisData() async {
     // In Riverpod, explicitly triggering dozens of downstream network fetches directly inside
-    // a UI refresh loop violates reactive principles. 
+    // a UI refresh loop violates reactive principles.
     // Simply invalidating the primary data source guarantees all downstream providers will fetch when needed!
     ref.invalidate(currentBirthdateRecordProvider);
     ref.invalidate(birthdatesStreamProvider);
-    
+
     final birthdate = ref.read(birthdateProvider);
     if (birthdate == null) return;
-    
+
     // ignore: unused_result
     await ref.refresh(birthdatesStreamProvider.future);
   }
-
-
 
   void _navigateToCartAndSelect(DateTime birthdate) async {
     final record = ref.read(currentBirthdateRecordProvider);
@@ -99,9 +90,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       final newSelection = Set<String>.from(currentSelection)..add(birthdateId);
       ref.read(selectedOrdersProvider.notifier).state = newSelection;
 
-      // Navigate to cart page
+      // Navigate to cart page (push so back arrow shows on cart)
       if (mounted) {
-        context.goNamed(AppRoute.cartName);
+        context.pushNamed(AppRoute.cartName);
       }
     }
   }
@@ -123,6 +114,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           final birthdate = ref.watch(birthdateProvider);
           final cartStatus = ref.watch(cartStatusProvider);
           final currentLang = ref.watch(languageProvider);
+          final hasBeenSaved = cartStatus != null;
+          final isPending = cartStatus?.toLowerCase() == 'pending';
           final theme = Theme.of(context);
 
           return Scaffold(
@@ -169,7 +162,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                       .toggleLanguage();
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: AnalysisTheme.getAccent(theme),
+                                  foregroundColor: AnalysisTheme.getAccent(
+                                    theme,
+                                  ),
                                   backgroundColor: AnalysisTheme.getAccent(
                                     theme,
                                   ).withValues(alpha: 0.1),
@@ -227,24 +222,37 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                   final birthdateId =
                                       birthdateRecord?['id'] as String?;
                                   final fullName =
-                                      birthdateRecord?['full_name'] as String? ??
+                                      birthdateRecord?['full_name']
+                                          as String? ??
                                       'Age Snapshot';
                                   if (birthdateId != null) {
                                     _updateBirthdateName(
                                       birthdateId,
-                                      fullName == 'Age Snapshot' ? '' : fullName,
+                                      fullName == 'Age Snapshot'
+                                          ? ''
+                                          : fullName,
                                     );
                                   }
                                 },
                               ),
-                              NumerologyCoreDetailsSection(onHelp: _showHelpDialog),
-                              PersonalityAnalysisSection(onHelp: _showHelpDialog),
+                              NumerologyCoreDetailsSection(
+                                onHelp: _showHelpDialog,
+                              ),
+                              PersonalityAnalysisSection(
+                                onHelp: _showHelpDialog,
+                              ),
                               LoShuGridSection(onHelp: _showHelpDialog),
                               LoshuPlanesSection(onHelp: _showHelpDialog),
                               RemedyValuesSection(onHelp: _showHelpDialog),
-                              MissingNumberTellsSection(onHelp: _showHelpDialog),
-                              MissingNumberRemediesSection(onHelp: _showHelpDialog),
-                              NumberOccurrenceDetailsSection(onHelp: _showHelpDialog),
+                              MissingNumberTellsSection(
+                                onHelp: _showHelpDialog,
+                              ),
+                              MissingNumberRemediesSection(
+                                onHelp: _showHelpDialog,
+                              ),
+                              NumberOccurrenceDetailsSection(
+                                onHelp: _showHelpDialog,
+                              ),
                               ImportantPointsSection(onHelp: _showHelpDialog),
                               StockMarketInfoSection(onHelp: _showHelpDialog),
                               PinnacleSection(
@@ -269,12 +277,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                               ),
                               LifePathSection(onHelp: _showHelpDialog),
                               CareerSection(onHelp: _showHelpDialog),
-                              BoostingPersonalitySection(onHelp: _showHelpDialog),
-                              CombinationSection(onHelp: _showHelpDialog),
-                              const TestimonialsSection(),
-                              NarrationGuideSection(
-                                pulseController: _pulseController,
+                              BoostingPersonalitySection(
+                                onHelp: _showHelpDialog,
                               ),
+                              CombinationSection(onHelp: _showHelpDialog),
+                              if (hasBeenSaved) ...[
+                                const TestimonialsSection(),
+                                NarrationGuideSection(
+                                  pulseController: _pulseController,
+                                ),
+                              ],
                               const SizedBox(height: 100),
                             ],
                           ),
@@ -425,16 +437,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       ),
     );
   }
-
-
-
-
-
-
-
-
-
-
 
   Future<void> _handleOrderAction(DateTime birthdate) async {
     final l10n = ref.read(birthdateL10nProvider);
@@ -602,7 +604,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: AnalysisTheme.getAccent(theme)),
+              Icon(
+                Icons.info_outline_rounded,
+                color: AnalysisTheme.getAccent(theme),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

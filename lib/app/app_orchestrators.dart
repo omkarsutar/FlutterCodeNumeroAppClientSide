@@ -11,6 +11,8 @@ import 'package:flutter_supabase_order_app_mobile/features/postLogin/cart/provid
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_router.dart';
+import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
+import 'package:flutter_supabase_order_app_mobile/shared/widgets/language_selection_dialog.dart';
 
 class AppOrchestratorScope extends StatelessWidget {
   final Widget child;
@@ -21,11 +23,42 @@ class AppOrchestratorScope extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthBootstrapOrchestrator(
       child: ConnectivityToastOrchestrator(
-        child: RoleChangeOrchestrator(
-          child: RetailerShopLinkChangeOrchestrator(child: child),
+        child: LanguageOrchestrator(
+          child: RoleChangeOrchestrator(
+            child: RetailerShopLinkChangeOrchestrator(child: child),
+          ),
         ),
       ),
     );
+  }
+}
+
+class LanguageOrchestrator extends ConsumerWidget {
+  final Widget child;
+
+  const LanguageOrchestrator({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Listen for language selection state
+    ref.listen<bool>(isLanguageSetProvider, (previous, next) {
+      if (!next) {
+        // Delay slightly to ensure context is ready and other orchestrators settled
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          LanguageSelectionDialog.show(context);
+        });
+      }
+    });
+
+    // Check on initial build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final isSet = ref.read(isLanguageSetProvider);
+      if (!isSet) {
+        LanguageSelectionDialog.show(context);
+      }
+    });
+
+    return child;
   }
 }
 

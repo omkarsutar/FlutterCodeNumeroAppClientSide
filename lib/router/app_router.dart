@@ -1,4 +1,5 @@
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/purchase_orders/ui/purchase_order_list_page.dart';
+import '../features/postLogin/notifications/ui/notification_admin_page.dart';
+import '../features/postLogin/purchase_orders/ui/purchase_order_list_page.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   ModuleRouteRegistry.registerRoutePermission(
     AppRoute.birthdateAnalysisName,
     RoutePermission(moduleId: 'birthdate_analysis', action: RbacAction.read),
+  );
+
+  ModuleRouteRegistry.registerRoutePermission(
+    AppRoute.notificationAdminName,
+    RoutePermission(moduleId: 'notification_admin', action: RbacAction.read),
   );
 
   return GoRouter(
@@ -90,6 +96,11 @@ final List<RouteBase> authRoutes = [
     name: AppRoute.birthdateAnalysisName,
     path: AppRoute.birthdateAnalysis,
     builder: (context, state) => const BirthdateAnalysisPage(),
+  ),
+  GoRoute(
+    name: AppRoute.notificationAdminName,
+    path: AppRoute.notificationAdmin,
+    builder: (context, state) => const NotificationAdminPage(),
   ),
   GoRoute(
     name: AppRoute.unauthorizedName,

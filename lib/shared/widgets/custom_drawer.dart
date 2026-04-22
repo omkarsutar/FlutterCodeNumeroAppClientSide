@@ -152,18 +152,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                                       ),
                                     ),
                                     errorWidget: (context, url, error) {
-                                      WidgetsBinding.instance.addPostFrameCallback((
-                                        _,
-                                      ) {
-                                        if (mounted && !_hasImageError) {
-                                          setState(() => _hasImageError = true);
-                                        }
-                                      });
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            if (mounted && !_hasImageError) {
+                                              setState(
+                                                () => _hasImageError = true,
+                                              );
+                                            }
+                                          });
                                       return Center(
                                         child: Text(
                                           initials,
                                           style: TextStyle(
-                                            color: colorScheme.onPrimaryContainer,
+                                            color:
+                                                colorScheme.onPrimaryContainer,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -206,10 +208,8 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                   const SizedBox(height: 14),
                   Text(
                     displayName != null
-                        ? (l10n['welcome_user'] ?? 'Welcome, {name}').replaceAll(
-                            '{name}',
-                            displayName,
-                          )
+                        ? (l10n['welcome_user'] ?? 'Welcome, {name}')
+                              .replaceAll('{name}', displayName)
                         : l10n['welcome_numeroshastra'] ??
                               'Welcome to Numero Shastra',
                     style: TextStyle(
@@ -278,6 +278,21 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                   context.goNamed(AppRoute.purchaseOrdersName);
                 },
               ),
+            if (isLoggedIn && rbacService.roleName?.toLowerCase() == 'admin')
+              _DrawerTile(
+                icon: Icons.notification_add_rounded,
+                title: 'Send Notifications',
+                iconColor: drawerAccentColor,
+                textColor: drawerTextColor,
+                tileColor: drawerTileColor,
+                onTap: () {
+                  ref
+                      .read(analyticsServiceProvider)
+                      .logClickEvent('drawer_notifications_admin_clicked');
+                  Navigator.pop(context);
+                  context.goNamed(AppRoute.notificationAdminName);
+                },
+              ),
             if (isLoggedIn)
               _DrawerTile(
                 icon: Icons.person,
@@ -329,8 +344,9 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                 ),
                 value: ref.watch(themeModeProvider) == ThemeMode.dark,
                 onChanged: (value) {
-                  ref.read(themeModeProvider.notifier).state =
-                      value ? ThemeMode.dark : ThemeMode.light;
+                  ref.read(themeModeProvider.notifier).state = value
+                      ? ThemeMode.dark
+                      : ThemeMode.light;
                 },
               ),
             ),
@@ -390,10 +406,7 @@ class _DrawerTile extends StatelessWidget {
         leading: Icon(icon, color: iconColor),
         title: Text(
           title,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
         ),
         onTap: onTap,
       ),
