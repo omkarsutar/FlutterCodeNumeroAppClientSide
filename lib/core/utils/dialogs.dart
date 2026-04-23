@@ -5,6 +5,7 @@ Future<bool> showConfirmationDialog({
   required String title,
   required String content,
   required String confirmLabel,
+  String cancelLabel = 'Cancel',
 }) async {
   return await showDialog<bool>(
         context: context,
@@ -14,7 +15,7 @@ Future<bool> showConfirmationDialog({
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(cancelLabel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),

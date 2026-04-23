@@ -20,7 +20,7 @@ class AppPalette {
   static const Color darkSurfaceSoft = Color(0xFF202B47);
   static const Color darkOutline = Color(0xFF2E3A5D);
   static const Color darkText = Color(0xFFF5F7FF);
-  static const Color darkMutedText = Color(0xFFB7C2DD);
+  static const Color darkMutedText = Color(0xFFE2E8F0);
   static const Color darkPrimaryContainer = Color(0xFF142B72);
   static const Color darkGoldContainer = Color(0xFF4B390A);
   static const Color darkError = Color(0xFFF87171);
@@ -30,7 +30,7 @@ class AppPalette {
   static const Color lightSurfaceRaised = Color(0xFFE8E1D2);
   static const Color lightOutline = Color(0xFFD8D1C2);
   static const Color lightText = Color(0xFF171E33);
-  static const Color lightMutedText = Color(0xFF5D667D);
+  static const Color lightMutedText = Color(0xFF1E293B);
   static const Color lightPrimaryContainer = Color(0xFFDCE6FF);
   static const Color lightGoldContainer = Color(0xFFFFE7A6);
   static const Color lightError = Color(0xFFB91C1C);
@@ -98,7 +98,7 @@ ThemeData buildDarkTheme() {
       filled: true,
       fillColor: AppPalette.darkSurfaceRaised,
       labelStyle: const TextStyle(color: AppPalette.darkMutedText),
-      hintStyle: const TextStyle(color: Color(0xFF7D89A7)),
+      hintStyle: const TextStyle(color: AppPalette.darkMutedText),
     ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: AppPalette.darkBackground,
@@ -218,7 +218,7 @@ ThemeData buildLightTheme() {
       filled: true,
       fillColor: AppPalette.lightSurface,
       labelStyle: const TextStyle(color: AppPalette.lightMutedText),
-      hintStyle: const TextStyle(color: Color(0xFF9099AD)),
+      hintStyle: const TextStyle(color: AppPalette.lightMutedText),
     ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: AppPalette.lightSurface,

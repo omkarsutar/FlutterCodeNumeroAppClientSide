@@ -56,7 +56,6 @@ class CartController {
 
         // Invalidate relevant providers to force fresh data fetch
         ref.invalidate(birthdatesStreamProvider);
-        ref.invalidate(cachedBirthdateRecordsProvider);
         ref.invalidate(unpaidOrdersProvider);
         ref.invalidate(currentBirthdateRecordProvider);
         ref.read(selectedOrdersProvider.notifier).state = {};

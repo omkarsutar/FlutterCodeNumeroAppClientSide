@@ -9,9 +9,6 @@ import 'package:flutter_supabase_order_app_mobile/core/providers/birthdate_local
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 
 final birthdateProvider = StateProvider<DateTime?>((ref) => null);
-final cachedBirthdateRecordsProvider = StateProvider<List<ModelBirthdate>>(
-  (ref) => [],
-);
 
 final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   final client = ref.watch(supabaseClientProvider);
@@ -19,7 +16,6 @@ final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   ref.watch(authStateProvider);
   final user = client.auth.currentUser;
   if (user == null) {
-    ref.read(cachedBirthdateRecordsProvider.notifier).state = [];
     return Stream.value([]);
   }
 
@@ -42,23 +38,14 @@ final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
           }
         }).toList();
 
-        ref.read(cachedBirthdateRecordsProvider.notifier).state = records;
         return records;
       });
 });
 
 final effectiveBirthdateRecordsProvider = Provider<List<ModelBirthdate>>((ref) {
   final birthdatesAsync = ref.watch(birthdatesStreamProvider);
-  final cachedRecords = ref.watch(cachedBirthdateRecordsProvider);
 
-  return birthdatesAsync.when(
-    data: (records) => records,
-    loading: () => cachedRecords,
-    error: (error, stack) {
-      debugPrint('[BirthdateRecords] Falling back to cached records: $error');
-      return cachedRecords;
-    },
-  );
+  return birthdatesAsync.valueOrNull ?? [];
 });
 
 final currentBirthdateProvider = Provider<ModelBirthdate?>((ref) {

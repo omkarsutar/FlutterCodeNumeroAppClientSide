@@ -5,44 +5,39 @@ import 'auth_providers.dart';
 
 enum AppLanguage { english, hindi, marathi }
 
+final sharedPrefsProvider = FutureProvider<SharedPreferences>((ref) async {
+  return await SharedPreferences.getInstance();
+});
+
 class LanguageNotifier extends Notifier<AppLanguage> {
   static const String _prefKey = 'user_language';
   static const String _hasSetKey = 'has_set_language';
-  SharedPreferences? _prefs;
 
   @override
   AppLanguage build() {
-    _initPrefs();
-
-    // 1. Priority: User Profile (DB)
+    final prefsAsync = ref.watch(sharedPrefsProvider);
     final profile = ref.watch(userProfileStateProvider).profile;
-    final dbLang = profile?.userLanguage;
 
-    if (dbLang != null) {
-      final lang = _mapCodeToLanguage(dbLang);
-      _saveToLocal(lang, silent: true); // Keep local in sync with DB
+    // 1. Priority: Local Storage (SharedPreferences)
+    if (prefsAsync.hasValue) {
+      final prefs = prefsAsync.value!;
+      final localCode = prefs.getString(_prefKey);
+      if (localCode != null) {
+        return _mapCodeToLanguage(localCode);
+      }
+    }
+
+    // 2. Priority: User Profile (DB)
+    if (profile?.userLanguage != null) {
+      final lang = _mapCodeToLanguage(profile!.userLanguage!);
+      // Sync to local storage if prefs are ready
+      if (prefsAsync.hasValue) {
+        _saveToLocal(lang, silent: true);
+      }
       return lang;
     }
 
-    // 2. Priority: Local Storage (SharedPreferences)
-    // Note: build() is synchronous, so we check if prefs was already initialized
-    // or use a default and let the UI react when prefs are ready.
-    final localCode = _prefs?.getString(_prefKey);
-    if (localCode != null) {
-      return _mapCodeToLanguage(localCode);
-    }
-
     return AppLanguage.english; // Default fallback
-  }
-
-  Future<void> _initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-    // Re-trigger build once prefs are loaded to catch local storage
-    ref.invalidateSelf();
-  }
-
-  bool get hasSetLanguage {
-    return _prefs?.getBool(_hasSetKey) ?? false;
   }
 
   void toggleLanguage() {
@@ -58,9 +53,13 @@ class LanguageNotifier extends Notifier<AppLanguage> {
   }
 
   Future<void> setLanguage(AppLanguage lang) async {
-    if (state == lang && hasSetLanguage) return;
+    // If already set to this language AND marked as hasSetLanguage, skip
+    final prefs = ref.read(sharedPrefsProvider).value;
+    final hasSet = prefs?.getBool(_hasSetKey) ?? false;
+    
+    if (state == lang && hasSet) return;
+    
     state = lang;
-
     await _saveToLocal(lang);
 
     // Persist to Supabase if logged in
@@ -71,7 +70,8 @@ class LanguageNotifier extends Notifier<AppLanguage> {
   }
 
   Future<void> _saveToLocal(AppLanguage lang, {bool silent = false}) async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    final prefs = ref.read(sharedPrefsProvider).value ?? 
+                 await SharedPreferences.getInstance();
     final code = _mapLanguageToCode(lang);
     await prefs.setString(_prefKey, code);
     if (!silent) {
@@ -98,7 +98,6 @@ class LanguageNotifier extends Notifier<AppLanguage> {
       case AppLanguage.marathi:
         return 'mr';
       case AppLanguage.english:
-      default:
         return 'en';
     }
   }
@@ -109,7 +108,20 @@ final languageProvider = NotifierProvider<LanguageNotifier, AppLanguage>(() {
 });
 
 final isLanguageSetProvider = Provider<bool>((ref) {
-  // We need to watch the notifier state to re-evaluate when language is set
-  ref.watch(languageProvider);
-  return ref.read(languageProvider.notifier).hasSetLanguage;
+  final prefsAsync = ref.watch(sharedPrefsProvider);
+  final profile = ref.watch(userProfileStateProvider).profile;
+  
+  // While loading prefs, assume it's set to avoid dialog flickers
+  if (prefsAsync.isLoading) return true;
+  
+  final prefs = prefsAsync.value;
+  if (prefs != null && prefs.getBool('has_set_language') == true) {
+    return true;
+  }
+  
+  if (profile?.userLanguage != null) {
+    return true;
+  }
+  
+  return false;
 });

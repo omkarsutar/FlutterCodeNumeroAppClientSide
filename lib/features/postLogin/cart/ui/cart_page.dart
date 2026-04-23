@@ -61,6 +61,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   void _showSuccessDialog(String poId) {
+    final l10n = ref.read(appL10nProvider);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -88,15 +89,16 @@ class _CartPageState extends ConsumerState<CartPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Analysis Unlocked!',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Text(
+                  l10n['analysis_unlocked_title'] ?? 'Analysis Unlocked!',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Your payment was successful and your birthdate analysis is now unlocked! You can find it in your History or by clicking the button below.',
+                Text(
+                  l10n['analysis_unlocked_msg'] ??
+                      'Your payment was successful and your birthdate analysis is now unlocked! You can now explore all the hidden secrets of your birthdate!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF94A3B8)),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -113,9 +115,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'View Analysis',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Text(
+                      l10n['view_analysis'] ?? 'View Analysis',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -138,7 +140,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Payment Failed: $error',
+            '${ref.read(appL10nProvider)['payment_failed'] ?? 'Payment Failed'}: $error',
             style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red[700],
@@ -364,9 +366,11 @@ class _CartPageState extends ConsumerState<CartPage> {
     final l10n = ref.read(appL10nProvider);
     final confirm = await showConfirmationDialog(
       context: context,
-      title: 'Delete Order?',
-      content: 'Are you sure you want to delete this specific analysis record?',
-      confirmLabel: 'Delete',
+      title: l10n['delete_order_title'] ?? 'Delete Order?',
+      content: l10n['delete_order_msg'] ??
+          'Are you sure you want to delete this specific analysis record?',
+      confirmLabel: l10n['delete_all'] ?? 'Delete',
+      cancelLabel: l10n['cancel'] ?? 'Cancel',
     );
 
     if (confirm == true) {
@@ -383,12 +387,12 @@ class _CartPageState extends ConsumerState<CartPage> {
         if (mounted) {
           Navigator.of(context).pop(); // Dismiss loading
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Record deleted successfully.',
-                style: TextStyle(color: Colors.white),
+                l10n['delete_success_msg'] ?? 'Record deleted successfully.',
+                style: const TextStyle(color: Colors.white),
               ),
-              backgroundColor: Color(0xFF15803D),
+              backgroundColor: const Color(0xFF15803D),
             ),
           );
         }
@@ -398,7 +402,7 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to delete record: $e',
+                '${l10n['delete_failed_msg'] ?? 'Failed to delete record'}: $e',
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red[700],
@@ -410,6 +414,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   Future<void> _handlePaymentAction(List<String> poIds) async {
+    final l10n = ref.read(appL10nProvider);
     final user = ref.read(supabaseClientProvider).auth.currentUser;
 
     if (user == null) {
@@ -441,17 +446,18 @@ class _CartPageState extends ConsumerState<CartPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
-              title: const Text(
-                'Mobile App Required',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              title: Text(
+                l10n['mobile_app_required_title'] ?? 'Mobile App Required',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              content: const Text(
-                'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.',
+              content: Text(
+                l10n['mobile_app_required_msg'] ??
+                    'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Got it'),
+                  child: Text(l10n['got_it'] ?? 'Got it'),
                 ),
               ],
             ),
@@ -463,7 +469,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       if (!mounted) return;
       showLoadingDialog(
         context: context,
-        message: 'Redirecting to Payment Gateway...',
+        message: l10n['redirecting_payment'] ?? 'Redirecting to Payment Gateway...',
       );
 
       try {
@@ -492,7 +498,7 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to initiate payment: $e',
+                '${l10n['payment_failed'] ?? 'Failed to initiate payment'}: $e',
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red[700],
@@ -508,6 +514,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     required List<dynamic> orders,
     required int totalAmount,
   }) {
+    final l10n = ref.read(appL10nProvider);
     final theme = Theme.of(context);
     final count = orders.length;
 
@@ -537,7 +544,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    'Confirm Purchase',
+                    l10n['confirm_purchase_title'] ?? 'Confirm Purchase',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -546,7 +553,7 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
               const SizedBox(height: 24),
               Text(
-                'You are unlocking $count ${count == 1 ? "birthdate analysis" : "birthdate analyses"}:',
+                (l10n['unlocking_analyses_msg'] ?? 'You are unlocking {count} birthdate analysis:').replaceAll('{count}', count.toString()),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -625,7 +632,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total Amount',
+                      l10n['total_amount_label'] ?? 'Total Amount',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -653,7 +660,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        l10n['cancel'] ?? 'Cancel',
                         style: TextStyle(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.bold,
@@ -674,9 +681,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Pay Now',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        l10n['pay_now'] ?? 'Pay Now',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -918,17 +925,9 @@ class _CartPageState extends ConsumerState<CartPage> {
     final l10n = ref.watch(birthdateL10nProvider);
     final unpaidOrders = ref.watch(unpaidOrdersProvider);
 
-    // Check if any order in the cart is 'pending'
-    // Temporarily always show the tile for debugging
-    final hasPendingOrder = unpaidOrders.any(
-      (order) => order.status.toLowerCase() == 'pending',
-    );
-
     return Column(
       children: [
-        // Always show the tile for debugging - remove this condition later
         _buildPremiumFeaturesTile(context, l10n),
-        // if (hasPendingOrder) _buildPremiumFeaturesTile(context, l10n),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),

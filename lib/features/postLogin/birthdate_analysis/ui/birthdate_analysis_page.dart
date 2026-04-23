@@ -11,6 +11,7 @@ import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../router/app_routes.dart';
+import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../model/numerology_help_content.dart';
@@ -115,7 +116,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           final cartStatus = ref.watch(cartStatusProvider);
           final currentLang = ref.watch(languageProvider);
           final hasBeenSaved = cartStatus != null;
-          final isPending = cartStatus?.toLowerCase() == 'pending';
           final theme = Theme.of(context);
 
           return Scaffold(
@@ -446,8 +446,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              l10n['cart_saved_login'] ??
-                  'Cart saved. Please login to complete your order.',
+              l10n['cart_saved_login'] ?? 'Please login to continue.',
               style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.orange[700],
@@ -477,7 +476,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to place order: $e',
+              '${l10n['order_failed_msg'] ?? 'Failed to place order'}: $e',
               style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red[700],
@@ -488,7 +487,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   }
 
   Future<void> _updateBirthdateName(String id, String currentName) async {
-    final l10n = ref.read(birthdateL10nProvider);
+    final l10n = ref.read(
+      appL10nProvider,
+    ); // Using global appL10n for general actions
     final theme = Theme.of(context);
     final controller = TextEditingController(text: currentName);
 
@@ -534,7 +535,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       if (!mounted) return;
       showLoadingDialog(
         context: context,
-        message: l10n['please_wait'] ?? 'Updating...',
+        message: l10n['updating'] ?? 'Updating...',
       );
 
       try {
@@ -645,6 +646,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   }
 
   Future<void> _showThankYouDialog() {
+    final l10n = ref.read(appL10nProvider);
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -686,7 +688,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Analysis Unlocked!',
+                  l10n['analysis_unlocked_title'] ?? 'Analysis Unlocked!',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
@@ -694,7 +696,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your birthdate analysis is now saved and unlocked successfully. You can now explore all the hidden secrets of your birthdate!',
+                  l10n['analysis_unlocked_msg'] ??
+                      'Your birthdate analysis is now saved and unlocked successfully. You can now explore all the hidden secrets of your birthdate!',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -716,7 +719,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                       ),
                     ),
                     child: Text(
-                      'View Analysis',
+                      l10n['view_analysis'] ?? 'View Analysis',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

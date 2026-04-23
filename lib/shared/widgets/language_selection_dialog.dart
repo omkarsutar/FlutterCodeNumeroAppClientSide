@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/localization_provider.dart';
+import '../../core/providers/app_localization_provider.dart';
 
 class LanguageSelectionDialog extends ConsumerWidget {
   const LanguageSelectionDialog({super.key});
 
+  static bool _isShowing = false;
+
   static Future<void> show(BuildContext context) async {
-    return showDialog(
+    if (_isShowing) return;
+    _isShowing = true;
+    await showDialog(
       context: context,
       barrierDismissible: false, // Force selection
       builder: (context) => const LanguageSelectionDialog(),
     );
+    _isShowing = false;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final currentLang = ref.watch(languageProvider);
+    final l10n = ref.watch(appL10nProvider);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -52,7 +59,7 @@ class LanguageSelectionDialog extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Choose Language',
+              l10n['choose_language_title'] ?? 'Choose Language',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: theme.colorScheme.onSurface,
@@ -60,7 +67,8 @@ class LanguageSelectionDialog extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Select your preferred language to continue',
+              l10n['select_language_subtitle'] ??
+                  'Select your preferred language to continue',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -69,7 +77,7 @@ class LanguageSelectionDialog extends ConsumerWidget {
             const SizedBox(height: 28),
             _LanguageOption(
               title: 'English',
-              subtitle: 'Default language',
+              subtitle: l10n['default_language_label'] ?? 'Default language',
               isSelected: currentLang == AppLanguage.english,
               onTap: () => _handleSelection(context, ref, AppLanguage.english),
             ),

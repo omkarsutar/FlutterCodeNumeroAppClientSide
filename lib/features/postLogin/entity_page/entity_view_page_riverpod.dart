@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/field_config.dart';
 import '../../../core/services/entity_service.dart';
 import '../../../core/models/entity_meta.dart';
-import '../../../shared/widgets/custom_app_bar.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import 'providers/entity_view_logic.dart';
 import 'providers/generic_view_controller.dart';
 import '../../../shared/widgets/shared_widget_barrel.dart';
+import '../../../core/providers/app_localization_provider.dart';
 
 /// Generic Riverpod version of Entity View Page
 /// Can be used for any entity type (Role, Note, etc.)
@@ -49,22 +49,24 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
     WidgetRef ref,
     GenericViewController controller,
   ) async {
+    final l10n = ref.read(appL10nProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${entityMeta.entityName}'),
-        content: Text(
-          'Are you sure you want to delete this ${entityMeta.entityNameLower}?',
-        ),
+        title: Text((l10n['delete_entity_title'] ?? 'Delete {entity}')
+            .replaceAll('{entity}', entityMeta.entityName)),
+        content: Text((l10n['delete_entity_msg'] ??
+                'Are you sure you want to delete this {entity}?')
+            .replaceAll('{entity}', entityMeta.entityNameLower)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n['cancel'] ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l10n['delete_all'] ?? 'Delete'),
           ),
         ],
       ),
@@ -83,6 +85,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
     BuildContext context,
     ThemeData theme,
     ProcessedEntityField processedField,
+    Map<String, String> l10n,
   ) {
     if (processedField.rawValue == null ||
         processedField.rawValue.toString().isEmpty) {
@@ -111,7 +114,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
             processedField.label,
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
@@ -151,7 +154,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Open in Maps',
+                      l10n['open_in_maps'] ?? 'Open in Maps',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: theme.colorScheme.primary,
@@ -262,9 +265,9 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
                           Matrix4.identity()) {
                         transformationController.value = Matrix4.identity();
                       } else {
-                        // Zoom in to 2x on double tap
-                        transformationController.value = Matrix4.identity()
-                          ..scale(2.5);
+                        // Zoom in to 2.5x on double tap
+                        transformationController.value =
+                            Matrix4.diagonal3Values(2.5, 2.5, 1.0);
                       }
                     },
                     child: InteractiveViewer(
@@ -315,6 +318,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = ref.watch(appL10nProvider);
     final entityAsync = ref.watch(entityByIdProvider(entityId));
     final entityAdapter = ref.watch(adapterProvider);
     final isInitialized = ref.watch(rbacInitializationProvider);
@@ -338,20 +342,22 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
     ) {
       if (next.isDeleted && !next.isLoading) {
         SnackbarUtils.showSuccess(
-          '${entityMeta.entityName} deleted successfully!',
+          '${entityMeta.entityName} ${l10n['delete_success_msg'] ?? 'deleted successfully!'}',
         );
         if (context.mounted && context.canPop()) {
           context.pop();
         }
       } else if (next.error != null && !next.isLoading) {
-        SnackbarUtils.showError('Failed to delete: ${next.error}');
+        SnackbarUtils.showError(
+            '${l10n['delete_failed_msg'] ?? 'Failed to delete'}: ${next.error}');
       }
     });
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: CustomAppBar(
-        title: 'View ${entityMeta.entityName}',
+        title: (l10n['view_entity_title'] ?? 'View {entity}')
+            .replaceAll('{entity}', entityMeta.entityName),
         showBack: true,
         actions: [
           // Edit button - only show if user has update permission
@@ -381,7 +387,8 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
             data: (entity) {
               if (entity == null) {
                 return Center(
-                  child: Text('${entityMeta.entityName} not found'),
+                  child: Text((l10n['entity_not_found_msg'] ?? '{entity} not found')
+                      .replaceAll('{entity}', entityMeta.entityName)),
                 );
               }
 
@@ -473,6 +480,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
                                   context,
                                   theme,
                                   processedField,
+                                  l10n,
                                 );
                               }),
                         ],
