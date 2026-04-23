@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/numerology_content_providers.dart';
 import '../../model/numerology_ui_content.dart';
 import '../../../../../core/providers/localization_provider.dart';
-import '../utils/analysis_theme.dart';
 import '../widgets/mystic_widgets.dart';
 
 class ImportantPointsSection extends ConsumerWidget {
@@ -19,7 +18,6 @@ class ImportantPointsSection extends ConsumerWidget {
     final importantPointsAsync = ref.watch(importantPointsProvider);
     final theme = Theme.of(context);
     final currentLang = ref.watch(languageProvider);
-    final accent = AnalysisTheme.getAccent(theme);
 
     return importantPointsAsync.when(
       data: (points) {

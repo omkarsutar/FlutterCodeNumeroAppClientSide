@@ -11,7 +11,6 @@ import 'core/utils/platform/web_utils.dart';
 import 'router/app_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/services/messaging_service.dart';
-import 'core/services/analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/providers/theme_provider.dart';

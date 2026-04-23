@@ -8,7 +8,6 @@ import '../../../core/services/entity_service.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../../shared/widgets/custom_app_bar.dart';
 import '../../../core/providers/core_providers.dart';
-import 'providers/entity_form_logic.dart';
 import 'providers/generic_form_controller.dart';
 import 'widgets/form_fields.dart';
 

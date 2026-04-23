@@ -1,4 +1,3 @@
-import 'web_utils_interface.dart';
 export 'web_utils_interface.dart';
 
 abstract class WebUtils {

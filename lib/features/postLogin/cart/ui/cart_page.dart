@@ -923,7 +923,6 @@ class _CartPageState extends ConsumerState<CartPage> {
   Widget _buildPromoFooter(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = ref.watch(birthdateL10nProvider);
-    final unpaidOrders = ref.watch(unpaidOrdersProvider);
 
     return Column(
       children: [

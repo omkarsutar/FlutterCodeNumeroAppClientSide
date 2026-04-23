@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/field_config.dart';
 import '../../../../core/utils/snackbar_utils.dart';
-import '../../../../router/app_routes.dart';
 import '../providers/entity_form_logic.dart';
 
 class EntityTextField extends StatelessWidget {
@@ -224,7 +222,7 @@ class EntityDropdownField extends StatelessWidget {
       }).toList();
 
       return DropdownButtonFormField<String>(
-        value: currentValue ?? items.firstOrNull?.value,
+        initialValue: currentValue ?? items.firstOrNull?.value,
         decoration: InputDecoration(
           labelText: field.label,
           border: const OutlineInputBorder(),
@@ -266,7 +264,7 @@ class EntityDropdownField extends StatelessWidget {
     }
 
     return DropdownButtonFormField<String>(
-      value: safeCurrentValue,
+      initialValue: safeCurrentValue,
       decoration: InputDecoration(
         labelText: field.label,
         border: const OutlineInputBorder(),

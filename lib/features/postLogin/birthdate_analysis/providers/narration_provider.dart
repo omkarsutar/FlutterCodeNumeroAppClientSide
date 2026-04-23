@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../../../core/providers/localization_provider.dart';
-import '../../../../core/providers/core_providers.dart';
 import '../model/numerology_models.dart';
 import 'numerology_content_providers.dart';
 import 'numerology_providers.dart';
