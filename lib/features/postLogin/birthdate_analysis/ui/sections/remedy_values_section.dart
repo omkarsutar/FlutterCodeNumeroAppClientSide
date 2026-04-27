@@ -9,10 +9,7 @@ import '../widgets/mystic_widgets.dart';
 class RemedyValuesSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
 
-  const RemedyValuesSection({
-    super.key,
-    required this.onHelp,
-  });
+  const RemedyValuesSection({super.key, required this.onHelp});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,6 +22,32 @@ class RemedyValuesSection extends ConsumerWidget {
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         final remedy = items.first;
+
+        final luckyNumbers = remedy.luckyNumbers
+            .map((e) => e.toString())
+            .toList();
+        final unluckyNumbers = remedy.unluckyNumbers
+            .map((e) => e.toString())
+            .toList();
+        final luckyColors = remedy.getLuckyColors(lang);
+        final unluckyColors = remedy.getUnluckyColors(lang);
+        final luckyDays = remedy.getLuckyDays(lang);
+        final numbersForRemedy = remedy.numbersForRemedy
+            .map((e) => e.toString())
+            .toList();
+        final numbersNotForRemedy = remedy.numbersNotForRemedy
+            .map((e) => e.toString())
+            .toList();
+
+        if (luckyNumbers.isEmpty &&
+            unluckyNumbers.isEmpty &&
+            luckyColors.isEmpty &&
+            unluckyColors.isEmpty &&
+            luckyDays.isEmpty &&
+            numbersForRemedy.isEmpty &&
+            numbersNotForRemedy.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
         return MysticSection(
           child: Column(
@@ -41,63 +64,69 @@ class RemedyValuesSection extends ConsumerWidget {
                 onHelp: () => onHelp('lucky_unlucky', lang),
               ),
               const SizedBox(height: 24),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('lucky_number', lang),
-                values: remedy.luckyNumbers.map((e) => e.toString()).toList(),
-                color: Colors.green,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('unlucky_number', lang),
-                values: remedy.unluckyNumbers.map((e) => e.toString()).toList(),
-                color: Colors.red,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('lucky_color', lang),
-                values: remedy.getLuckyColors(lang),
-                color: Colors.blue,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('unlucky_color', lang),
-                values: remedy.getUnluckyColors(lang),
-                color: Colors.orange,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('lucky_day', lang),
-                values: remedy.getLuckyDays(lang),
-                color: theme.colorScheme.secondary,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel('numbers_for_remedy', lang),
-                values: remedy.numbersForRemedy
-                    .map((e) => e.toString())
-                    .toList(),
-                color: accent,
-                accent: accent,
-              ),
-              _buildRemedyGroup(
-                context,
-                title: NumerologyUIContent.getLabel(
-                  'numbers_not_for_remedy',
-                  lang,
+              if (luckyNumbers.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel('lucky_number', lang),
+                  values: luckyNumbers,
+                  color: Colors.green,
+                  accent: accent,
                 ),
-                values: remedy.numbersNotForRemedy
-                    .map((e) => e.toString())
-                    .toList(),
-                color: theme.colorScheme.error,
-                accent: accent,
-                isLast: true,
-              ),
+              if (unluckyNumbers.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel('unlucky_number', lang),
+                  values: unluckyNumbers,
+                  color: Colors.red,
+                  accent: accent,
+                ),
+              if (luckyColors.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel('lucky_color', lang),
+                  values: luckyColors,
+                  color: Colors.blue,
+                  accent: accent,
+                ),
+              if (unluckyColors.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel('unlucky_color', lang),
+                  values: unluckyColors,
+                  color: Colors.orange,
+                  accent: accent,
+                ),
+              if (luckyDays.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel('lucky_day', lang),
+                  values: luckyDays,
+                  color: theme.colorScheme.secondary,
+                  accent: accent,
+                ),
+              if (numbersForRemedy.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel(
+                    'numbers_for_remedy',
+                    lang,
+                  ),
+                  values: numbersForRemedy,
+                  color: accent,
+                  accent: accent,
+                ),
+              if (numbersNotForRemedy.isNotEmpty)
+                _buildRemedyGroup(
+                  context,
+                  title: NumerologyUIContent.getLabel(
+                    'numbers_not_for_remedy',
+                    lang,
+                  ),
+                  values: numbersNotForRemedy,
+                  color: theme.colorScheme.error,
+                  accent: accent,
+                  isLast: true,
+                ),
             ],
           ),
         );
@@ -133,10 +162,7 @@ class RemedyValuesSection extends ConsumerWidget {
           spacing: 12,
           runSpacing: 12,
           children: values.map((v) {
-            return MysticChip(
-              label: v,
-              color: color,
-            );
+            return MysticChip(label: v, color: color);
           }).toList(),
         ),
         if (!isLast) ...[
