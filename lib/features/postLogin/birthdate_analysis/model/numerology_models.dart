@@ -714,7 +714,9 @@ class CombinationData {
   final String descriptionEn;
   final String? descriptionHi;
   final String? descriptionMr;
-  final String example;
+  final String exampleEn;
+  final String? exampleHi;
+  final String? exampleMr;
 
   CombinationData({
     required this.personalityNumber,
@@ -722,7 +724,9 @@ class CombinationData {
     required this.descriptionEn,
     this.descriptionHi,
     this.descriptionMr,
-    required this.example,
+    required this.exampleEn,
+    this.exampleHi,
+    this.exampleMr,
   });
 
   factory CombinationData.fromMap(Map<String, dynamic> map) {
@@ -734,7 +738,9 @@ class CombinationData {
           (map['description_hi'] ?? map['description_hindi']) as String?,
       descriptionMr:
           (map['description_mr'] ?? map['description_marathi']) as String?,
-      example: map['example'] as String,
+      exampleEn: (map['example'] ?? map['example_en'] ?? '') as String,
+      exampleHi: (map['example_hi'] ?? map['example_hindi']) as String?,
+      exampleMr: (map['example_mr'] ?? map['example_marathi']) as String?,
     );
   }
 
@@ -746,6 +752,17 @@ class CombinationData {
         return descriptionMr ?? descriptionEn;
       case AppLanguage.english:
         return descriptionEn;
+    }
+  }
+
+  String getExample(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return exampleHi ?? exampleEn;
+      case AppLanguage.marathi:
+        return exampleMr ?? exampleEn;
+      case AppLanguage.english:
+        return exampleEn;
     }
   }
 }

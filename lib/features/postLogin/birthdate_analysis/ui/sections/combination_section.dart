@@ -59,7 +59,7 @@ class CombinationSection extends ConsumerWidget {
                           height: 1.6,
                         ),
                       ),
-                      if (item.example.isNotEmpty) ...[
+                      if (item.getExample(currentLang).isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -85,7 +85,7 @@ class CombinationSection extends ConsumerWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  "${NumerologyUIContent.getLabel('example', currentLang)}: ${item.example}",
+                                  "${NumerologyUIContent.getLabel('example', currentLang)}: ${item.getExample(currentLang)}",
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.secondary,
                                     fontStyle: FontStyle.italic,
