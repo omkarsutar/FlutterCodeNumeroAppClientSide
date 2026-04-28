@@ -15,17 +15,26 @@ class NarrationState {
     this.isPlaying = false,
     this.isPaused = false,
     this.isStopped = true,
+    this.currentChunk = 0,
+    this.totalChunks = 0,
   });
+
+  final int currentChunk;
+  final int totalChunks;
 
   NarrationState copyWith({
     bool? isPlaying,
     bool? isPaused,
     bool? isStopped,
+    int? currentChunk,
+    int? totalChunks,
   }) {
     return NarrationState(
       isPlaying: isPlaying ?? this.isPlaying,
       isPaused: isPaused ?? this.isPaused,
       isStopped: isStopped ?? this.isStopped,
+      currentChunk: currentChunk ?? this.currentChunk,
+      totalChunks: totalChunks ?? this.totalChunks,
     );
   }
 }
@@ -337,9 +346,15 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       }
     }
 
-    state = state.copyWith(isPlaying: true, isPaused: false, isStopped: false);
+    state = state.copyWith(
+      isPlaying: true,
+      isPaused: false,
+      isStopped: false,
+      currentChunk: 0,
+      totalChunks: chunks.length,
+    );
 
-    for (final chunk in chunks) {
+    for (int i = 0; i < chunks.length; i++) {
       if (_isNarrationStopped) break;
 
       while (state.isPaused && !_isNarrationStopped) {
@@ -347,7 +362,9 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       }
 
       if (_isNarrationStopped) break;
-      await _flutterTts.speak(chunk);
+
+      state = state.copyWith(currentChunk: i + 1);
+      await _flutterTts.speak(chunks[i]);
     }
 
     if (!_isNarrationStopped) {

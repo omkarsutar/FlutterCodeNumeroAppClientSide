@@ -154,7 +154,16 @@ class NarrationGuideSection extends ConsumerWidget {
                           children: [
                             OracleButton(
                               onPressed: canPlay
-                                  ? () => narrationNotifier.playNarration(currentLang)
+                                  ? () {
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: true,
+                                        builder: (context) => OracleGuideVideoDialog(
+                                          pulseController: pulseController,
+                                        ),
+                                      );
+                                      narrationNotifier.playNarration(currentLang);
+                                    }
                                   : null,
                               icon: narrationState.isPaused
                                   ? Icons.play_arrow_rounded
