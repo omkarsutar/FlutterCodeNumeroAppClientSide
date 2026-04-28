@@ -5,6 +5,7 @@ import '../model/numerology_models.dart';
 import 'numerology_content_providers.dart';
 import 'numerology_providers.dart';
 import '../../cart/providers/birthdate_record_providers.dart';
+import '../../../../core/providers/birthdate_localization_provider.dart';
 
 class NarrationState {
   final bool isPlaying;
@@ -130,7 +131,7 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
     return '${birthdate.day} ${monthNames[birthdate.month - 1]} ${birthdate.year}';
   }
 
-  String _narrationText(AppLanguage lang) {
+  String _narrationText(AppLanguage lang, Map<String, String> l10n) {
     final birthdate = ref.read(birthdateProvider);
     final ageText = ref.read(ageProvider);
     final numerology = ref.read(numerologyProvider);
@@ -174,33 +175,19 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
     final pinnacle4 =
         ref.read(pinnacleData4Provider).valueOrNull ?? const <PinnacleData>[];
 
-    final intro = switch (lang) {
-      AppLanguage.hindi =>
-        'यह आपकी जन्मतिथि का व्यक्तिगत विश्लेषण है। मैं अब आपके लिए मुख्य संकेत पढ़ रहा हूँ।',
-      AppLanguage.marathi =>
-        'हे तुमच्या जन्मतारखेचे वैयक्तिक विश्लेषण आहे. आता मी तुमच्यासाठी मुख्य संकेत वाचत आहे.',
-      AppLanguage.english =>
-        'This is your personal birthdate analysis. I will now read the key insights for you.',
-    };
+    final lines = <String>[];
 
-    final lines = <String>[intro];
+    // Intro
+    lines.add(l10n['narrator_intro'] ?? 'Hello! This is your personal birthdate analysis.');
 
-    if (birthdate != null) {
-      lines.add(switch (lang) {
-        AppLanguage.hindi =>
-          'जन्मतिथि ${_safeNarrationDate(birthdate, lang)} है।',
-        AppLanguage.marathi =>
-          'जन्मतारीख ${_safeNarrationDate(birthdate, lang)} आहे.',
-        AppLanguage.english =>
-          'The selected birthdate is ${_safeNarrationDate(birthdate, lang)}.',
-      });
-    }
-
+    // 1. Age
     if (ageText != null && ageText.isNotEmpty) {
-      lines.add(ageText);
+      lines.add('${l10n['narrator_age'] ?? 'This is based on your age: '} $ageText.');
     }
 
+    // 2. Numerology Core Details
     if (numerology.personality != null || numerology.lifePath != null) {
+      lines.add(l10n['narrator_core'] ?? 'First, let\'s look at your core numbers.');
       lines.add(switch (lang) {
         AppLanguage.hindi =>
           'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
@@ -211,15 +198,17 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       });
     }
 
+    // 3. Personality Analysis
     if (personality != null) {
+      lines.add(l10n['narrator_personality'] ?? 'Personality analysis.');
       if (personality.getLord(lang).isNotEmpty) {
         lines.add(switch (lang) {
           AppLanguage.hindi =>
-            'आपके व्यक्तित्व के अधिपति ${personality.getLord(lang)} हैं।',
+            'अधिपति: ${personality.getLord(lang)}।',
           AppLanguage.marathi =>
-            'तुमच्या व्यक्तिमत्त्वाचे अधिपती ${personality.getLord(lang)} आहेत.',
+            'अधिपती: ${personality.getLord(lang)}.',
           AppLanguage.english =>
-            'The ruling influence for your personality is ${personality.getLord(lang)}.',
+            'The ruling influence is ${personality.getLord(lang)}.',
         });
       }
       if (personality.getQualities(lang).isNotEmpty) {
@@ -228,33 +217,29 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       if (personality.getWeaknesses(lang).isNotEmpty) {
         lines.add(personality.getWeaknesses(lang));
       }
-      if (personality.getYouShould(lang).isNotEmpty) {
-        lines.add(personality.getYouShould(lang));
-      }
       if (personality.getDescription(lang).isNotEmpty) {
         lines.add(personality.getDescription(lang));
       }
     }
 
+    // 4. Lo Shu Grid (Simple mention)
     if (numerology.absentNumbers != null &&
         numerology.absentNumbers!.isNotEmpty) {
-      lines.add(switch (lang) {
-        AppLanguage.hindi =>
-          'लापता नंबर हैं: ${_joinList(numerology.absentNumbers!)}।',
-        AppLanguage.marathi =>
-          'गहाळ अंक आहेत: ${_joinList(numerology.absentNumbers!)}.',
-        AppLanguage.english =>
-          'Your missing numbers are ${_joinList(numerology.absentNumbers!)}.',
-      });
+      lines.add(l10n['narrator_loshu'] ?? 'Lo Shu Grid insights.');
+      lines.add('${l10n['absent_numbers_label'] ?? 'Missing Numbers'}: ${_joinList(numerology.absentNumbers!)}.');
     }
 
+    // 5. Loshu Planes
     if (planes.isNotEmpty) {
-      for (final plane in planes.take(3)) {
+      lines.add(l10n['narrator_planes'] ?? 'Grid planes analysis.');
+      for (final plane in planes) {
         lines.add('${plane.getTitle(lang)}. ${plane.getDescription(lang)}');
       }
     }
 
+    // 6. Remedy Values (Lucky/Unlucky)
     if (remedies.isNotEmpty) {
+      lines.add(l10n['narrator_remedies'] ?? 'Positive energy enhancements.');
       final remedy = remedies.first;
       lines.add(switch (lang) {
         AppLanguage.hindi =>
@@ -262,53 +247,102 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
         AppLanguage.marathi =>
           'शुभ अंक ${_joinList(remedy.luckyNumbers)} आहेत. शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(remedy.getLuckyDays(lang))} आहेत.',
         AppLanguage.english =>
-          'Your lucky numbers are ${_joinList(remedy.luckyNumbers)}. Your lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Your lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
+          'Lucky numbers are ${_joinList(remedy.luckyNumbers)}. Lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
       });
     }
 
-    for (final tell in missingTells.take(3)) {
-      lines.add(tell.getDescription(lang));
+    // 7. Missing Number Tells
+    if (missingTells.isNotEmpty) {
+      lines.add(l10n['narrator_missing_tells'] ?? 'Challenges from missing numbers.');
+      for (final tell in missingTells) {
+        lines.add(tell.getDescription(lang));
+      }
     }
 
-    for (final remedy in missingRemedies.take(3)) {
-      lines.add(remedy.getDescription(lang));
+    // 8. Missing Number Remedies
+    if (missingRemedies.isNotEmpty) {
+      lines.add(l10n['narrator_missing_remedies'] ?? 'Balancing missing energies.');
+      for (final remedy in missingRemedies) {
+        lines.add(remedy.getDescription(lang));
+      }
     }
 
-    for (final detail in numberDetails.take(3)) {
-      lines.add(detail.getDescription(lang));
+    // 9. Number Occurrence Details
+    if (numberDetails.isNotEmpty) {
+      lines.add(l10n['narrator_occurrence'] ?? 'Number repetition effects.');
+      for (final detail in numberDetails) {
+        lines.add(detail.getDescription(lang));
+      }
     }
 
-    for (final point in importantPoints.take(3)) {
-      lines.add(point.getDescription(lang));
+    // 10. Important Points
+    if (importantPoints.isNotEmpty) {
+      lines.add(l10n['narrator_important'] ?? 'Crucial tailored insights.');
+      for (final point in importantPoints) {
+        lines.add(point.getDescription(lang));
+      }
     }
 
-    for (final item in stockInfo.take(2)) {
-      lines.add(item.getDescription(lang));
+    // 11. Stock Market Info
+    if (stockInfo.isNotEmpty) {
+      lines.add(l10n['narrator_stock'] ?? 'Investment and financial influences.');
+      for (final item in stockInfo) {
+        lines.add(item.getDescription(lang));
+      }
     }
 
-    for (final item in lifePathItems.take(1)) {
-      lines.add(item.getDescription(lang));
+    // 12. Pinnacles
+    if (pinnacle1.isNotEmpty || pinnacle2.isNotEmpty || pinnacle3.isNotEmpty || pinnacle4.isNotEmpty) {
+      lines.add(l10n['narrator_pinnacle'] ?? 'Life stages analysis.');
+      
+      void addPinnacle(List<PinnacleData> data) {
+        if (data.isEmpty) return;
+        final p = data.first;
+        String detail = l10n['narrator_pinnacle_detail'] ?? 'For age range {range}, your pinnacle number is {number}: ';
+        detail = detail.replaceAll('{range}', p.lifePeriodRange);
+        detail = detail.replaceAll('{number}', p.pinnacleno.toString());
+        lines.add(detail);
+        for (final item in data) {
+          lines.add(item.getDescription(lang));
+        }
+      }
+
+      addPinnacle(pinnacle1);
+      addPinnacle(pinnacle2);
+      addPinnacle(pinnacle3);
+      addPinnacle(pinnacle4);
     }
 
-    for (final item in careerItems.take(1)) {
-      lines.add(item.getDescription(lang));
+    // 13. Life Path Details
+    if (lifePathItems.isNotEmpty) {
+      lines.add(l10n['narrator_lifepath'] ?? 'Long-term journey insights.');
+      for (final item in lifePathItems) {
+        lines.add(item.getDescription(lang));
+      }
     }
 
-    for (final item in boostingItems.take(1)) {
-      lines.add(item.getDescription(lang));
+    // 14. Career Details
+    if (careerItems.isNotEmpty) {
+      lines.add(l10n['narrator_career'] ?? 'Career path fulfillment.');
+      for (final item in careerItems) {
+        lines.add(item.getDescription(lang));
+      }
     }
 
-    for (final item in combinations.take(1)) {
-      lines.add(item.getDescription(lang));
+    // 15. Boosting Personality
+    if (boostingItems.isNotEmpty) {
+      lines.add(l10n['narrator_boosting'] ?? 'Strengthening your personality.');
+      for (final item in boostingItems) {
+        lines.add(item.getDescription(lang));
+      }
     }
 
-    for (final pinnacle in [
-      ...pinnacle1,
-      ...pinnacle2,
-      ...pinnacle3,
-      ...pinnacle4,
-    ].take(4)) {
-      lines.add(pinnacle.getDescription(lang));
+    // 16. Combination Details
+    if (combinations.isNotEmpty) {
+      lines.add(l10n['narrator_combination'] ?? 'Unique interaction patterns.');
+      for (final item in combinations) {
+        lines.add(item.getDescription(lang));
+      }
     }
 
     return lines
@@ -317,8 +351,10 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
         .join(' ');
   }
 
+
   Future<void> playNarration(AppLanguage lang) async {
-    final script = _narrationText(lang);
+    final l10n = ref.read(birthdateL10nProvider);
+    final script = _narrationText(lang, l10n);
     if (script.trim().isEmpty) return;
 
     await _setNarrationLanguage(lang);
