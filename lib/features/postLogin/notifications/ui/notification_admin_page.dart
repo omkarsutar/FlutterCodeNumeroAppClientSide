@@ -205,22 +205,7 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           constraints: const BoxConstraints(maxHeight: 250),
-          child:
-              ref
-                      .watch(supabaseClientProvider)
-                      .from(ModelUserFields.table)
-                      .select()
-                      .asStream()
-                      .map((data) {
-                        return (data as List)
-                            .map((m) => ModelUser.fromMap(m))
-                            .toList();
-                      })
-                      .isEmpty
-                      .then((isEmpty) => isEmpty) ==
-                  true
-              ? const Center(child: Text('No users found'))
-              : StreamBuilder<List<ModelUser>>(
+          child: StreamBuilder<List<ModelUser>>(
                   stream: ref
                       .watch(supabaseClientProvider)
                       .from(ModelUserFields.table)
@@ -237,8 +222,9 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
                     final users = snapshot.data ?? [];
-                    if (users.isEmpty)
-                      return const Center(child: Text('No users with tokens'));
+                    if (users.isEmpty) {
+                      return const Center(child: Text('No users found'));
+                    }
 
                     return ListView.separated(
                       shrinkWrap: true,

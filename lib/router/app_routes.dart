@@ -5,6 +5,7 @@
 /// - Route URLs/paths (for GoRouter configuration)
 /// - Path parameter building (e.g., /shops/:id → /shops/123)
 /// - Type-safe route definitions
+library;
 
 class AppRoute {
   /// Auth & Root Routes

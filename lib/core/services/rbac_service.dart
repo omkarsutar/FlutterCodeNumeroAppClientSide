@@ -34,7 +34,7 @@ class RbacService {
 
   // Cache for current user's permissions
   // Format: {moduleId: {action: hasPermission}}
-  Map<String, Map<RbacAction, bool>> _permissionCache = {};
+  final Map<String, Map<RbacAction, bool>> _permissionCache = {};
   String? _cachedRoleId;
   String? _cachedRoleName; // NEW
 

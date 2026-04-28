@@ -204,4 +204,29 @@ class AuthService {
       );
     }
   }
+
+  /// Update the user's feedback in Supabase
+  Future<void> updateUserFeedback(String feedback) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      if (feedback.length > 500) {
+        throw Exception('Feedback cannot exceed 500 characters');
+      }
+
+      await _client
+          .from(ModelUserFields.table)
+          .update({ModelUserFields.userFeedback: feedback})
+          .eq(ModelUserFields.userId, userId);
+    } catch (e, st) {
+      _errorHandler.handle(
+        e,
+        st,
+        context: 'Updating user feedback',
+        showToUser: true,
+      );
+      rethrow;
+    }
+  }
 }

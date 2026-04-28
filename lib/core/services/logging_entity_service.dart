@@ -3,7 +3,7 @@ import '../interfaces/connectivity_service_interface.dart';
 import 'entity_service.dart';
 import 'logger_service.dart';
 
-/// Abstract service that wraps EntityService<T> with automatic logging
+/// Abstract service that wraps `EntityService<T>` with automatic logging
 /// All implementing classes automatically get logging without writing log statements
 abstract class LoggingEntityService<T> implements EntityService<T> {
   final LoggerService logger;

@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../cart/providers/cart_controller.dart';
@@ -15,6 +16,11 @@ import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../model/numerology_help_content.dart';
+import 'widgets/birthdate_share_template.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 import 'utils/analysis_theme.dart';
 import 'widgets/mystic_widgets.dart';
@@ -36,6 +42,7 @@ import 'sections/pinnacle_section.dart';
 import 'sections/life_path_section.dart';
 import 'sections/boosting_personality_section.dart';
 import 'sections/testimonials_section.dart';
+import 'sections/user_feedback_section.dart';
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
@@ -49,6 +56,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -153,6 +161,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                             ),
                           ),
                           actions: [
+                            if (birthdate != null)
+                              IconButton(
+                                icon: const Icon(Icons.share_rounded),
+                                onPressed: _handleShare,
+                                tooltip: 'Share Analysis',
+                              ),
                             Padding(
                               padding: const EdgeInsets.only(right: 12.0),
                               child: TextButton(
@@ -281,6 +295,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                 onHelp: _showHelpDialog,
                               ),
                               CombinationSection(onHelp: _showHelpDialog),
+                              if (birthdate != null) const UserFeedbackSection(),
                               if (hasBeenSaved) ...[
                                 const TestimonialsSection(),
                                 NarrationGuideSection(
@@ -733,6 +748,100 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         );
       },
     );
+  }
+
+  Future<void> _handleShare() async {
+    final birthdateData = ref.read(currentBirthdateProvider);
+    if (birthdateData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a birthdate first')),
+      );
+      return;
+    }
+
+    final l10n = ref.read(birthdateL10nProvider);
+
+    showLoadingDialog(
+      context: context,
+      message: l10n['share_loading'] ?? 'Generating shareable analysis...',
+    );
+
+    try {
+      // Capture the template widget
+      final image = await _screenshotController.captureFromWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(1080, 1920),
+            devicePixelRatio: 1.0,
+          ),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Material(
+              child: BirthdateShareTemplate(
+                birthdate: birthdateData,
+                l10n: l10n,
+              ),
+            ),
+          ),
+        ),
+        delay: const Duration(milliseconds: 100),
+        targetSize: const Size(1080, 1920),
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Dismiss loading
+
+      XFile xFile;
+      if (kIsWeb) {
+        // On Web, use fromData directly to avoid path_provider dependency
+        xFile = XFile.fromData(
+          image,
+          name: 'birthdate_analysis.png',
+          mimeType: 'image/png',
+        );
+      } else {
+        // On Mobile/Desktop, save to temporary file
+        final directory = await getTemporaryDirectory();
+        final imagePath =
+            '${directory.path}/birthdate_analysis_${DateTime.now().millisecondsSinceEpoch}.png';
+        final imageFile = File(imagePath);
+        await imageFile.writeAsBytes(image);
+        xFile = XFile(imagePath);
+      }
+
+      // Share text
+      final psychic = birthdateData.personalityNumber ?? "?";
+      final destiny = birthdateData.lifePathNumber ?? "?";
+      
+      final psychicLabel = l10n['personality_number_label'] ?? 'Psychic Number';
+      final destinyLabel = l10n['life_path_number_label'] ?? 'Destiny Number';
+      final sharePrefix = l10n['share_prefix'] ?? '✨ Check out my Mystical Analysis! ✨';
+      final sharePromo = l10n['share_promo'] ?? 'Get your own numerology analysis and unlock the secrets of your life path with Numero Shastra! 🔮';
+      final shareDownload = l10n['share_download'] ?? 'Download now on Play Store';
+
+      final shareText =
+          "$sharePrefix\n\n"
+          "$psychicLabel: $psychic\n"
+          "$destinyLabel: $destiny\n\n"
+          "$sharePromo\n\n"
+          "$shareDownload: https://play.google.com/store/apps/details?id=com.numero.shastra";
+
+      // Share the file
+      await Share.shareXFiles(
+        [xFile],
+        text: shareText,
+        subject: l10n['share_subject'] ?? 'My Numero Shastra Analysis',
+      );
+
+      ref.read(analyticsServiceProvider).logClickEvent('share_analysis_clicked');
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${l10n['share_error_msg'] ?? 'Failed to share'}: $e')),
+        );
+      }
+    }
   }
 }
 

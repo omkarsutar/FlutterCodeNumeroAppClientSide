@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 /// Pretty prints any object, handling JSON serialization
 void prettyPrint(dynamic entity) {
   final encoder = const JsonEncoder.withIndent('  ');
 
   if (entity == null) {
-    print('null');
+    debugPrint('null');
     return;
   }
 
@@ -26,7 +27,7 @@ void prettyPrint(dynamic entity) {
   }
 
   final jsonString = encoder.convert(data);
-  print(jsonString);
+  debugPrint(jsonString);
 }
 
 /// Converts any object to a pretty-printed JSON string

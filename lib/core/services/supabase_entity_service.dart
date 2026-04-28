@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../interfaces/connectivity_service_interface.dart';
@@ -17,6 +18,7 @@ abstract class SupabaseEntityService<T> extends LoggingEntityService<T> {
   ) : super(logger, connectivityService);
 
   /// Table name in Supabase
+  @override
   String get tableName;
 
   /// Primary key column
@@ -48,7 +50,7 @@ abstract class SupabaseEntityService<T> extends LoggingEntityService<T> {
 
   @override
   Future<List<T>> fetchAllImpl(String source) async {
-    print(
+    debugPrint(
       "From $source For $tableName Inside fetchAllImpl of SupabaseEntityService",
     );
     final maps = await client

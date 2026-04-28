@@ -150,31 +150,40 @@ class ModelPurchaseOrder {
     final map = <String, dynamic>{};
 
     if (poId != null) map[ModelPurchaseOrderFields.poId] = poId;
-    if (poTotalAmount != null)
+    if (poTotalAmount != null) {
       map[ModelPurchaseOrderFields.poTotalAmount] = poTotalAmount;
-    if (poLineItemCount != null)
+    }
+    if (poLineItemCount != null) {
       map[ModelPurchaseOrderFields.poLineItemCount] = poLineItemCount;
+    }
     if (poRouteId != null) map[ModelPurchaseOrderFields.poRouteId] = poRouteId;
     if (poShopId != null) map[ModelPurchaseOrderFields.poShopId] = poShopId;
-    if (userComment != null)
+    if (userComment != null) {
       map[ModelPurchaseOrderFields.userComment] = userComment;
-    if (profitToShop != null)
+    }
+    if (profitToShop != null) {
       map[ModelPurchaseOrderFields.profitToShop] = profitToShop;
+    }
     if (poLat != null) map[ModelPurchaseOrderFields.poLat] = poLat;
     if (poLong != null) map[ModelPurchaseOrderFields.poLong] = poLong;
     if (status != null) map[ModelPurchaseOrderFields.status] = status;
     if (createdBy != null) map[ModelPurchaseOrderFields.createdBy] = createdBy;
     if (updatedBy != null) map[ModelPurchaseOrderFields.updatedBy] = updatedBy;
-    if (createdAt != null)
+    if (createdAt != null) {
       map[ModelPurchaseOrderFields.createdAt] = createdAt!.toIso8601String();
-    if (updatedAt != null)
+    }
+    if (updatedAt != null) {
       map[ModelPurchaseOrderFields.updatedAt] = updatedAt!.toIso8601String();
-    if (adminComment != null)
+    }
+    if (adminComment != null) {
       map[ModelPurchaseOrderFields.adminComment] = adminComment;
-    if (visitOrder != null)
+    }
+    if (visitOrder != null) {
       map[ModelPurchaseOrderFields.visitOrder] = visitOrder;
-    if (birthdateIds != null)
+    }
+    if (birthdateIds != null) {
       map[ModelPurchaseOrderFields.birthdateIds] = birthdateIds;
+    }
 
     return map;
   }

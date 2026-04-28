@@ -12,6 +12,8 @@ class ModelUserFields {
   static const String updatedAt = 'updated_at';
   static const String userLanguage = 'user_language';
   static const String fcmToken = 'fcm_token';
+  static const String userFeedback = 'user_feedback';
+  static const String isUserFeedbackActive = 'is_user_feedback_active';
 }
 
 class ModelUser {
@@ -23,6 +25,8 @@ class ModelUser {
   final DateTime? updatedAt; // nullable, DB default
   final String? userLanguage; // nullable
   final String? fcmToken; // nullable
+  final String? userFeedback; // nullable
+  final bool isUserFeedbackActive; // non-nullable, default true
   final Map<String, dynamic> _resolvedLabels;
 
   ModelUser({
@@ -34,6 +38,8 @@ class ModelUser {
     this.updatedAt,
     this.userLanguage,
     this.fcmToken,
+    this.userFeedback,
+    this.isUserFeedbackActive = true,
     Map<String, dynamic>? resolvedLabels,
   }) : _resolvedLabels = resolvedLabels ?? const {};
 
@@ -56,6 +62,8 @@ class ModelUser {
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
       userLanguage: map[ModelUserFields.userLanguage],
       fcmToken: map[ModelUserFields.fcmToken],
+      userFeedback: map[ModelUserFields.userFeedback],
+      isUserFeedbackActive: map[ModelUserFields.isUserFeedbackActive] ?? true,
       resolvedLabels: labelEntries,
     );
   }
@@ -73,6 +81,8 @@ class ModelUser {
         ModelUserFields.updatedAt: updatedAt!.toIso8601String(),
       if (userLanguage != null) ModelUserFields.userLanguage: userLanguage,
       if (fcmToken != null) ModelUserFields.fcmToken: fcmToken,
+      if (userFeedback != null) ModelUserFields.userFeedback: userFeedback,
+      ModelUserFields.isUserFeedbackActive: isUserFeedbackActive,
     };
   }
 
@@ -86,6 +96,8 @@ class ModelUser {
       'updatedAt': updatedAt?.toIso8601String(),
       'userLanguage': userLanguage,
       'fcmToken': fcmToken,
+      'userFeedback': userFeedback,
+      'isUserFeedbackActive': isUserFeedbackActive,
       'resolvedLabels': resolvedLabels,
     };
   }
@@ -100,6 +112,8 @@ class ModelUser {
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
       userLanguage: json['userLanguage'] as String?,
       fcmToken: json['fcmToken'] as String?,
+      userFeedback: json['userFeedback'] as String?,
+      isUserFeedbackActive: json['isUserFeedbackActive'] ?? true,
       resolvedLabels: json['resolvedLabels'] ?? {},
     );
   }

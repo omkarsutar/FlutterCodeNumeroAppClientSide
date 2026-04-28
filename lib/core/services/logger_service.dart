@@ -1,4 +1,5 @@
-/// Abstract logger service interface
+import 'package:flutter/foundation.dart';
+
 /// Provides centralized logging for the application
 /// Can be easily extended to integrate with Firebase Crashlytics, Sentry, etc.
 abstract class LoggerService {
@@ -23,16 +24,16 @@ class LoggerServiceImpl implements LoggerService {
 
   @override
   void info(String message) {
-    print('[$_tag] ℹ️  $message');
+    debugPrint('[$_tag] ℹ️  $message');
     // TODO: Send to Firebase Analytics in production
     // FirebaseAnalytics.instance.logEvent(name: 'info', parameters: {'message': message});
   }
 
   @override
   void warning(String message, [StackTrace? stackTrace]) {
-    print('[$_tag] ⚠️  $message');
+    debugPrint('[$_tag] ⚠️  $message');
     if (stackTrace != null) {
-      print('Stack trace: $stackTrace');
+      debugPrint('Stack trace: $stackTrace');
     }
     // TODO: Send to Firebase Crashlytics in production with non-fatal exception
     // FirebaseCrashlytics.instance.recordError(Exception(message), stackTrace, reason: 'warning');
@@ -40,9 +41,9 @@ class LoggerServiceImpl implements LoggerService {
 
   @override
   void error(String message, StackTrace? stackTrace) {
-    print('[$_tag] ❌ $message');
+    debugPrint('[$_tag] ❌ $message');
     if (stackTrace != null) {
-      print('Stack trace: $stackTrace');
+      debugPrint('Stack trace: $stackTrace');
     }
     // TODO: Send to Firebase Crashlytics in production
     // FirebaseCrashlytics.instance.recordError(Exception(message), stackTrace);

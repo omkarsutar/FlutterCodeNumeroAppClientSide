@@ -13,8 +13,9 @@ class RazorpayService {
     required Function(PaymentFailureResponse) onFailure,
     required Function(ExternalWalletResponse) onExternalWallet,
   }) {
-    if (kIsWeb)
+    if (kIsWeb) {
       return; // Avoid native plugin initialization on web if it causes issues
+    }
 
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, onSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, onFailure);

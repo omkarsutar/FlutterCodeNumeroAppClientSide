@@ -25,10 +25,12 @@ class RetailerShopLinkAdapter extends EntityAdapter<ModelRetailerShopLink> {
 
   @override
   dynamic getLabelValue(ModelRetailerShopLink entity, String fieldName) {
-    if (fieldName == 'user_role')
+    if (fieldName == 'user_role') {
       return entity.resolvedLabels['user_role_label'];
-    if (fieldName == 'shop_route')
+    }
+    if (fieldName == 'shop_route') {
       return entity.resolvedLabels['shop_route_label'];
+    }
 
     if (fieldName.endsWith('_id')) {
       final labelKey = '${fieldName}_label';

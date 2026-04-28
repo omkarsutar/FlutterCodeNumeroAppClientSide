@@ -266,7 +266,7 @@ class PurchaseOrderFormNotifier extends StateNotifier<PurchaseOrderFormState> {
 
     try {
       final service = ref.read(purchaseOrderServiceProvider);
-      await service.deleteEntityById(entityId);
+      await service.delete(entityId);
       if (!_mounted) return true;
       state = state.copyWith(isLoading: false);
       return true;

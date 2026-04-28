@@ -75,7 +75,7 @@ class DeleteEntityButton<T> extends ConsumerWidget {
 
     if (confirmed) {
       try {
-        await entityService.deleteEntityById(adapter.getId(entity, idField));
+        await entityService.delete(adapter.getId(entity, idField));
         SnackbarUtils.showSuccess('$entityLabel deleted!');
       } catch (e, stackTrace) {
         debugPrint(stackTrace.toString());
