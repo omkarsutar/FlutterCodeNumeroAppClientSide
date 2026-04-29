@@ -2,15 +2,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../model/numerology_models.dart';
+import '../model/numerology_ui_content.dart';
 import 'numerology_content_providers.dart';
 import 'numerology_providers.dart';
 import '../../cart/providers/birthdate_record_providers.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 
+enum NarrationSection {
+  intro,
+  age,
+  coreDetails,
+  personality,
+  loshuGrid,
+  loshuPlanes,
+  remedyValues,
+  missingTells,
+  missingRemedies,
+  numberOccurrence,
+  importantPoints,
+  stockMarket,
+  pinnacles,
+  lifePath,
+  career,
+  boosting,
+  combination,
+}
+
+class NarrationChunk {
+  final String text;
+  final NarrationSection section;
+  final int? subIndex;
+
+  NarrationChunk({
+    required this.text,
+    required this.section,
+    this.subIndex,
+  });
+}
+
 class NarrationState {
   final bool isPlaying;
   final bool isPaused;
   final bool isStopped;
+  final int currentChunk;
+  final int totalChunks;
+  final String currentText;
+  final NarrationSection currentSection;
+  final int? currentSubIndex;
 
   const NarrationState({
     this.isPlaying = false,
@@ -18,10 +56,10 @@ class NarrationState {
     this.isStopped = true,
     this.currentChunk = 0,
     this.totalChunks = 0,
+    this.currentText = '',
+    this.currentSection = NarrationSection.intro,
+    this.currentSubIndex,
   });
-
-  final int currentChunk;
-  final int totalChunks;
 
   NarrationState copyWith({
     bool? isPlaying,
@@ -29,6 +67,9 @@ class NarrationState {
     bool? isStopped,
     int? currentChunk,
     int? totalChunks,
+    String? currentText,
+    NarrationSection? currentSection,
+    int? currentSubIndex,
   }) {
     return NarrationState(
       isPlaying: isPlaying ?? this.isPlaying,
@@ -36,6 +77,9 @@ class NarrationState {
       isStopped: isStopped ?? this.isStopped,
       currentChunk: currentChunk ?? this.currentChunk,
       totalChunks: totalChunks ?? this.totalChunks,
+      currentText: currentText ?? this.currentText,
+      currentSection: currentSection ?? this.currentSection,
+      currentSubIndex: currentSubIndex ?? this.currentSubIndex,
     );
   }
 }
@@ -82,338 +126,329 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
     return values.map((value) => value.toString()).join(', ');
   }
 
-  String _safeNarrationDate(DateTime birthdate, AppLanguage lang) {
-    final monthNames = switch (lang) {
-      AppLanguage.hindi => const [
-        'जनवरी',
-        'फरवरी',
-        'मार्च',
-        'अप्रैल',
-        'मई',
-        'जून',
-        'जुलाई',
-        'अगस्त',
-        'सितंबर',
-        'अक्टूबर',
-        'नवंबर',
-        'दिसंबर',
-      ],
-      AppLanguage.marathi => const [
-        'जानेवारी',
-        'फेब्रुवारी',
-        'मार्च',
-        'एप्रिल',
-        'मे',
-        'जून',
-        'जुलै',
-        'ऑगस्ट',
-        'सप्टेंबर',
-        'ऑक्टोबर',
-        'नोव्हेंबर',
-        'डिसेंबर',
-      ],
-      AppLanguage.english => const [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',
-      ],
-    };
-
-    return '${birthdate.day} ${monthNames[birthdate.month - 1]} ${birthdate.year}';
-  }
-
-  String _narrationText(AppLanguage lang, Map<String, String> l10n) {
-    final birthdate = ref.read(birthdateProvider);
+  List<NarrationChunk> _getNarrationChunks(AppLanguage lang, Map<String, String> l10n) {
     final ageText = ref.read(ageProvider);
     final numerology = ref.read(numerologyProvider);
     final personality = ref.read(personalityDataProvider).valueOrNull;
-    final planes =
-        ref.read(loshuPlanesProvider).valueOrNull ?? const <LoshuPlane>[];
-    final remedies =
-        ref.read(remedyValuesProvider).valueOrNull ?? const <RemedyValues>[];
-    final missingTells =
-        ref.read(missingNumberTellsProvider).valueOrNull ??
-        const <MissingNumberTell>[];
-    final missingRemedies =
-        ref.read(missingNumberRemediesProvider).valueOrNull ??
-        const <MissingNumberRemedy>[];
-    final numberDetails =
-        ref.read(numberOccurrenceDetailsProvider).valueOrNull ??
-        const <NumberOccurrenceDetail>[];
-    final importantPoints =
-        ref.read(importantPointsProvider).valueOrNull ??
-        const <ImportantPoint>[];
-    final stockInfo =
-        ref.read(stockMarketInfoProvider).valueOrNull ??
-        const <StockMarketInfo>[];
-    final lifePathItems =
-        ref.read(lifePathNumberDataProvider).valueOrNull ??
-        const <LifePathData>[];
-    final careerItems =
-        ref.read(careerDataProvider).valueOrNull ?? const <CareerData>[];
-    final boostingItems =
-        ref.read(boostingPersonalityDataProvider).valueOrNull ??
-        const <BoostingPersonalityData>[];
-    final combinations =
-        ref.read(combinationDataProvider).valueOrNull ??
-        const <CombinationData>[];
-    final pinnacle1 =
-        ref.read(pinnacleData1Provider).valueOrNull ?? const <PinnacleData>[];
-    final pinnacle2 =
-        ref.read(pinnacleData2Provider).valueOrNull ?? const <PinnacleData>[];
-    final pinnacle3 =
-        ref.read(pinnacleData3Provider).valueOrNull ?? const <PinnacleData>[];
-    final pinnacle4 =
-        ref.read(pinnacleData4Provider).valueOrNull ?? const <PinnacleData>[];
+    final planes = ref.read(loshuPlanesProvider).valueOrNull ?? const <LoshuPlane>[];
+    final remedies = ref.read(remedyValuesProvider).valueOrNull ?? const <RemedyValues>[];
+    final missingTells = ref.read(missingNumberTellsProvider).valueOrNull ?? const <MissingNumberTell>[];
+    final missingRemedies = ref.read(missingNumberRemediesProvider).valueOrNull ?? const <MissingNumberRemedy>[];
+    final numberDetails = ref.read(numberOccurrenceDetailsProvider).valueOrNull ?? const <NumberOccurrenceDetail>[];
+    final importantPoints = ref.read(importantPointsProvider).valueOrNull ?? const <ImportantPoint>[];
+    final stockInfo = ref.read(stockMarketInfoProvider).valueOrNull ?? const <StockMarketInfo>[];
+    final lifePathItems = ref.read(lifePathNumberDataProvider).valueOrNull ?? const <LifePathData>[];
+    final careerItems = ref.read(careerDataProvider).valueOrNull ?? const <CareerData>[];
+    final boostingItems = ref.read(boostingPersonalityDataProvider).valueOrNull ?? const <BoostingPersonalityData>[];
+    final combinations = ref.read(combinationDataProvider).valueOrNull ?? const <CombinationData>[];
+    final pinnacle1 = ref.read(pinnacleData1Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle2 = ref.read(pinnacleData2Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle3 = ref.read(pinnacleData3Provider).valueOrNull ?? const <PinnacleData>[];
+    final pinnacle4 = ref.read(pinnacleData4Provider).valueOrNull ?? const <PinnacleData>[];
 
-    final lines = <String>[];
+    final chunks = <NarrationChunk>[];
+
+    void addSectionHeader(String titleKey, String subtitleKey, NarrationSection section) {
+      final title = NumerologyUIContent.getHeaderTitle(titleKey, lang);
+      final subtitle = NumerologyUIContent.getHeaderTitle(subtitleKey, lang);
+      chunks.add(NarrationChunk(text: title, section: section));
+      if (subtitle.isNotEmpty && subtitle != title) {
+        chunks.add(NarrationChunk(text: subtitle, section: section));
+      }
+    }
 
     // Intro
-    lines.add(l10n['narrator_intro'] ?? 'Hello! This is your personal birthdate analysis.');
+    chunks.add(NarrationChunk(text: l10n['narrator_intro'] ?? 'Hello! This is your analysis.', section: NarrationSection.intro));
 
     // 1. Age
     if (ageText != null && ageText.isNotEmpty) {
-      lines.add('${l10n['narrator_age'] ?? 'This is based on your age: '} $ageText.');
+      chunks.add(NarrationChunk(text: '${l10n['narrator_age'] ?? 'Based on age: '} $ageText.', section: NarrationSection.age));
     }
 
     // 2. Numerology Core Details
     if (numerology.personality != null || numerology.lifePath != null) {
-      lines.add(l10n['narrator_core'] ?? 'First, let\'s look at your core numbers.');
-      lines.add(switch (lang) {
-        AppLanguage.hindi =>
-          'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
-        AppLanguage.marathi =>
-          'तुमचा पर्सनॅलिटी नंबर ${numerology.personality ?? '-'} आणि लाईफ पाथ नंबर ${numerology.lifePath ?? '-'} आहे.',
-        AppLanguage.english =>
-          'Your personality number is ${numerology.personality ?? '-'} and your life path number is ${numerology.lifePath ?? '-'}.',
-      });
+      addSectionHeader('numerical_analysis', '', NarrationSection.coreDetails);
+      chunks.add(NarrationChunk(text: l10n['narrator_core'] ?? 'Core numbers.', section: NarrationSection.coreDetails));
+      chunks.add(NarrationChunk(
+        text: switch (lang) {
+          AppLanguage.hindi => 'आपका पर्सनैलिटी नंबर ${numerology.personality ?? '-'} और लाइफ पाथ नंबर ${numerology.lifePath ?? '-'} है।',
+          AppLanguage.marathi => 'तुमचा पर्सनॅलिटी नंबर ${numerology.personality ?? '-'} आणि लाईफ पाथ नंबर ${numerology.lifePath ?? '-'} आहे.',
+          AppLanguage.english => 'Your personality number is ${numerology.personality ?? '-'} and your life path number is ${numerology.lifePath ?? '-'}.',
+        },
+        section: NarrationSection.coreDetails,
+      ));
     }
 
     // 3. Personality Analysis
     if (personality != null) {
-      lines.add(l10n['narrator_personality'] ?? 'Personality analysis.');
+      addSectionHeader('personality_analysis', 'personality_subtitle', NarrationSection.personality);
+      chunks.add(NarrationChunk(text: l10n['narrator_personality'] ?? 'Personality analysis.', section: NarrationSection.personality));
+      
+      final personalityHeader = NumerologyUIContent.getLabel('personality_analysis_label', lang)
+          .replaceAll('{number}', personality.personalityNumber.toString());
+      chunks.add(NarrationChunk(text: personalityHeader, section: NarrationSection.personality));
+
       if (personality.getLord(lang).isNotEmpty) {
-        lines.add(switch (lang) {
-          AppLanguage.hindi =>
-            'अधिपति: ${personality.getLord(lang)}।',
-          AppLanguage.marathi =>
-            'अधिपती: ${personality.getLord(lang)}.',
-          AppLanguage.english =>
-            'The ruling influence is ${personality.getLord(lang)}.',
-        });
+        chunks.add(NarrationChunk(
+          text: '${NumerologyUIContent.getLabel('lord', lang)}: ${personality.getLord(lang)}.',
+          section: NarrationSection.personality,
+        ));
       }
       if (personality.getQualities(lang).isNotEmpty) {
-        lines.add(personality.getQualities(lang));
+        chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('qualities', lang)}. ${personality.getQualities(lang)}', section: NarrationSection.personality));
       }
       if (personality.getWeaknesses(lang).isNotEmpty) {
-        lines.add(personality.getWeaknesses(lang));
+        chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('weaknesses', lang)}. ${personality.getWeaknesses(lang)}', section: NarrationSection.personality));
+      }
+      if (personality.getYouShould(lang).isNotEmpty) {
+        chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('recommendation', lang)}. ${personality.getYouShould(lang)}', section: NarrationSection.personality));
       }
       if (personality.getDescription(lang).isNotEmpty) {
-        lines.add(personality.getDescription(lang));
+        chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('detailed_insight', lang)}. ${personality.getDescription(lang)}', section: NarrationSection.personality));
       }
     }
 
-    // 4. Lo Shu Grid (Simple mention)
-    if (numerology.absentNumbers != null &&
-        numerology.absentNumbers!.isNotEmpty) {
-      lines.add(l10n['narrator_loshu'] ?? 'Lo Shu Grid insights.');
-      lines.add('${l10n['absent_numbers_label'] ?? 'Missing Numbers'}: ${_joinList(numerology.absentNumbers!)}.');
+    // 4. Lo Shu Grid
+    addSectionHeader('lo_shu_grid', 'lo_shu_grid_subtitle', NarrationSection.loshuGrid);
+    chunks.add(NarrationChunk(text: l10n['narrator_loshu'] ?? 'Lo Shu Grid.', section: NarrationSection.loshuGrid));
+    if (numerology.absentNumbers != null && numerology.absentNumbers!.isNotEmpty) {
+      chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('missing_numbers_grid', lang)}: ${_joinList(numerology.absentNumbers!)}.', section: NarrationSection.loshuGrid));
+    }
+    if (numerology.numberOccurrences != null) {
+      final occurrences = numerology.numberOccurrences!.entries
+          .where((e) => e.value > 0)
+          .map((e) => '${e.key} (${e.value})')
+          .join(', ');
+      if (occurrences.isNotEmpty) {
+        final occurrenceText = switch (lang) {
+          AppLanguage.hindi => 'आपके ग्रिड में नंबरों की आवृत्ति: $occurrences.',
+          AppLanguage.marathi => 'तुमच्या ग्रिडमधील अंकांची पुनरावृत्ती: $occurrences.',
+          AppLanguage.english => 'Number occurrences in your grid: $occurrences.',
+        };
+        chunks.add(NarrationChunk(text: occurrenceText, section: NarrationSection.loshuGrid));
+      }
     }
 
     // 5. Loshu Planes
     if (planes.isNotEmpty) {
-      lines.add(l10n['narrator_planes'] ?? 'Grid planes analysis.');
-      for (final plane in planes) {
-        lines.add('${plane.getTitle(lang)}. ${plane.getDescription(lang)}');
+      addSectionHeader('lo_shu_planes', 'lo_shu_planes_subtitle', NarrationSection.loshuPlanes);
+      chunks.add(NarrationChunk(text: l10n['narrator_planes'] ?? 'Grid planes.', section: NarrationSection.loshuPlanes));
+      for (int i = 0; i < planes.length; i++) {
+        final p = planes[i];
+        chunks.add(NarrationChunk(text: p.getTitle(lang), section: NarrationSection.loshuPlanes, subIndex: i));
+        chunks.add(NarrationChunk(text: p.getDescription(lang), section: NarrationSection.loshuPlanes, subIndex: i));
       }
     }
 
-    // 6. Remedy Values (Lucky/Unlucky)
+    // 6. Remedy Values
     if (remedies.isNotEmpty) {
-      lines.add(l10n['narrator_remedies'] ?? 'Positive energy enhancements.');
-      final remedy = remedies.first;
-      lines.add(switch (lang) {
-        AppLanguage.hindi =>
-          'शुभ नंबर ${_joinList(remedy.luckyNumbers)} हैं। शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(remedy.getLuckyDays(lang))} हैं।',
-        AppLanguage.marathi =>
-          'शुभ अंक ${_joinList(remedy.luckyNumbers)} आहेत. शुभ रंग ${_joinList(remedy.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(remedy.getLuckyDays(lang))} आहेत.',
-        AppLanguage.english =>
-          'Lucky numbers are ${_joinList(remedy.luckyNumbers)}. Lucky colors are ${_joinList(remedy.getLuckyColors(lang))}. Lucky days are ${_joinList(remedy.getLuckyDays(lang))}.',
-      });
+      addSectionHeader('lucky_unlucky', '', NarrationSection.remedyValues);
+      chunks.add(NarrationChunk(text: l10n['narrator_remedies'] ?? 'Enhancements.', section: NarrationSection.remedyValues));
+      final r = remedies.first;
+      
+      final luckyHeader = NumerologyUIContent.getLabel('lucky_number', lang);
+      chunks.add(NarrationChunk(text: luckyHeader, section: NarrationSection.remedyValues));
+      final luckyText = switch (lang) {
+        AppLanguage.hindi => 'शुभ नंबर ${_joinList(r.luckyNumbers)} हैं। शुभ रंग ${_joinList(r.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(r.getLuckyDays(lang))} हैं।',
+        AppLanguage.marathi => 'शुभ अंक ${_joinList(r.luckyNumbers)} आहेत. शुभ रंग ${_joinList(r.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(r.getLuckyDays(lang))} आहेत.',
+        AppLanguage.english => 'Lucky numbers are ${_joinList(r.luckyNumbers)}. Lucky colors are ${_joinList(r.getLuckyColors(lang))}. Lucky days are ${_joinList(r.getLuckyDays(lang))}.',
+      };
+      chunks.add(NarrationChunk(text: luckyText, section: NarrationSection.remedyValues));
+
+      if (r.unluckyNumbers.isNotEmpty || r.getUnluckyColors(lang).isNotEmpty) {
+        final unluckyHeader = NumerologyUIContent.getLabel('unlucky_number', lang);
+        chunks.add(NarrationChunk(text: unluckyHeader, section: NarrationSection.remedyValues));
+        final unluckyText = switch (lang) {
+          AppLanguage.hindi => 'अशुभ नंबर ${_joinList(r.unluckyNumbers)} और अशुभ रंग ${_joinList(r.getUnluckyColors(lang))} से बचें।',
+          AppLanguage.marathi => 'अशुभ अंक ${_joinList(r.unluckyNumbers)} आणि अशुभ रंग ${_joinList(r.getUnluckyColors(lang))} टाळावेत.',
+          AppLanguage.english => 'Avoid unlucky numbers ${_joinList(r.unluckyNumbers)} and unlucky colors ${_joinList(r.getUnluckyColors(lang))}.',
+        };
+        chunks.add(NarrationChunk(text: unluckyText, section: NarrationSection.remedyValues));
+      }
+
+      if (r.numbersForRemedy.isNotEmpty) {
+        final remedyNumbersHeader = NumerologyUIContent.getLabel('numbers_for_remedy', lang);
+        chunks.add(NarrationChunk(text: remedyNumbersHeader, section: NarrationSection.remedyValues));
+        final remedyNumbersText = switch (lang) {
+          AppLanguage.hindi => 'उपाय के लिए नंबर ${_joinList(r.numbersForRemedy)} का उपयोग करें।',
+          AppLanguage.marathi => 'उपायांसाठी ${_joinList(r.numbersForRemedy)} हे अंक वापरावेत.',
+          AppLanguage.english => 'Use numbers ${_joinList(r.numbersForRemedy)} for specific remedies.',
+        };
+        chunks.add(NarrationChunk(text: remedyNumbersText, section: NarrationSection.remedyValues));
+      }
     }
 
     // 7. Missing Number Tells
     if (missingTells.isNotEmpty) {
-      lines.add(l10n['narrator_missing_tells'] ?? 'Challenges from missing numbers.');
-      for (final tell in missingTells) {
-        lines.add(tell.getDescription(lang));
+      addSectionHeader('missing_number_tells', 'missing_number_tells_subtitle', NarrationSection.missingTells);
+      chunks.add(NarrationChunk(text: l10n['narrator_missing_tells'] ?? 'Challenges.', section: NarrationSection.missingTells));
+      for (int i = 0; i < missingTells.length; i++) {
+        final t = missingTells[i];
+        final header = NumerologyUIContent.getLabel('missing_number_label', lang)
+            .replaceAll('{number}', t.missingNumber.toString());
+        chunks.add(NarrationChunk(text: header, section: NarrationSection.missingTells, subIndex: i));
+        chunks.add(NarrationChunk(text: t.getDescription(lang), section: NarrationSection.missingTells, subIndex: i));
       }
     }
 
     // 8. Missing Number Remedies
     if (missingRemedies.isNotEmpty) {
-      lines.add(l10n['narrator_missing_remedies'] ?? 'Balancing missing energies.');
-      for (final remedy in missingRemedies) {
-        lines.add(remedy.getDescription(lang));
+      addSectionHeader('missing_number_remedies', '', NarrationSection.missingRemedies);
+      chunks.add(NarrationChunk(text: l10n['narrator_missing_remedies'] ?? 'Remedies.', section: NarrationSection.missingRemedies));
+      chunks.add(NarrationChunk(text: NumerologyUIContent.getLabel('remedy_instruction', lang), section: NarrationSection.missingRemedies));
+      for (int i = 0; i < missingRemedies.length; i++) {
+        final r = missingRemedies[i];
+        final header = NumerologyUIContent.getLabel('remedy_for_number', lang)
+            .replaceAll('{number}', r.missingNumber.toString());
+        chunks.add(NarrationChunk(text: header, section: NarrationSection.missingRemedies, subIndex: i));
+        chunks.add(NarrationChunk(text: r.getDescription(lang), section: NarrationSection.missingRemedies, subIndex: i));
       }
     }
 
-    // 9. Number Occurrence Details
+    // 9. Number Occurrence
     if (numberDetails.isNotEmpty) {
-      lines.add(l10n['narrator_occurrence'] ?? 'Number repetition effects.');
-      for (final detail in numberDetails) {
-        lines.add(detail.getDescription(lang));
+      addSectionHeader('occurrence_details', 'occurrence_details_subtitle', NarrationSection.numberOccurrence);
+      chunks.add(NarrationChunk(text: l10n['narrator_occurrence'] ?? 'Repetition.', section: NarrationSection.numberOccurrence));
+      for (int i = 0; i < numberDetails.length; i++) {
+        final d = numberDetails[i];
+        final timeLabel = d.occurrence == 1 
+            ? NumerologyUIContent.getLabel('time_singular', lang)
+            : NumerologyUIContent.getLabel('time_plural', lang);
+        final header = NumerologyUIContent.getLabel('occurrence_format', lang)
+            .replaceAll('{number}', d.number.toString())
+            .replaceAll('{count}', d.occurrence.toString())
+            .replaceAll('{times}', timeLabel);
+        chunks.add(NarrationChunk(text: header, section: NarrationSection.numberOccurrence, subIndex: i));
+        chunks.add(NarrationChunk(text: d.getDescription(lang), section: NarrationSection.numberOccurrence, subIndex: i));
       }
     }
 
     // 10. Important Points
     if (importantPoints.isNotEmpty) {
-      lines.add(l10n['narrator_important'] ?? 'Crucial tailored insights.');
-      for (final point in importantPoints) {
-        lines.add(point.getDescription(lang));
+      addSectionHeader('important_points', 'important_points_subtitle', NarrationSection.importantPoints);
+      chunks.add(NarrationChunk(text: l10n['narrator_important'] ?? 'Tailored insights.', section: NarrationSection.importantPoints));
+      for (int i = 0; i < importantPoints.length; i++) {
+        final p = importantPoints[i];
+        final header = '${NumerologyUIContent.getLabel('lo_shu_grid', lang)}: ${_joinList(p.includedNumbers)}';
+        chunks.add(NarrationChunk(text: header, section: NarrationSection.importantPoints, subIndex: i));
+        chunks.add(NarrationChunk(text: p.getDescription(lang), section: NarrationSection.importantPoints, subIndex: i));
       }
     }
 
-    // 11. Stock Market Info
+    // 11. Stock Market
     if (stockInfo.isNotEmpty) {
-      lines.add(l10n['narrator_stock'] ?? 'Investment and financial influences.');
-      for (final item in stockInfo) {
-        lines.add(item.getDescription(lang));
+      addSectionHeader('stock_market', 'stock_market_subtitle', NarrationSection.stockMarket);
+      chunks.add(NarrationChunk(text: l10n['narrator_stock'] ?? 'Financial influences.', section: NarrationSection.stockMarket));
+      for (int i = 0; i < stockInfo.length; i++) {
+        final s = stockInfo[i];
+        if (s.includedNumbers.isNotEmpty) {
+           final header = '${NumerologyUIContent.getLabel('lo_shu_grid', lang)}: ${_joinList(s.includedNumbers)}';
+           chunks.add(NarrationChunk(text: header, section: NarrationSection.stockMarket, subIndex: i));
+        }
+        chunks.add(NarrationChunk(text: s.getDescription(lang), section: NarrationSection.stockMarket, subIndex: i));
       }
     }
 
     // 12. Pinnacles
     if (pinnacle1.isNotEmpty || pinnacle2.isNotEmpty || pinnacle3.isNotEmpty || pinnacle4.isNotEmpty) {
-      lines.add(l10n['narrator_pinnacle'] ?? 'Life stages analysis.');
+      addSectionHeader('pinnacle_stage', 'pinnacle_subtitle', NarrationSection.pinnacles);
+      chunks.add(NarrationChunk(text: l10n['narrator_pinnacle'] ?? 'Life stages.', section: NarrationSection.pinnacles));
       
-      void addPinnacle(List<PinnacleData> data) {
-        if (data.isEmpty) return;
-        final p = data.first;
-        String detail = l10n['narrator_pinnacle_detail'] ?? 'For age range {range}, your pinnacle number is {number}: ';
-        detail = detail.replaceAll('{range}', p.lifePeriodRange);
-        detail = detail.replaceAll('{number}', p.pinnacleno.toString());
-        lines.add(detail);
-        for (final item in data) {
-          lines.add(item.getDescription(lang));
+      void addP(List<PinnacleData> d, String titleKey, int subIndex) {
+        if (d.isEmpty) return;
+        final p = d.first;
+        final sectionTitle = NumerologyUIContent.getHeaderTitle(titleKey, lang);
+        chunks.add(NarrationChunk(text: sectionTitle, section: NarrationSection.pinnacles, subIndex: subIndex));
+        
+        String det = l10n['narrator_pinnacle_detail'] ?? 'For age {range}, pinnacle is {number}: ';
+        det = det.replaceAll('{range}', p.lifePeriodRange).replaceAll('{number}', p.pinnacleno.toString());
+        chunks.add(NarrationChunk(text: det, section: NarrationSection.pinnacles, subIndex: subIndex));
+        for (final item in d) chunks.add(NarrationChunk(text: item.getDescription(lang), section: NarrationSection.pinnacles, subIndex: subIndex));
+      }
+      addP(pinnacle1, 'pinnacle_1', 0); 
+      addP(pinnacle2, 'pinnacle_2', 1); 
+      addP(pinnacle3, 'pinnacle_3', 2); 
+      addP(pinnacle4, 'pinnacle_4', 3);
+    }
+
+    // 13. Life Path
+    if (lifePathItems.isNotEmpty) {
+      addSectionHeader('life_path_details', 'life_path_subtitle', NarrationSection.lifePath);
+      chunks.add(NarrationChunk(text: l10n['narrator_lifepath'] ?? 'Journey.', section: NarrationSection.lifePath));
+      for (int i = 0; i < lifePathItems.length; i++) {
+        chunks.add(NarrationChunk(text: lifePathItems[i].getDescription(lang), section: NarrationSection.lifePath, subIndex: i));
+      }
+    }
+
+    // 14. Career
+    if (careerItems.isNotEmpty) {
+      addSectionHeader('career_destiny', 'career_destiny_subtitle', NarrationSection.career);
+      chunks.add(NarrationChunk(text: l10n['narrator_career'] ?? 'Career paths.', section: NarrationSection.career));
+      for (int i = 0; i < careerItems.length; i++) {
+        chunks.add(NarrationChunk(text: careerItems[i].getDescription(lang), section: NarrationSection.career, subIndex: i));
+      }
+    }
+
+    // 15. Boosting
+    if (boostingItems.isNotEmpty) {
+      addSectionHeader('boosting_personality', 'boosting_personality_subtitle', NarrationSection.boosting);
+      chunks.add(NarrationChunk(text: l10n['narrator_boosting'] ?? 'Strengthening.', section: NarrationSection.boosting));
+      for (int i = 0; i < boostingItems.length; i++) {
+        chunks.add(NarrationChunk(text: boostingItems[i].getDescription(lang), section: NarrationSection.boosting, subIndex: i));
+      }
+    }
+
+    // 16. Combination
+    if (combinations.isNotEmpty) {
+      addSectionHeader('combination_analysis', 'combination_subtitle', NarrationSection.combination);
+      chunks.add(NarrationChunk(text: l10n['narrator_combination'] ?? 'Interactions.', section: NarrationSection.combination));
+      for (int i = 0; i < combinations.length; i++) {
+        final c = combinations[i];
+        chunks.add(NarrationChunk(text: c.getDescription(lang), section: NarrationSection.combination, subIndex: i));
+        if (c.getExample(lang).isNotEmpty) {
+          chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('example', lang)}. ${c.getExample(lang)}', section: NarrationSection.combination, subIndex: i));
         }
       }
-
-      addPinnacle(pinnacle1);
-      addPinnacle(pinnacle2);
-      addPinnacle(pinnacle3);
-      addPinnacle(pinnacle4);
     }
 
-    // 13. Life Path Details
-    if (lifePathItems.isNotEmpty) {
-      lines.add(l10n['narrator_lifepath'] ?? 'Long-term journey insights.');
-      for (final item in lifePathItems) {
-        lines.add(item.getDescription(lang));
-      }
-    }
-
-    // 14. Career Details
-    if (careerItems.isNotEmpty) {
-      lines.add(l10n['narrator_career'] ?? 'Career path fulfillment.');
-      for (final item in careerItems) {
-        lines.add(item.getDescription(lang));
-      }
-    }
-
-    // 15. Boosting Personality
-    if (boostingItems.isNotEmpty) {
-      lines.add(l10n['narrator_boosting'] ?? 'Strengthening your personality.');
-      for (final item in boostingItems) {
-        lines.add(item.getDescription(lang));
-      }
-    }
-
-    // 16. Combination Details
-    if (combinations.isNotEmpty) {
-      lines.add(l10n['narrator_combination'] ?? 'Unique interaction patterns.');
-      for (final item in combinations) {
-        lines.add(item.getDescription(lang));
-      }
-    }
-
-    return lines
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .join(' ');
+    return chunks;
   }
-
 
   Future<void> playNarration(AppLanguage lang) async {
     final l10n = ref.read(birthdateL10nProvider);
-    final script = _narrationText(lang, l10n);
-    if (script.trim().isEmpty) return;
+    final chunks = _getNarrationChunks(lang, l10n);
+    if (chunks.isEmpty) return;
 
     await _setNarrationLanguage(lang);
     await _flutterTts.stop();
     _isNarrationStopped = false;
 
-    // chunking logic to prevent Android TTS crashing (max length 4000)
-    final List<String> chunks = [];
-    int start = 0;
-    while (start < script.length) {
-      if (start + 3000 < script.length) {
-        int end = start + 3000;
-        while (end > start &&
-            script[end] != ' ' &&
-            script[end] != '.' &&
-            script[end] != '।') {
-          end--;
-        }
-        if (end == start) end = start + 3000;
-        chunks.add(script.substring(start, end).trim());
-        start = end;
-      } else {
-        chunks.add(script.substring(start).trim());
-        start = script.length;
-      }
-    }
-
     state = state.copyWith(
-      isPlaying: true,
-      isPaused: false,
-      isStopped: false,
-      currentChunk: 0,
-      totalChunks: chunks.length,
+      isPlaying: true, isPaused: false, isStopped: false,
+      currentChunk: 0, totalChunks: chunks.length,
+      currentText: chunks.first.text, currentSection: chunks.first.section,
+      currentSubIndex: chunks.first.subIndex,
     );
 
     for (int i = 0; i < chunks.length; i++) {
       if (_isNarrationStopped) break;
-
-      while (state.isPaused && !_isNarrationStopped) {
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
-
+      while (state.isPaused && !_isNarrationStopped) await Future.delayed(const Duration(milliseconds: 300));
       if (_isNarrationStopped) break;
 
-      state = state.copyWith(currentChunk: i + 1);
-      await _flutterTts.speak(chunks[i]);
+      state = state.copyWith(
+        currentChunk: i + 1,
+        currentText: chunks[i].text,
+        currentSection: chunks[i].section,
+        currentSubIndex: chunks[i].subIndex,
+      );
+      await _flutterTts.speak(chunks[i].text);
     }
 
-    if (!_isNarrationStopped) {
-      state = state.copyWith(isPlaying: false, isPaused: false, isStopped: true);
-    }
+    if (!_isNarrationStopped) stopNarration();
   }
 
   Future<void> pauseNarration() async {
-    try {
-      await _flutterTts.pause();
-    } catch (_) {
-      await _flutterTts.stop();
-    }
+    try { await _flutterTts.pause(); } catch (_) { await _flutterTts.stop(); }
     state = state.copyWith(isPlaying: false, isPaused: true, isStopped: false);
   }
 

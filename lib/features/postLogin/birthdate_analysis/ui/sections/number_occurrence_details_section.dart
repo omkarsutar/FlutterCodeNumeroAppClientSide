@@ -8,10 +8,12 @@ import '../widgets/mystic_widgets.dart';
 
 class NumberOccurrenceDetailsSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const NumberOccurrenceDetailsSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -44,9 +46,13 @@ class NumberOccurrenceDetailsSection extends ConsumerWidget {
                 onHelp: () => onHelp('number_occurrences', lang),
               ),
               const SizedBox(height: 24),
-              ...details.map(
-                (detail) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...details.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final detail = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -118,8 +124,8 @@ class NumberOccurrenceDetailsSection extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

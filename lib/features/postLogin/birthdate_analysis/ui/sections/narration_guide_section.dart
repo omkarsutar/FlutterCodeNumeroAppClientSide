@@ -26,11 +26,6 @@ class NarrationGuideSection extends ConsumerWidget {
     final narrationNotifier = ref.read(narrationProvider.notifier);
 
     final canPlay = ref.watch(birthdateProvider) != null;
-    final playLabel = switch (currentLang) {
-      AppLanguage.hindi => 'सुनिए',
-      AppLanguage.marathi => 'ऐका',
-      AppLanguage.english => 'Listen',
-    };
 
     final title = switch (currentLang) {
       AppLanguage.hindi => 'नमस्ते!',
@@ -149,8 +144,8 @@ class NarrationGuideSection extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 12,
+                          runSpacing: 12,
                           children: [
                             OracleButton(
                               onPressed: canPlay
@@ -165,23 +160,18 @@ class NarrationGuideSection extends ConsumerWidget {
                                       narrationNotifier.playNarration(currentLang);
                                     }
                                   : null,
-                              icon: narrationState.isPaused
-                                  ? Icons.play_arrow_rounded
-                                  : Icons.volume_up_rounded,
-                              label: playLabel,
+                              icon: Icons.smart_display_rounded,
+                              label: 'Watch',
                               isPrimary: true,
                             ),
-                            if (narrationState.isPlaying || narrationState.isPaused) ...[
-                              OracleButton(
-                                onPressed: () => narrationNotifier.pauseNarration(),
-                                icon: Icons.pause_rounded,
-                              ),
-                              OracleButton(
-                                onPressed: () => narrationNotifier.stopNarration(),
-                                icon: Icons.stop_rounded,
-                                isError: true,
-                              ),
-                            ],
+                            OracleButton(
+                              onPressed: canPlay
+                                  ? () => narrationNotifier.playNarration(currentLang)
+                                  : null,
+                              icon: Icons.headphones_rounded,
+                              label: 'Listen',
+                              isPrimary: false,
+                            ),
                           ],
                         ),
                       ],

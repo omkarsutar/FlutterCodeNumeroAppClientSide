@@ -8,10 +8,12 @@ import '../widgets/mystic_widgets.dart';
 
 class LoshuPlanesSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const LoshuPlanesSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -44,9 +46,13 @@ class LoshuPlanesSection extends ConsumerWidget {
                 onHelp: () => onHelp('lo_shu_planes', lang),
               ),
               const SizedBox(height: 24),
-              ...planes.map(
-                (plane) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...planes.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final plane = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -67,8 +73,8 @@ class LoshuPlanesSection extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

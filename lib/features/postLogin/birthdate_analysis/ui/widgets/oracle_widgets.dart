@@ -459,3 +459,124 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
     );
   }
 }
+class NarrationPlayerBar extends ConsumerWidget {
+  const NarrationPlayerBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final narrationState = ref.watch(narrationProvider);
+    final narrationNotifier = ref.read(narrationProvider.notifier);
+    final accent = AnalysisTheme.getAccent(theme);
+
+    if (narrationState.isStopped) return const SizedBox.shrink();
+
+    final progress = narrationState.totalChunks > 0 
+        ? narrationState.currentChunk / narrationState.totalChunks 
+        : 0.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(color: accent.withValues(alpha: 0.3), width: 1.5),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress Bar at the very top
+            LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.white10,
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+              minHeight: 4,
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+              child: Column(
+                children: [
+                  // Bottom Row: Progress Time | Controls
+                  Row(
+                    children: [
+                      // Progress Text
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "${narrationState.currentChunk}/${narrationState.totalChunks}",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ),
+                      
+                      const Spacer(),
+                      
+                      // Controls
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              narrationState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            onPressed: () {
+                              if (narrationState.isPlaying) {
+                                narrationNotifier.pauseNarration();
+                              } else {
+                                narrationNotifier.playNarration(ref.read(languageProvider));
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.stop_rounded, color: Colors.white, size: 32),
+                            onPressed: () => narrationNotifier.stopNarration(),
+                          ),
+                        ],
+                      ),
+                      
+                      const Spacer(),
+                      
+                      // Fullscreen/Watch toggle button
+                      IconButton(
+                        icon: Icon(Icons.smart_display_rounded, color: accent),
+                        onPressed: () {
+                          // Note: This logic assumes pulseController is available or managed elsewhere
+                          // For now, we just indicate it's the 'Watch' entry point
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

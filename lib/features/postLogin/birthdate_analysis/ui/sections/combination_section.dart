@@ -9,10 +9,12 @@ import '../widgets/mystic_widgets.dart';
 
 class CombinationSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const CombinationSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -44,9 +46,13 @@ class CombinationSection extends ConsumerWidget {
                 onHelp: () => onHelp('combination_analysis', currentLang),
               ),
               const SizedBox(height: 24),
-              ...data.map(
-                (item) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...data.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -98,8 +104,8 @@ class CombinationSection extends ConsumerWidget {
                       ],
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

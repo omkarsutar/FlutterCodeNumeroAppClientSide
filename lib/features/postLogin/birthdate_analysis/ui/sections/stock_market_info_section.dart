@@ -8,10 +8,12 @@ import '../widgets/mystic_widgets.dart';
 
 class StockMarketInfoSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const StockMarketInfoSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -44,9 +46,13 @@ class StockMarketInfoSection extends ConsumerWidget {
                 onHelp: () => onHelp('stock_market', currentLang),
               ),
               const SizedBox(height: 20),
-              ...items.map(
-                (item) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...items.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   borderColor: Colors.green.withValues(alpha: 0.2),
                   gradientColors: [
                     Colors.green.withValues(alpha: 0.05),
@@ -95,8 +101,8 @@ class StockMarketInfoSection extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

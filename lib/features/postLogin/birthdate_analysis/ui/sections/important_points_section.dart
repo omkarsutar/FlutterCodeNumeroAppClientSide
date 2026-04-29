@@ -7,10 +7,12 @@ import '../widgets/mystic_widgets.dart';
 
 class ImportantPointsSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const ImportantPointsSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -42,9 +44,13 @@ class ImportantPointsSection extends ConsumerWidget {
                 onHelp: () => onHelp('important_points', currentLang),
               ),
               const SizedBox(height: 20),
-              ...points.map(
-                (point) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...points.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final point = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   borderColor: theme.colorScheme.secondary.withValues(
                     alpha: 0.2,
                   ),
@@ -77,8 +83,8 @@ class ImportantPointsSection extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

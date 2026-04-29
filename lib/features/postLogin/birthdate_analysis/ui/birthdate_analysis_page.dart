@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'utils/analysis_theme.dart';
 import 'widgets/mystic_widgets.dart';
+import 'widgets/oracle_widgets.dart';
 import 'sections/narration_guide_section.dart';
 import 'sections/age_indicator_section.dart';
 import 'sections/numerology_core_details_section.dart';
@@ -43,6 +44,7 @@ import 'sections/life_path_section.dart';
 import 'sections/boosting_personality_section.dart';
 import 'sections/testimonials_section.dart';
 import 'sections/user_feedback_section.dart';
+import '../providers/narration_provider.dart';
 
 class BirthdateAnalysisPage extends ConsumerStatefulWidget {
   const BirthdateAnalysisPage({super.key});
@@ -57,6 +59,33 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
   final ScreenshotController _screenshotController = ScreenshotController();
+
+  final Map<NarrationSection, GlobalKey> _sectionKeys = {
+    NarrationSection.intro: GlobalKey(),
+    NarrationSection.age: GlobalKey(),
+    NarrationSection.coreDetails: GlobalKey(),
+    NarrationSection.personality: GlobalKey(),
+    NarrationSection.loshuGrid: GlobalKey(),
+    NarrationSection.loshuPlanes: GlobalKey(),
+    NarrationSection.remedyValues: GlobalKey(),
+    NarrationSection.missingTells: GlobalKey(),
+    NarrationSection.missingRemedies: GlobalKey(),
+    NarrationSection.numberOccurrence: GlobalKey(),
+    NarrationSection.importantPoints: GlobalKey(),
+    NarrationSection.stockMarket: GlobalKey(),
+    NarrationSection.pinnacles: GlobalKey(),
+    NarrationSection.lifePath: GlobalKey(),
+    NarrationSection.career: GlobalKey(),
+    NarrationSection.boosting: GlobalKey(),
+    NarrationSection.combination: GlobalKey(),
+  };
+
+  final Map<String, GlobalKey> _subSectionKeys = {};
+
+  GlobalKey _getSubSectionKey(NarrationSection section, int index) {
+    final key = '${section.name}_$index';
+    return _subSectionKeys.putIfAbsent(key, () => GlobalKey());
+  }
 
   @override
   void initState() {
@@ -115,6 +144,30 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       ),
     );
 
+    // Auto-scroll listener
+    ref.listen(narrationProvider, (prev, next) {
+      if (next.isPlaying) {
+        GlobalKey? targetKey;
+
+        if (next.currentSubIndex != null) {
+          final key = '${next.currentSection.name}_${next.currentSubIndex}';
+          targetKey = _subSectionKeys[key];
+        }
+
+        // Fallback to section key if sub-section key not found or not provided
+        targetKey ??= _sectionKeys[next.currentSection];
+
+        if (targetKey != null && targetKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            targetKey.currentContext!,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOutCubic,
+            alignment: 0.15,
+          );
+        }
+      }
+    });
+
     return Theme(
       data: pageTheme,
       child: Builder(
@@ -129,192 +182,361 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           return Scaffold(
             key: _scaffoldKey,
             drawer: const CustomDrawer(),
-            body: Column(
+            body: Stack(
               children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _refreshAnalysisData,
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      slivers: [
-                        SliverAppBar(
-                          pinned: true,
-                          stretch: true,
-                          expandedHeight: 0,
-                          toolbarHeight: 70,
-                          backgroundColor: theme.colorScheme.surface,
-                          foregroundColor: theme.colorScheme.onSurface,
-                          elevation: 0,
-                          centerTitle: true,
-                          leading: IconButton(
-                            icon: const Icon(Icons.menu_rounded),
-                            onPressed: () =>
-                                _scaffoldKey.currentState?.openDrawer(),
+                Column(
+                  children: [
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _refreshAnalysisData,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
                           ),
-                          title: Text(
-                            l10n['birthdate_analysis'] ?? 'Birthdate Analysis',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                          actions: [
-                            if (birthdate != null)
+                          slivers: [
+                            SliverAppBar(
+                              pinned: true,
+                              stretch: true,
+                              expandedHeight: 0,
+                              toolbarHeight: 70,
+                              backgroundColor: theme.colorScheme.surface,
+                              foregroundColor: theme.colorScheme.onSurface,
+                              elevation: 0,
+                              centerTitle: true,
+                              leading: IconButton(
+                                icon: const Icon(Icons.menu_rounded),
+                                onPressed: () =>
+                                    _scaffoldKey.currentState?.openDrawer(),
+                              ),
+                              title: Text(
+                                l10n['birthdate_analysis'] ??
+                                    'Birthdate Analysis',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              actions: [
+                                /* if (birthdate != null)
                               IconButton(
                                 icon: const Icon(Icons.share_rounded),
                                 onPressed: _handleShare,
                                 tooltip: 'Share Analysis',
+                              ), */
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: TextButton(
+                                    onPressed: () {
+                                      ref
+                                          .read(languageProvider.notifier)
+                                          .toggleLanguage();
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AnalysisTheme.getAccent(
+                                        theme,
+                                      ),
+                                      backgroundColor: AnalysisTheme.getAccent(
+                                        theme,
+                                      ).withValues(alpha: 0.1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      currentLang == AppLanguage.english
+                                          ? 'EN'
+                                          : currentLang == AppLanguage.hindi
+                                          ? '\u0939\u093f'
+                                          : '\u092e',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              bottom: PreferredSize(
+                                preferredSize: const Size.fromHeight(1),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AnalysisTheme.getAccent(
+                                    theme,
+                                  ).withValues(alpha: 0.12),
+                                ),
                               ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: TextButton(
-                                onPressed: () {
-                                  ref
-                                      .read(languageProvider.notifier)
-                                      .toggleLanguage();
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: AnalysisTheme.getAccent(
-                                    theme,
-                                  ),
-                                  backgroundColor: AnalysisTheme.getAccent(
-                                    theme,
-                                  ).withValues(alpha: 0.1),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
+                            ),
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _BirthdateHeaderDelegate(
+                                child: _buildBirthdatePickerTile(
+                                  context,
+                                  birthdate,
+                                  l10n,
+                                  integrated: true,
                                 ),
-                                child: Text(
-                                  currentLang == AppLanguage.english
-                                      ? 'EN'
-                                      : currentLang == AppLanguage.hindi
-                                      ? '\u0939\u093f'
-                                      : '\u092e',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
+                                backgroundColor: theme.colorScheme.surface,
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Column(
+                                children: [
+                                  AgeIndicatorSection(
+                                    key: _sectionKeys[NarrationSection.age],
+                                    onEditName: () {
+                                      final birthdateRecord = ref.read(
+                                        currentBirthdateRecordProvider,
+                                      );
+                                      final birthdateId =
+                                          birthdateRecord?['id'] as String?;
+                                      final fullName =
+                                          birthdateRecord?['full_name']
+                                              as String? ??
+                                          'Age Snapshot';
+                                      if (birthdateId != null) {
+                                        _updateBirthdateName(
+                                          birthdateId,
+                                          fullName == 'Age Snapshot'
+                                              ? ''
+                                              : fullName,
+                                        );
+                                      }
+                                    },
                                   ),
-                                ),
+                                  _buildQuickActionButtons(
+                                    context,
+                                    currentLang,
+                                    birthdate,
+                                    l10n,
+                                  ),
+                                  NumerologyCoreDetailsSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .coreDetails],
+                                    onHelp: _showHelpDialog,
+                                  ),
+                                  PersonalityAnalysisSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .personality],
+                                    onHelp: _showHelpDialog,
+                                  ),
+                                  LoShuGridSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .loshuGrid],
+                                    onHelp: _showHelpDialog,
+                                  ),
+                                  LoshuPlanesSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .loshuPlanes],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.loshuPlanes,
+                                      index,
+                                    ),
+                                  ),
+                                  RemedyValuesSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .remedyValues],
+                                    onHelp: _showHelpDialog,
+                                  ),
+                                  MissingNumberTellsSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .missingTells],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.missingTells,
+                                      index,
+                                    ),
+                                  ),
+                                  MissingNumberRemediesSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .missingRemedies],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.missingRemedies,
+                                      index,
+                                    ),
+                                  ),
+                                  NumberOccurrenceDetailsSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .numberOccurrence],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.numberOccurrence,
+                                      index,
+                                    ),
+                                  ),
+                                  ImportantPointsSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .importantPoints],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.importantPoints,
+                                      index,
+                                    ),
+                                  ),
+                                  StockMarketInfoSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .stockMarket],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.stockMarket,
+                                      index,
+                                    ),
+                                  ),
+                                  PinnacleSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .pinnacles],
+                                    provider: pinnacleData1Provider,
+                                    title: "pinnacle_1",
+                                    onHelp: _showHelpDialog,
+                                    subKey: _getSubSectionKey(
+                                      NarrationSection.pinnacles,
+                                      0,
+                                    ),
+                                  ),
+                                  PinnacleSection(
+                                    provider: pinnacleData2Provider,
+                                    title: "pinnacle_2",
+                                    onHelp: _showHelpDialog,
+                                    subKey: _getSubSectionKey(
+                                      NarrationSection.pinnacles,
+                                      1,
+                                    ),
+                                  ),
+                                  PinnacleSection(
+                                    provider: pinnacleData3Provider,
+                                    title: "pinnacle_3",
+                                    onHelp: _showHelpDialog,
+                                    subKey: _getSubSectionKey(
+                                      NarrationSection.pinnacles,
+                                      2,
+                                    ),
+                                  ),
+                                  PinnacleSection(
+                                    provider: pinnacleData4Provider,
+                                    title: "pinnacle_4",
+                                    onHelp: _showHelpDialog,
+                                    subKey: _getSubSectionKey(
+                                      NarrationSection.pinnacles,
+                                      3,
+                                    ),
+                                  ),
+                                  LifePathSection(
+                                    key:
+                                        _sectionKeys[NarrationSection.lifePath],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.lifePath,
+                                      index,
+                                    ),
+                                  ),
+                                  CareerSection(
+                                    key: _sectionKeys[NarrationSection.career],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.career,
+                                      index,
+                                    ),
+                                  ),
+                                  BoostingPersonalitySection(
+                                    key:
+                                        _sectionKeys[NarrationSection.boosting],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.boosting,
+                                      index,
+                                    ),
+                                  ),
+                                  CombinationSection(
+                                    key:
+                                        _sectionKeys[NarrationSection
+                                            .combination],
+                                    onHelp: _showHelpDialog,
+                                    getSubKey: (index) => _getSubSectionKey(
+                                      NarrationSection.combination,
+                                      index,
+                                    ),
+                                  ),
+                                  if (birthdate != null)
+                                    const UserFeedbackSection(),
+                                  if (hasBeenSaved) ...[
+                                    const TestimonialsSection(),
+                                    NarrationGuideSection(
+                                      key: _sectionKeys[NarrationSection.intro],
+                                      pulseController: _pulseController,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 160),
+                                ],
                               ),
                             ),
                           ],
-                          bottom: PreferredSize(
-                            preferredSize: const Size.fromHeight(1),
-                            child: Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: AnalysisTheme.getAccent(
-                                theme,
-                              ).withValues(alpha: 0.12),
-                            ),
-                          ),
                         ),
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _BirthdateHeaderDelegate(
-                            child: _buildBirthdatePickerTile(
-                              context,
-                              birthdate,
-                              l10n,
-                              integrated: true,
-                            ),
-                            backgroundColor: theme.colorScheme.surface,
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Column(
-                            children: [
-                              AgeIndicatorSection(
-                                onEditName: () {
-                                  final birthdateRecord = ref.read(
-                                    currentBirthdateRecordProvider,
-                                  );
-                                  final birthdateId =
-                                      birthdateRecord?['id'] as String?;
-                                  final fullName =
-                                      birthdateRecord?['full_name']
-                                          as String? ??
-                                      'Age Snapshot';
-                                  if (birthdateId != null) {
-                                    _updateBirthdateName(
-                                      birthdateId,
-                                      fullName == 'Age Snapshot'
-                                          ? ''
-                                          : fullName,
-                                    );
-                                  }
-                                },
-                              ),
-                              NumerologyCoreDetailsSection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              PersonalityAnalysisSection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              LoShuGridSection(onHelp: _showHelpDialog),
-                              LoshuPlanesSection(onHelp: _showHelpDialog),
-                              RemedyValuesSection(onHelp: _showHelpDialog),
-                              MissingNumberTellsSection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              MissingNumberRemediesSection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              NumberOccurrenceDetailsSection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              ImportantPointsSection(onHelp: _showHelpDialog),
-                              StockMarketInfoSection(onHelp: _showHelpDialog),
-                              PinnacleSection(
-                                provider: pinnacleData1Provider,
-                                title: "pinnacle_1",
-                                onHelp: _showHelpDialog,
-                              ),
-                              PinnacleSection(
-                                provider: pinnacleData2Provider,
-                                title: "pinnacle_2",
-                                onHelp: _showHelpDialog,
-                              ),
-                              PinnacleSection(
-                                provider: pinnacleData3Provider,
-                                title: "pinnacle_3",
-                                onHelp: _showHelpDialog,
-                              ),
-                              PinnacleSection(
-                                provider: pinnacleData4Provider,
-                                title: "pinnacle_4",
-                                onHelp: _showHelpDialog,
-                              ),
-                              LifePathSection(onHelp: _showHelpDialog),
-                              CareerSection(onHelp: _showHelpDialog),
-                              BoostingPersonalitySection(
-                                onHelp: _showHelpDialog,
-                              ),
-                              CombinationSection(onHelp: _showHelpDialog),
-                              if (birthdate != null) const UserFeedbackSection(),
-                              if (hasBeenSaved) ...[
-                                const TestimonialsSection(),
-                                NarrationGuideSection(
-                                  pulseController: _pulseController,
-                                ),
-                              ],
-                              const SizedBox(height: 100),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    _buildActionFooter(context, l10n, birthdate, cartStatus),
+                  ],
                 ),
-                _buildActionFooter(context, l10n, birthdate, cartStatus),
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: NarrationPlayerBar(),
+                ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButtons(
+    BuildContext context,
+    AppLanguage lang,
+    DateTime? birthdate,
+    Map<String, String> l10n,
+  ) {
+    final narrationNotifier = ref.read(narrationProvider.notifier);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: OracleButton(
+              onPressed: birthdate == null
+                  ? null
+                  : () => narrationNotifier.playNarration(lang),
+              icon: Icons.headphones_rounded,
+              label: l10n['listen'] ?? 'Listen',
+              isPrimary: true,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OracleButton(
+              onPressed: birthdate == null ? null : _handleShare,
+              icon: Icons.share_rounded,
+              label: l10n['share'] ?? 'Share',
+              isPrimary: false,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -812,12 +1034,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       // Share text
       final psychic = birthdateData.personalityNumber ?? "?";
       final destiny = birthdateData.lifePathNumber ?? "?";
-      
+
       final psychicLabel = l10n['personality_number_label'] ?? 'Psychic Number';
       final destinyLabel = l10n['life_path_number_label'] ?? 'Destiny Number';
-      final sharePrefix = l10n['share_prefix'] ?? '✨ Check out my Mystical Analysis! ✨';
-      final sharePromo = l10n['share_promo'] ?? 'Get your own numerology analysis and unlock the secrets of your life path with Numero Shastra! 🔮';
-      final shareDownload = l10n['share_download'] ?? 'Download now on Play Store';
+      final sharePrefix =
+          l10n['share_prefix'] ?? '✨ Check out my Mystical Analysis! ✨';
+      final sharePromo =
+          l10n['share_promo'] ??
+          'Get your own numerology analysis and unlock the secrets of your life path with Numero Shastra! 🔮';
+      final shareDownload =
+          l10n['share_download'] ?? 'Download now on Play Store';
 
       final shareText =
           "$sharePrefix\n\n"
@@ -833,12 +1059,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         subject: l10n['share_subject'] ?? 'My Numero Shastra Analysis',
       );
 
-      ref.read(analyticsServiceProvider).logClickEvent('share_analysis_clicked');
+      ref
+          .read(analyticsServiceProvider)
+          .logClickEvent('share_analysis_clicked');
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop(); // Dismiss loading
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${l10n['share_error_msg'] ?? 'Failed to share'}: $e')),
+          SnackBar(
+            content: Text(
+              '${l10n['share_error_msg'] ?? 'Failed to share'}: $e',
+            ),
+          ),
         );
       }
     }

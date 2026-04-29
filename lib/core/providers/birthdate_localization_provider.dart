@@ -96,6 +96,8 @@ const _birthdateTranslations = {
     'narrator_career': 'Based on your numbers, these career paths might be most fulfilling for you.',
     'narrator_boosting': 'You can further strengthen your personality by following these simple tips.',
     'narrator_combination': 'Finally, we look at how your different numbers interact with each other to create your unique life pattern.',
+    'listen': 'Listen',
+    'share': 'Share',
   },
   AppLanguage.marathi: {
     'birthdate_label': 'जन्म तारीख',
@@ -185,6 +187,8 @@ const _birthdateTranslations = {
     'narrator_career': 'तुमच्या अंकांनुसार, हे करिअर मार्ग तुमच्यासाठी सर्वात फायदेशीर ठरू शकतात.',
     'narrator_boosting': 'या सोप्या टिप्स फॉलो करून तुम्ही तुमचे व्यक्तिमत्व अधिक मजबूत करू शकता.',
     'narrator_combination': 'शेवटी, तुमचे वेगवेगळे अंक एकमेकांशी कसे संवाद साधतात आणि तुमची अनोखी जीवन पद्धती कशी तयार करतात हे आम्ही पाहतो.',
+    'listen': 'ऐका',
+    'share': 'शेअर करा',
   },
   AppLanguage.hindi: {
     'birthdate_label': 'जन्म तिथि',
@@ -274,5 +278,7 @@ const _birthdateTranslations = {
     'share_download': 'अभी प्ले स्टोर पर डाउनलोड करें',
     'share_subject': 'मेरा न्युमेरो शास्त्र विश्लेषण',
     'share_error_msg': 'साझा करने में विफल',
+    'listen': 'सुनें',
+    'share': 'शेयर करें',
   },
 };

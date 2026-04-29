@@ -8,10 +8,12 @@ import '../widgets/mystic_widgets.dart';
 
 class MissingNumberRemediesSection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const MissingNumberRemediesSection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -52,9 +54,13 @@ class MissingNumberRemediesSection extends ConsumerWidget {
                     height: 24,
                   ),
                   if (remedies.isNotEmpty) ...[
-                    ...remedies.map(
-                      (remedy) => MysticContentCard(
-                        margin: const EdgeInsets.only(bottom: 12),
+                    ...remedies.asMap().entries.map(
+                      (entry) {
+                        final index = entry.key;
+                        final remedy = entry.value;
+                        return MysticContentCard(
+                          key: getSubKey?.call(index),
+                          margin: const EdgeInsets.only(bottom: 12),
                         gradientColors: [
                           theme.colorScheme.secondary.withValues(alpha: 0.05),
                           theme.colorScheme.surface,
@@ -85,8 +91,8 @@ class MissingNumberRemediesSection extends ConsumerWidget {
                             ),
                           ],
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ],
                   if (numbersNotForRemedy.isNotEmpty) ...[
                     MysticContentCard(

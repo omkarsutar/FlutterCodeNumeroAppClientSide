@@ -8,10 +8,12 @@ import '../widgets/mystic_widgets.dart';
 
 class BoostingPersonalitySection extends ConsumerWidget {
   final Function(String, AppLanguage) onHelp;
+  final GlobalKey Function(int)? getSubKey;
 
   const BoostingPersonalitySection({
     super.key,
     required this.onHelp,
+    this.getSubKey,
   });
 
   @override
@@ -44,9 +46,13 @@ class BoostingPersonalitySection extends ConsumerWidget {
                 onHelp: () => onHelp('boosting_personality', currentLang),
               ),
               const SizedBox(height: 24),
-              ...data.map(
-                (item) => MysticContentCard(
-                  margin: const EdgeInsets.only(bottom: 12),
+              ...data.asMap().entries.map(
+                (entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return MysticContentCard(
+                    key: getSubKey?.call(index),
+                    margin: const EdgeInsets.only(bottom: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -68,8 +74,8 @@ class BoostingPersonalitySection extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );

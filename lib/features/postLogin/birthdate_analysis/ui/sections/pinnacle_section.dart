@@ -10,12 +10,14 @@ class PinnacleSection extends ConsumerWidget {
   final FutureProvider<List<PinnacleData>> provider;
   final String title;
   final Function(String, AppLanguage) onHelp;
+  final Key? subKey;
 
   const PinnacleSection({
     super.key,
     required this.provider,
     required this.title,
     required this.onHelp,
+    this.subKey,
   });
 
   @override
@@ -30,6 +32,7 @@ class PinnacleSection extends ConsumerWidget {
         if (pinnacles.isEmpty) return const SizedBox.shrink();
 
         return MysticSection(
+          key: subKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
