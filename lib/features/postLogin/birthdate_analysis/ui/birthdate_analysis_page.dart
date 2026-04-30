@@ -158,12 +158,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         targetKey ??= _sectionKeys[next.currentSection];
 
         if (targetKey != null && targetKey.currentContext != null) {
-          Scrollable.ensureVisible(
-            targetKey.currentContext!,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOutCubic,
-            alignment: 0.15,
-          );
+          // Skip scrolling for the intro section to avoid jarring jumps
+          // especially when starting narration from the top quick action buttons
+          if (next.currentSection == NarrationSection.intro) return;
+
+          _scrollToContext(targetKey.currentContext!);
         }
       }
     });
@@ -505,6 +504,22 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
   }
 
+  void _scrollToContext(BuildContext context) {
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeInOutCubic,
+      alignment: 0.0,
+    );
+  }
+
+  void _scrollToSection(NarrationSection section) {
+    final targetKey = _sectionKeys[section];
+    if (targetKey != null && targetKey.currentContext != null) {
+      _scrollToContext(targetKey.currentContext!);
+    }
+  }
+
   Widget _buildQuickActionButtons(
     BuildContext context,
     AppLanguage lang,
@@ -706,6 +721,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       if (mounted) {
         Navigator.of(context).pop(); // Dismiss loading
         await _showThankYouDialog();
+        if (mounted) {
+          _scrollToSection(NarrationSection.personality);
+        }
       }
     } catch (e) {
       if (mounted) {

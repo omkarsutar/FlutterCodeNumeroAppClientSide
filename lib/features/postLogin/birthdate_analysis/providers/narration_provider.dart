@@ -157,9 +157,6 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       }
     }
 
-    // Intro
-    chunks.add(NarrationChunk(text: l10n['narrator_intro'] ?? 'Hello! This is your analysis.', section: NarrationSection.intro));
-
     // 1. Age
     if (ageText != null && ageText.isNotEmpty) {
       chunks.add(NarrationChunk(text: '${l10n['narrator_age'] ?? 'Based on age: '} $ageText.', section: NarrationSection.age));
@@ -215,15 +212,32 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       chunks.add(NarrationChunk(text: '${NumerologyUIContent.getLabel('missing_numbers_grid', lang)}: ${_joinList(numerology.absentNumbers!)}.', section: NarrationSection.loshuGrid));
     }
     if (numerology.numberOccurrences != null) {
-      final occurrences = numerology.numberOccurrences!.entries
+      final entries = numerology.numberOccurrences!.entries
           .where((e) => e.value > 0)
-          .map((e) => '${e.key} (${e.value})')
-          .join(', ');
-      if (occurrences.isNotEmpty) {
+          .toList();
+      
+      if (entries.isNotEmpty) {
+        final List<String> verbalOccurrences = [];
+        for (final entry in entries) {
+          final number = entry.key;
+          final count = entry.value;
+          final timeLabel = count == 1 
+              ? NumerologyUIContent.getLabel('time_singular', lang)
+              : NumerologyUIContent.getLabel('time_plural', lang);
+          
+          final verbal = switch (lang) {
+            AppLanguage.hindi => 'नंबर $number $count $timeLabel आया है',
+            AppLanguage.marathi => 'नंबर $number $count $timeLabel आला आहे',
+            AppLanguage.english => 'Number $number comes $count $timeLabel',
+          };
+          verbalOccurrences.add(verbal);
+        }
+
+        final combinedVerbal = verbalOccurrences.join(', ');
         final occurrenceText = switch (lang) {
-          AppLanguage.hindi => 'आपके ग्रिड में नंबरों की आवृत्ति: $occurrences.',
-          AppLanguage.marathi => 'तुमच्या ग्रिडमधील अंकांची पुनरावृत्ती: $occurrences.',
-          AppLanguage.english => 'Number occurrences in your grid: $occurrences.',
+          AppLanguage.hindi => 'आपके ग्रिड में नंबरों की आवृत्ति: $combinedVerbal.',
+          AppLanguage.marathi => 'तुमच्या ग्रिडमधील अंकांची पुनरावृत्ती: $combinedVerbal.',
+          AppLanguage.english => 'Number occurrences in your grid: $combinedVerbal.',
         };
         chunks.add(NarrationChunk(text: occurrenceText, section: NarrationSection.loshuGrid));
       }
@@ -245,36 +259,89 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
       addSectionHeader('lucky_unlucky', '', NarrationSection.remedyValues);
       chunks.add(NarrationChunk(text: l10n['narrator_remedies'] ?? 'Enhancements.', section: NarrationSection.remedyValues));
       final r = remedies.first;
-      
-      final luckyHeader = NumerologyUIContent.getLabel('lucky_number', lang);
-      chunks.add(NarrationChunk(text: luckyHeader, section: NarrationSection.remedyValues));
-      final luckyText = switch (lang) {
-        AppLanguage.hindi => 'शुभ नंबर ${_joinList(r.luckyNumbers)} हैं। शुभ रंग ${_joinList(r.getLuckyColors(lang))} हैं। शुभ दिन ${_joinList(r.getLuckyDays(lang))} हैं।',
-        AppLanguage.marathi => 'शुभ अंक ${_joinList(r.luckyNumbers)} आहेत. शुभ रंग ${_joinList(r.getLuckyColors(lang))} आहेत. शुभ दिवस ${_joinList(r.getLuckyDays(lang))} आहेत.',
-        AppLanguage.english => 'Lucky numbers are ${_joinList(r.luckyNumbers)}. Lucky colors are ${_joinList(r.getLuckyColors(lang))}. Lucky days are ${_joinList(r.getLuckyDays(lang))}.',
-      };
-      chunks.add(NarrationChunk(text: luckyText, section: NarrationSection.remedyValues));
 
-      if (r.unluckyNumbers.isNotEmpty || r.getUnluckyColors(lang).isNotEmpty) {
-        final unluckyHeader = NumerologyUIContent.getLabel('unlucky_number', lang);
-        chunks.add(NarrationChunk(text: unluckyHeader, section: NarrationSection.remedyValues));
-        final unluckyText = switch (lang) {
-          AppLanguage.hindi => 'अशुभ नंबर ${_joinList(r.unluckyNumbers)} और अशुभ रंग ${_joinList(r.getUnluckyColors(lang))} से बचें।',
-          AppLanguage.marathi => 'अशुभ अंक ${_joinList(r.unluckyNumbers)} आणि अशुभ रंग ${_joinList(r.getUnluckyColors(lang))} टाळावेत.',
-          AppLanguage.english => 'Avoid unlucky numbers ${_joinList(r.unluckyNumbers)} and unlucky colors ${_joinList(r.getUnluckyColors(lang))}.',
+      // 1. Lucky Numbers
+      if (r.luckyNumbers.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('lucky_number', lang);
+        final numbers = _joinList(r.luckyNumbers);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'आपके शुभ अंक $numbers हैं।',
+          AppLanguage.marathi => 'तुमचे शुभ अंक $numbers आहेत.',
+          AppLanguage.english => 'Your lucky numbers are $numbers.',
         };
-        chunks.add(NarrationChunk(text: unluckyText, section: NarrationSection.remedyValues));
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
       }
 
-      if (r.numbersForRemedy.isNotEmpty) {
-        final remedyNumbersHeader = NumerologyUIContent.getLabel('numbers_for_remedy', lang);
-        chunks.add(NarrationChunk(text: remedyNumbersHeader, section: NarrationSection.remedyValues));
-        final remedyNumbersText = switch (lang) {
-          AppLanguage.hindi => 'उपाय के लिए नंबर ${_joinList(r.numbersForRemedy)} का उपयोग करें।',
-          AppLanguage.marathi => 'उपायांसाठी ${_joinList(r.numbersForRemedy)} हे अंक वापरावेत.',
-          AppLanguage.english => 'Use numbers ${_joinList(r.numbersForRemedy)} for specific remedies.',
+      // 2. Unlucky Numbers
+      if (r.unluckyNumbers.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('unlucky_number', lang);
+        final numbers = _joinList(r.unluckyNumbers);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'आपके अशुभ अंक $numbers हैं।',
+          AppLanguage.marathi => 'तुमचे अशुभ अंक $numbers आहेत.',
+          AppLanguage.english => 'Your unlucky numbers are $numbers.',
         };
-        chunks.add(NarrationChunk(text: remedyNumbersText, section: NarrationSection.remedyValues));
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
+      }
+
+      // 3. Lucky Colors
+      final luckyColors = r.getLuckyColors(lang);
+      if (luckyColors.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('lucky_color', lang);
+        final colors = _joinList(luckyColors);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'आपके शुभ रंग $colors हैं।',
+          AppLanguage.marathi => 'तुमचे शुभ रंग $colors आहेत.',
+          AppLanguage.english => 'Your lucky colors are $colors.',
+        };
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
+      }
+
+      // 4. Unlucky Colors
+      final unluckyColors = r.getUnluckyColors(lang);
+      if (unluckyColors.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('unlucky_color', lang);
+        final colors = _joinList(unluckyColors);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'आपके अशुभ रंग $colors हैं इनसे बचें।',
+          AppLanguage.marathi => 'तुमचे अशुभ रंग $colors आहेत, त्यांपासून दूर राहा.',
+          AppLanguage.english => 'Your unlucky colors are $colors, please avoid them.',
+        };
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
+      }
+
+      // 5. Lucky Days
+      final luckyDays = r.getLuckyDays(lang);
+      if (luckyDays.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('lucky_day', lang);
+        final days = _joinList(luckyDays);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'आपके शुभ दिन $days हैं।',
+          AppLanguage.marathi => 'तुमचे शुभ दिवस $days आहेत.',
+          AppLanguage.english => 'Your lucky days are $days.',
+        };
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
+      }
+
+      // 6. Numbers for Remedy
+      if (r.numbersForRemedy.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('numbers_for_remedy', lang);
+        final numbers = _joinList(r.numbersForRemedy);
+        final text = switch (lang) {
+          AppLanguage.hindi => 'उपाय के लिए नंबर $numbers का उपयोग करें।',
+          AppLanguage.marathi => 'उपायांसाठी $numbers हे अंक वापरावेत.',
+          AppLanguage.english => 'Use numbers $numbers for specific remedies.',
+        };
+        chunks.add(NarrationChunk(text: '$header. $text', section: NarrationSection.remedyValues));
+      }
+
+      // 7. Numbers not for Remedy
+      if (r.numbersNotForRemedy.isNotEmpty) {
+        final header = NumerologyUIContent.getLabel('numbers_not_for_remedy', lang);
+        final numbers = _joinList(r.numbersNotForRemedy);
+        final instruction = NumerologyUIContent.getLabel('no_remedy_instruction', lang)
+            .replaceAll('{numbers}', numbers);
+        chunks.add(NarrationChunk(text: '$header. $instruction', section: NarrationSection.remedyValues));
       }
     }
 
@@ -314,10 +381,11 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
         final timeLabel = d.occurrence == 1 
             ? NumerologyUIContent.getLabel('time_singular', lang)
             : NumerologyUIContent.getLabel('time_plural', lang);
-        final header = NumerologyUIContent.getLabel('occurrence_format', lang)
-            .replaceAll('{number}', d.number.toString())
-            .replaceAll('{count}', d.occurrence.toString())
-            .replaceAll('{times}', timeLabel);
+        final header = switch (lang) {
+          AppLanguage.hindi => 'नंबर ${d.number} ${d.occurrence} $timeLabel आया है',
+          AppLanguage.marathi => 'नंबर ${d.number} ${d.occurrence} $timeLabel आला आहे',
+          AppLanguage.english => 'Number ${d.number} comes ${d.occurrence} $timeLabel',
+        };
         chunks.add(NarrationChunk(text: header, section: NarrationSection.numberOccurrence, subIndex: i));
         chunks.add(NarrationChunk(text: d.getDescription(lang), section: NarrationSection.numberOccurrence, subIndex: i));
       }
