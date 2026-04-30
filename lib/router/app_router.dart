@@ -60,8 +60,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
     observers: [ref.read(analyticsServiceProvider).getObserver()],
     initialLocation: AppRoute.welcome,
-    redirect: (context, state) =>
-        ref.read(routeGuardServiceProvider).handleRedirect(ref, state),
+    redirect: (context, state) {
+      final path = state.uri.path;
+      // Handle GitHub Pages sub-path prefixing issues on redirect
+      if (path.startsWith('/NumeroShastraV01')) {
+        final newPath = path.replaceFirst('/NumeroShastraV01', '');
+        return newPath.isEmpty ? '/' : newPath;
+      }
+      return ref.read(routeGuardServiceProvider).handleRedirect(ref, state);
+    },
   );
 });
 

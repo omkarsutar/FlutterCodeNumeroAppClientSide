@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String baseUrlProd = 'https://omkarsutar.github.io/';
+  static const String baseUrlProd = 'https://numeroshastra.github.io/';
   static const String baseUrlLocal = 'http://localhost:3000/';
   static const String appPath = 'NumeroShastraV01/';
 
