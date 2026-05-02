@@ -101,6 +101,11 @@ class NumerologyUIContent {
       hi: 'क्षैतिज, लंबवत और तिरछे स्तरों का विश्लेषण',
       mr: 'आडव्या, उभ्या आणि तिरप्या रेषांचे विश्लेषण',
     ),
+    'lo_shu_grid': UIStrings(
+      en: 'Lo Shu Grid',
+      hi: 'लोशु ग्रिड',
+      mr: 'लोशु ग्रिड',
+    ),
     'career_destiny': UIStrings(
       en: 'Career & Destiny',
       hi: 'करियर और भाग्य',
@@ -253,14 +258,14 @@ class NumerologyUIContent {
     ),
     'example': UIStrings(en: 'Example', hi: 'उदाहरण', mr: 'उदाहरण'),
     'remedy_instruction': UIStrings(
-      en: '[Multiple remedies are given for each number, do any 1 remedy for 1 number as per your convenience]',
-      hi: '[प्रत्येक संख्या के लिए कई उपाय दिए गए हैं, अपनी सुविधानुसार किसी भी 1 संख्या के लिए 1 उपाय करें]',
-      mr: '[प्रत्येक अंकासाठी अनेक उपाय दिले आहेत, तुमच्या सोयीनुसार कोणत्याही एका अंकासाठी एक उपाय करा]',
+      en: 'Multiple remedies are given for each number, do any 1 remedy for 1 number as per your convenience.',
+      hi: 'प्रत्येक संख्या के लिए कई उपाय दिए गए हैं, अपनी सुविधानुसार किसी भी 1 संख्या के लिए 1 उपाय करें.',
+      mr: 'प्रत्येक अंकासाठी अनेक उपाय दिले आहेत, तुमच्या सोयीनुसार कोणत्याही एका अंकासाठी एक उपाय करा.',
     ),
     'no_remedy_instruction': UIStrings(
-      en: 'No remedy to number {numbers} as they are enemy to you',
-      hi: 'अंक {numbers} का कोई उपाय नहीं है क्योंकि वे आपके शत्रु हैं',
-      mr: 'अंक {numbers} साठी कोणताही उपाय नाही कारण ते तुमचे शत्रू आहेत',
+      en: 'No remedy to number {numbers} as they are enemy to you.',
+      hi: 'अंक {numbers} का कोई उपाय नहीं है क्योंकि वे आपके शत्रु हैं.',
+      mr: 'अंक {numbers} साठी कोणताही उपाय नाही कारण ते तुमचे शत्रू आहेत.',
     ),
     'age': UIStrings(en: 'Age', hi: 'आयु', mr: 'वय'),
     'years': UIStrings(en: 'Years', hi: 'वर्ष', mr: 'वर्षे'),

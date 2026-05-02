@@ -48,6 +48,41 @@ class MissingNumberRemediesSection extends ConsumerWidget {
                     ),
                     onHelp: () => onHelp('missing_number_remedies', currentLang),
                   ),
+                  const SizedBox(height: 16),
+                  MysticContentCard(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    borderColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    gradientColors: [
+                      theme.colorScheme.primary.withValues(alpha: 0.08),
+                      theme.colorScheme.surface,
+                    ],
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            NumerologyUIContent.getLabel(
+                              'remedy_instruction',
+                              currentLang,
+                            ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic,
+                              height: 1.45,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Divider(
                     color: accent.withValues(alpha: 0.12),
@@ -121,17 +156,6 @@ class MissingNumberRemediesSection extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  Text(
-                    NumerologyUIContent.getLabel(
-                      'remedy_instruction',
-                      currentLang,
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontStyle: FontStyle.italic,
-                      height: 1.4,
-                    ),
-                  ),
                 ],
               ),
             );

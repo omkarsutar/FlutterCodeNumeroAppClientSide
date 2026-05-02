@@ -991,6 +991,12 @@ class _CartPageState extends ConsumerState<CartPage> {
       l10n['premium_feature_4'] ?? 'Advanced Personality & Strength Mapping',
       l10n['premium_feature_5'] ?? 'Life Path & Pinnacle Phase Guidance',
       l10n['premium_feature_6'] ?? 'Oracle Voice Guide for Deeper Insights',
+      l10n['premium_feature_7'] ?? 'Stock Market & Financial Nature Analysis',
+      l10n['premium_feature_8'] ?? 'Detailed Number Occurrence Insights',
+      l10n['premium_feature_9'] ?? 'Horizontal, Vertical & Diagonal Planes Analysis',
+      l10n['premium_feature_10'] ?? 'Personalized Lucky Colors, Days & Numbers',
+      l10n['premium_feature_11'] ?? 'Personality & Life Path Synergy (Combinations)',
+      l10n['premium_feature_12'] ?? 'Practical Tips to Boost Your Energy',
     ];
 
     return MysticSection(

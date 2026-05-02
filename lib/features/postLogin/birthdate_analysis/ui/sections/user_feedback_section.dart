@@ -119,7 +119,7 @@ class _UserFeedbackSectionState extends ConsumerState<UserFeedbackSection> {
                   color: accent.withValues(alpha: 0.5),
                   fontWeight: FontWeight.bold,
                 ),
-                hintText: 'Share your thoughts...',
+                hintText: l10n['feedback_placeholder'] ?? 'Share your thoughts...',
                 hintStyle: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
