@@ -10,4 +10,7 @@ class AppConstants {
   static const String webAppHashUrl = '$baseUrlProd$appPath#';
   static const String mobileRedirectUri =
       'com.numeroshastra.client://login-callback';
+
+  static const String googleWebClientId =
+      '846330251035-cmmm0sqq9elonjh3tl1h4rnfreet1h57.apps.googleusercontent.com';
 }

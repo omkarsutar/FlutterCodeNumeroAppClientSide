@@ -15,6 +15,8 @@ import 'rbac_service.dart';
 import 'error_handler.dart';
 import 'analytics_service.dart';
 
+import 'package:google_sign_in/google_sign_in.dart' as gauth;
+
 class AuthService {
   final SupabaseClient _client;
   final RbacService _rbacService;
@@ -33,23 +35,52 @@ class AuthService {
 
   /// Sign in with Google and load user profile
   Future<void> signInWithGoogle() async {
-    final String redirectUri;
-    if (kIsWeb) {
-      redirectUri = kReleaseMode
-          ? AppConstants.webAppProdUrl
-          : AppConstants.webAppLocalUrl;
-    } else {
-      redirectUri = AppConstants.mobileRedirectUri;
-    }
-
     try {
       if (!await _connectivityService.isOnline()) {
         throw NoInternetException();
       }
-      await _client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: redirectUri,
-      );
+
+      if (kIsWeb) {
+        final String redirectUri = kReleaseMode
+            ? AppConstants.webAppProdUrl
+            : AppConstants.webAppLocalUrl;
+
+        await _client.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: redirectUri,
+        );
+      } else {
+        // Native Google Sign-In for Android/iOS (google_sign_in 7.0.0+ pattern)
+        final googleSignIn = gauth.GoogleSignIn.instance;
+
+        // Initialize once with the server client ID
+        await googleSignIn.initialize(
+          serverClientId: AppConstants.googleWebClientId,
+        );
+
+        // In 7.x, use authenticate() instead of signIn()
+        final googleUser = await googleSignIn.authenticate();
+
+        // Get authentication data (no longer a Future in 7.x)
+        final googleAuth = googleUser.authentication;
+        final idToken = googleAuth.idToken;
+
+        if (idToken == null) {
+          throw 'No ID Token found from Google Sign-In. Check your Web Client ID.';
+        }
+
+        // To get the accessToken in 7.x, we must use the authorizationClient
+        // We request no additional scopes (empty list) to get the basic access token
+        final authorizedUser =
+            await googleUser.authorizationClient.authorizeScopes([]);
+        final accessToken = authorizedUser.accessToken;
+
+        await _client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: accessToken,
+        );
+      }
     } catch (e, stackTrace) {
       _errorHandler.handle(
         e,
