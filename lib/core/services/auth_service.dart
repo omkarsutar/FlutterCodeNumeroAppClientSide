@@ -70,9 +70,9 @@ class AuthService {
         }
 
         // To get the accessToken in 7.x, we must use the authorizationClient
-        // We request no additional scopes (empty list) to get the basic access token
+        // We request the 'email' scope to satisfy the SDK requirement
         final authorizedUser =
-            await googleUser.authorizationClient.authorizeScopes([]);
+            await googleUser.authorizationClient.authorizeScopes(['email']);
         final accessToken = authorizedUser.accessToken;
 
         await _client.auth.signInWithIdToken(

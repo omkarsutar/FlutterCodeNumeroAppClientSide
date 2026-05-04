@@ -18,9 +18,13 @@ import '../core/models/route_permission.dart';
 import 'route_guards.dart';
 import '../core/services/analytics_service.dart';
 
+import 'package:flutter/material.dart';
+import '../core/providers/auth_providers.dart';
 import '../core/globals.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authRefreshListenable = ref.watch(authRefreshListenableProvider);
+
   // Register permissions for non-generic modules
   ModuleRouteRegistry.registerRoutePermission(
     AppRoute.birthdateAnalysisName,
@@ -34,6 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: navigatorKey,
+    refreshListenable: authRefreshListenable,
     routes: [
       ...authRoutes,
       GoRoute(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
@@ -25,6 +26,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
 final authStateProvider = StreamProvider<AuthState>((ref) {
   final client = ref.watch(supabaseClientProvider);
   return client.auth.onAuthStateChange;
+});
+
+/// Listenable to trigger GoRouter redirects on auth changes
+final authRefreshListenableProvider = Provider<Listenable>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return ValueNotifier(authState);
 });
 
 /// Stream of the current user's profile
