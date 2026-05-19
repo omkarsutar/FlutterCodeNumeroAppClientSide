@@ -49,4 +49,5 @@ android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
 lib/core/config/supabase_config.dart
+lib/core/config/razorpay_config.dart
 

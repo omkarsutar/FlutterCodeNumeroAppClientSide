@@ -8,6 +8,7 @@ import '../services/error_handler.dart';
 import '../services/rbac_service.dart';
 import '../services/razorpay_service.dart';
 import '../interfaces/connectivity_service_interface.dart';
+import '../config/razorpay_config.dart';
 
 /// Provides the global Supabase client instance
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -80,8 +81,5 @@ final roleNameProvider = Provider<String?>((ref) {
 
 /// Provides the Razorpay service instance
 final razorpayServiceProvider = Provider<RazorpayService>((ref) {
-  // Placeholder key - user will provide later
-  // const razorpayKey = 'rzp_test_YOUR_KEY_HERE';
-  const razorpayKey = 'rzp_test_SYxEd8SaQvfl81';
-  return RazorpayService(apiKey: razorpayKey);
+  return RazorpayService(apiKey: RazorpayConfig.apiKey);
 });

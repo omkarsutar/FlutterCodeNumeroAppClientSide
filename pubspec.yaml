@@ -57,6 +57,12 @@ dependencies:
   collection: ^1.19.1
   screenshot: ^3.0.0
 
+  # Your custom central tracking module setup
+  central_tracker_sdk:
+    git:
+      url: https://github.com/omkarsutar/central_tracker_sdk.git
+      ref: main  # Links to your stable core branch 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

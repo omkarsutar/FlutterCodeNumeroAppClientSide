@@ -13,4 +13,8 @@ class AppConstants {
 
   static const String googleWebClientId =
       '846330251035-cmmm0sqq9elonjh3tl1h4rnfreet1h57.apps.googleusercontent.com';
+
+  static const String trackingPackageName = 'com.numeroshastra.client';
+  static const String trackingEdgeFunctionUrl =
+      'https://toogplqvzycbngfzsutb.supabase.co/functions/v1/track-install-android-app';
 }

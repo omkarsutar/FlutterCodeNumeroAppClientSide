@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:central_tracker_sdk/central_tracker_sdk.dart';
 
 import 'app/app_orchestrators.dart';
 import 'core/config/supabase_config.dart';
+import 'core/constants/app_constants.dart';
 import 'core/globals.dart';
 import 'core/utils/platform/web_utils.dart';
 import 'router/app_router.dart';
@@ -24,6 +26,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure your custom tracking plugin layout rules
+  CentralTrackerSDK.initialize(
+    packageName: AppConstants.trackingPackageName,
+    edgeFunctionUrl: AppConstants.trackingEdgeFunctionUrl,
+  );
+
+  // Command the client engine to silently check and stream metrics in the background
+  CentralTrackerSDK.trackInstallation();
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
