@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
 import '../constants/app_constants.dart';
 import 'auth_providers.dart';
 import 'user_profile_state_provider.dart';
@@ -85,12 +87,41 @@ final roleNameProvider = Provider<String?>((ref) {
 /// Fetches app remote configuration (pricing, Razorpay key) from Supabase
 /// based on the runtime package name. Falls back gracefully on error.
 final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
+  const cacheKey = 'app_remote_config_cache_v1';
+
   String _normalizePackage(String value) {
     return value
         .trim()
         .replaceAll('"', '')
         .replaceAll("'", '')
         .replaceAll('.debug', '');
+  }
+
+  Future<void> _persistConfig(Map<String, dynamic> row) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(cacheKey, jsonEncode(row));
+    } catch (_) {
+      // Best-effort cache only
+    }
+  }
+
+  Future<AppRemoteConfig?> _readCachedConfig() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(cacheKey);
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return AppRemoteConfig.fromMap(decoded);
+      }
+      if (decoded is Map) {
+        return AppRemoteConfig.fromMap(decoded.cast<String, dynamic>());
+      }
+    } catch (_) {
+      // Ignore cache decode errors and continue with defaults
+    }
+    return null;
   }
 
   try {
@@ -119,6 +150,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
         (row) => _normalizePackage((row['package_name'] ?? '').toString()) == normalizedPackage,
         orElse: () => rows.first,
       );
+      await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
       debugPrint(
         'AppRemoteConfig: loaded ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
@@ -141,6 +173,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
           orElse: () => recentRows.first,
         ),
       );
+      await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
       debugPrint(
         'AppRemoteConfig: no IN match; using normalized lookup ${config.packageName}, price=${config.numerologyPriceInr}',
@@ -157,6 +190,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
         .limit(1)
         .maybeSingle();
     if (latest != null) {
+      await _persistConfig(latest);
       final config = AppRemoteConfig.fromMap(latest);
       debugPrint(
         'AppRemoteConfig: no package match; using latest row ${config.packageName}, price=${config.numerologyPriceInr}',
@@ -167,9 +201,24 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     debugPrint(
       'AppRemoteConfig: No config found for candidates=$candidates, runtimePackage=$packageName, using fallback.',
     );
+    final cached = await _readCachedConfig();
+    if (cached != null) {
+      debugPrint(
+        'AppRemoteConfig: using cached config ${cached.packageName}, price=${cached.numerologyPriceInr}',
+      );
+      return cached;
+    }
     return AppRemoteConfig.fallback();
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('AppRemoteConfig: Failed to fetch config: $e');
+    debugPrint('AppRemoteConfig: Stack trace: $st');
+    final cached = await _readCachedConfig();
+    if (cached != null) {
+      debugPrint(
+        'AppRemoteConfig: using cached config after error ${cached.packageName}, price=${cached.numerologyPriceInr}',
+      );
+      return cached;
+    }
     return AppRemoteConfig.fallback();
   }
 });
