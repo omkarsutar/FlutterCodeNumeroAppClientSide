@@ -3,3 +3,4 @@
 
 export 'entity_meta.dart';
 export 'route_permission.dart';
+export 'app_remote_config.dart';

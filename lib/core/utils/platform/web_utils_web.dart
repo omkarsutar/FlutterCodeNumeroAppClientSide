@@ -51,6 +51,25 @@ class WebUtilsImpl implements WebUtils {
   }
 
   @override
+  String? getFullUtmParams() {
+    try {
+      final uri = Uri.parse(html.window.location.href);
+      final utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+      final parts = <String>[];
+      for (final key in utmKeys) {
+        final value = uri.queryParameters[key];
+        if (value != null && value.isNotEmpty) {
+          parts.add('$key=$value');
+        }
+      }
+      return parts.isNotEmpty ? parts.join('&') : null;
+    } catch (e) {
+      debugPrint('WebUtils: Error getting full UTM params: $e');
+      return null;
+    }
+  }
+
+  @override
   void logMemoryDiagnostics() {
     try {
       // ignore: undefined_prefixed_name

@@ -13,6 +13,12 @@ class WebUtilsImpl implements WebUtils {
   }
 
   @override
+  String? getFullUtmParams() {
+    // Mobile doesn't use URL parameters this way
+    return null;
+  }
+
+  @override
   void logMemoryDiagnostics() {
     // No-op on mobile (use other profiling tools)
   }

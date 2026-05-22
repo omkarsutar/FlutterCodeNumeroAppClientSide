@@ -37,6 +37,9 @@ void main() async {
   // Command the client engine to silently check and stream metrics in the background
   CentralTrackerSDK.trackInstallation();
 
+  // Ensure attribution keys are always populated, even on non-Android platforms
+  await _enhanceAttributionTracking();
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,

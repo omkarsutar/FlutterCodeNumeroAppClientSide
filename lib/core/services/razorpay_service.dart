@@ -27,6 +27,8 @@ class RazorpayService {
     required double amount,
     required String contact,
     required String email,
+    String? apiKey,
+    Map<String, String>? notes,
   }) {
     if (kIsWeb) {
       developer.log(
@@ -37,13 +39,17 @@ class RazorpayService {
     }
 
     var options = {
-      'key': _apiKey,
+      'key': apiKey ?? _apiKey,
       'amount': (amount * 100).toInt(), // Amount is in paise
       'name': 'Numero Shastra',
       'description': description,
       'timeout': 300, // in seconds
       'prefill': {'contact': contact, 'email': email},
     };
+
+    if (notes != null && notes.isNotEmpty) {
+      options['notes'] = notes;
+    }
 
     try {
       _razorpay.open(options);

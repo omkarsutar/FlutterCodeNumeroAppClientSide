@@ -7,6 +7,9 @@ abstract class WebUtils {
   /// Gets the current URL's UTM source parameter on web.
   String? getUtmSource();
 
+  /// Gets the full UTM query string from the URL on web (e.g. utm_source=x&utm_medium=y&utm_campaign=z).
+  String? getFullUtmParams();
+
   /// Logs memory diagnostics on web.
   void logMemoryDiagnostics();
 }
