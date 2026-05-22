@@ -5,4 +5,3 @@ export 'dropdown_source.dart';
 export 'field_config.dart';
 export 'module_config.dart';
 export 'supabase_config.dart';
-export 'razorpay_config.dart';

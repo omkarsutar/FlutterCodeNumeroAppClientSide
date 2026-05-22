@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:central_tracker_sdk/central_tracker_sdk.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
 import '../../birthdate_analysis/ui/utils/analysis_theme.dart';
@@ -24,6 +25,11 @@ class CartPage extends ConsumerStatefulWidget {
 
 class _CartPageState extends ConsumerState<CartPage> {
   late final CartController _cartController;
+  final TextEditingController _promoController = TextEditingController();
+
+  String _appliedPromoCode = 'none';
+  double _appliedDiscountPercent = 0;
+  bool _isValidatingPromo = false;
 
   @override
   void initState() {
@@ -40,7 +46,82 @@ class _CartPageState extends ConsumerState<CartPage> {
   @override
   void dispose() {
     _cartController.disposeRazorpay();
+    _promoController.dispose();
     super.dispose();
+  }
+
+  double _unitPrice(double basePrice, int count) {
+    if (count <= 1) return basePrice;
+    return basePrice;
+  }
+
+  double _subtotal(int count, double basePrice) {
+    if (count <= 0) return 0;
+    return count * _unitPrice(basePrice, count);
+  }
+
+  double _discountedTotal(double subtotal) {
+    if (_appliedDiscountPercent <= 0) return subtotal;
+    return subtotal * (1 - (_appliedDiscountPercent / 100));
+  }
+
+  Future<void> _validateAndApplyPromo() async {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty || _isValidatingPromo) return;
+
+    setState(() => _isValidatingPromo = true);
+    try {
+      final result = await CentralTrackerSDK.verifyPromoCode(code);
+      if ((result['valid'] == true) && mounted) {
+        final discount =
+            (result['discount_percentage'] as num?)?.toDouble() ?? 0;
+        setState(() {
+          _appliedPromoCode = code;
+          _appliedDiscountPercent = discount;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF15803D),
+            content: Text(
+              'Promo applied: -${discount.toStringAsFixed(0)}%',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFB91C1C),
+            content: Text(
+              result['message']?.toString() ?? 'Invalid promo code',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFB91C1C),
+            content: Text(
+              'Promo validation failed: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isValidatingPromo = false);
+    }
+  }
+
+  void _clearPromo() {
+    setState(() {
+      _appliedPromoCode = 'none';
+      _appliedDiscountPercent = 0;
+    });
+    _promoController.clear();
   }
 
   void _onPaymentSuccess(String poId) {
@@ -161,6 +242,9 @@ class _CartPageState extends ConsumerState<CartPage> {
     final unpaidOrders = ref.watch(unpaidOrdersProvider);
     final selectedIds = ref.watch(selectedOrdersProvider);
     final theme = Theme.of(context);
+    final remoteConfigAsync = ref.watch(appRemoteConfigProvider);
+    final basePrice = remoteConfigAsync.valueOrNull?.numerologyPriceInr ?? 299.0;
+    final razorpayKey = remoteConfigAsync.valueOrNull?.razorpayKey ?? '';
 
     return Scaffold(
       appBar: CustomAppBar(title: l10n['my_cart'] ?? 'My Cart'),
@@ -197,7 +281,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildPromoFooter(context),
+                  _buildPromoFooter(context, basePrice),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -356,7 +440,13 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                 ),
-                _buildPaymentFooter(context, selectedIds, l10n),
+                _buildPaymentFooter(
+                  context,
+                  selectedIds,
+                  l10n,
+                  basePrice: basePrice,
+                  razorpayKey: razorpayKey,
+                ),
               ],
             ),
     );
@@ -413,7 +503,11 @@ class _CartPageState extends ConsumerState<CartPage> {
     }
   }
 
-  Future<void> _handlePaymentAction(List<String> poIds) async {
+  Future<void> _handlePaymentAction(
+    List<String> poIds, {
+    required double basePrice,
+    required String razorpayKey,
+  }) async {
     final l10n = ref.read(appL10nProvider);
     final user = ref.read(supabaseClientProvider).auth.currentUser;
 
@@ -429,7 +523,8 @@ class _CartPageState extends ConsumerState<CartPage> {
         .where((o) => poIds.contains(o.id))
         .toList();
     final count = selectedOrders.length;
-    final totalAmount = count == 1 ? 299 : count * 249;
+    final subtotal = _subtotal(count, basePrice);
+    final totalAmount = _discountedTotal(subtotal);
 
     final confirm = await _showPaymentConfirmationDialog(
       context: context,
@@ -488,9 +583,11 @@ class _CartPageState extends ConsumerState<CartPage> {
             .read(cartControllerProvider)
             .startPaymentFlow(
               poIds: poIds,
-              totalAmount: totalAmount.toDouble(),
+              totalAmount: totalAmount,
               email: email,
               contact: contact,
+              apiKey: razorpayKey.isNotEmpty ? razorpayKey : null,
+              appliedPromoCode: _appliedPromoCode,
             );
       } catch (e) {
         if (mounted) {
@@ -512,7 +609,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   Future<bool?> _showPaymentConfirmationDialog({
     required BuildContext context,
     required List<dynamic> orders,
-    required int totalAmount,
+    required double totalAmount,
   }) {
     final l10n = ref.read(appL10nProvider);
     final theme = Theme.of(context);
@@ -638,7 +735,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                       ),
                     ),
                     Text(
-                      '\u20B9$totalAmount',
+                      '\u20B9${totalAmount.toStringAsFixed(2)}',
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w900,
@@ -700,14 +797,14 @@ class _CartPageState extends ConsumerState<CartPage> {
     BuildContext context,
     Set<String> selectedIds,
     Map<String, String> l10n,
+    {required double basePrice, required String razorpayKey}
   ) {
     final theme = Theme.of(context);
     final count = selectedIds.length;
     final birthdateL10n = ref.watch(birthdateL10nProvider);
 
-    // Pricing logic: 1 -> 299, 1+ -> 249 each (e.g., 2=498, 3=747)
-    final totalAmount = count == 1 ? 299 : count * 249;
-    final originalAmount = count * 1000;
+    final subtotal = _subtotal(count, basePrice);
+    final totalAmount = _discountedTotal(subtotal);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -820,7 +917,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                   Text(
-                    '\u20B9299',
+                    '\u20B9${basePrice.toStringAsFixed(0)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(
                         alpha: 0.6,
@@ -829,7 +926,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                   Text(
-                    ' \u20B9249 ${birthdateL10n['each'] ?? 'each'}.',
+                    _appliedDiscountPercent > 0
+                        ? ' -${_appliedDiscountPercent.toStringAsFixed(0)}% promo'
+                        : ' ${birthdateL10n['each'] ?? 'each'}.',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w900,
@@ -839,6 +938,64 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
+            if (_appliedPromoCode != 'none') ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.discount_rounded, color: Colors.green, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$_appliedPromoCode applied (-${_appliedDiscountPercent.toStringAsFixed(0)}%)',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.green.shade800,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(onPressed: _clearPromo, child: const Text('Remove')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _promoController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Enter promo code',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.confirmation_number_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton(
+                  onPressed: _isValidatingPromo ? null : _validateAndApplyPromo,
+                  child: _isValidatingPromo
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Apply'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Row 3: Selection Count and Pay Button
             Row(
@@ -870,7 +1027,11 @@ class _CartPageState extends ConsumerState<CartPage> {
                 ElevatedButton(
                   onPressed: count == 0
                       ? null
-                      : () => _handlePaymentAction(selectedIds.toList()),
+                      : () => _handlePaymentAction(
+                          selectedIds.toList(),
+                          basePrice: basePrice,
+                          razorpayKey: razorpayKey,
+                        ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -891,7 +1052,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                     children: [
                       if (count > 0) ...[
                         Text(
-                          '\u20B9$originalAmount',
+                          '\u20B9${subtotal.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -902,7 +1063,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                         const SizedBox(width: 10),
                       ],
                       Text(
-                        count == 0 ? 'Pay' : 'Pay \u20B9$totalAmount',
+                        count == 0
+                            ? 'Pay'
+                            : 'Pay \u20B9${totalAmount.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -920,7 +1083,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     );
   }
 
-  Widget _buildPromoFooter(BuildContext context) {
+  Widget _buildPromoFooter(BuildContext context, double basePrice) {
     final theme = Theme.of(context);
     final l10n = ref.watch(birthdateL10nProvider);
 
@@ -961,15 +1124,15 @@ class _CartPageState extends ConsumerState<CartPage> {
               _buildOfferRow(
                 context,
                 title: '1 Birthdate Analysis',
-                price: '\u20B9299',
+                price: '\u20B9${basePrice.toStringAsFixed(0)}',
                 originalPrice: '\u20B9999',
               ),
               const Divider(height: 24),
               _buildOfferRow(
                 context,
-                title: '2+ Birthdate Analysis',
-                price: '\u20B9249 each',
-                originalPrice: '\u20B9299',
+                title: 'Dynamic Pricing',
+                price: '\u20B9${basePrice.toStringAsFixed(0)} each',
+                originalPrice: '\u20B9${basePrice.toStringAsFixed(0)}',
                 isSpecial: true,
               ),
             ],

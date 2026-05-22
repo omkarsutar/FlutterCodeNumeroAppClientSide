@@ -114,3 +114,28 @@ class MainApp extends ConsumerWidget {
     );
   }
 }
+
+Future<void> _enhanceAttributionTracking() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final first = prefs.getString('first_touch_source');
+  final second = prefs.getString('second_touch_source');
+
+  if (first != null && first.isNotEmpty && second != null && second.isNotEmpty) {
+    return;
+  }
+
+  String fallback = 'utm_source=organic&utm_medium=direct&utm_campaign=none';
+
+  if (kIsWeb) {
+    final utm = webUtils.getFullUtmParams();
+    if (utm != null && utm.isNotEmpty) {
+      fallback = utm;
+    }
+  } else {
+    fallback = 'utm_source=app&utm_medium=direct&utm_campaign=mobile_fallback';
+  }
+
+  await prefs.setString('first_touch_source', first ?? fallback);
+  await prefs.setString('second_touch_source', second ?? fallback);
+}

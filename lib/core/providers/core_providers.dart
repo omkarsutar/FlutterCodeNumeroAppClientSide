@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../constants/app_constants.dart';
 import 'auth_providers.dart';
 import 'user_profile_state_provider.dart';
 import '../models/app_remote_config.dart';
@@ -11,7 +12,6 @@ import '../services/error_handler.dart';
 import '../services/rbac_service.dart';
 import '../services/razorpay_service.dart';
 import '../interfaces/connectivity_service_interface.dart';
-import '../config/razorpay_config.dart';
 
 /// Provides the global Supabase client instance
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -87,20 +87,54 @@ final roleNameProvider = Provider<String?>((ref) {
 final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
   try {
     final packageInfo = await PackageInfo.fromPlatform();
-    final packageName = packageInfo.packageName;
+    final packageName = packageInfo.packageName.trim();
+    final normalizedPackage = packageName.replaceAll('.debug', '');
+    final appPackage = AppConstants.appPackageName.trim();
+    final candidates = <String>{
+      appPackage,
+      '${appPackage}.debug',
+      packageName,
+      normalizedPackage,
+    }.toList();
 
     final client = ref.read(supabaseClientProvider);
-    final response = await client
+    final rows = await client
         .from('app_remote_configs')
         .select()
-        .eq('package_name', packageName)
-        .maybeSingle();
+        .inFilter('package_name', candidates);
 
-    if (response != null) {
-      return AppRemoteConfig.fromMap(response);
+    if (rows.isNotEmpty) {
+      final preferred =
+              rows.cast<Map<String, dynamic>>().firstWhere(
+                    (row) => (row['package_name'] ?? '').toString() == packageName,
+                    orElse: () => rows.cast<Map<String, dynamic>>().first,
+                  );
+      final config = AppRemoteConfig.fromMap(preferred);
+      debugPrint(
+        'AppRemoteConfig: loaded ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
+      );
+      return config;
     }
 
-    debugPrint('AppRemoteConfig: No config found for $packageName, using fallback.');
+    // Final fallback: pick the latest updated config row.
+    // This keeps pricing/key dynamic even when package names are misaligned.
+    final latest = await client
+        .from('app_remote_configs')
+        .select()
+        .order('updated_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (latest != null) {
+      final config = AppRemoteConfig.fromMap(latest);
+      debugPrint(
+        'AppRemoteConfig: no package match; using latest row ${config.packageName}, price=${config.numerologyPriceInr}',
+      );
+      return config;
+    }
+
+    debugPrint(
+      'AppRemoteConfig: No config found for candidates=$candidates, using fallback.',
+    );
     return AppRemoteConfig.fallback();
   } catch (e) {
     debugPrint('AppRemoteConfig: Failed to fetch config: $e');
@@ -110,5 +144,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
 
 /// Provides the Razorpay service instance
 final razorpayServiceProvider = Provider<RazorpayService>((ref) {
-  return RazorpayService(apiKey: RazorpayConfig.apiKey);
+  // Base key intentionally left empty; runtime key is passed dynamically
+  // from appRemoteConfigProvider during checkout.
+  return RazorpayService(apiKey: '');
 });

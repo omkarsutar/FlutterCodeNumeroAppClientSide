@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cart_order_service.dart';
 import '../../../../core/services/razorpay_service.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
@@ -102,14 +104,37 @@ class CartController {
     required double totalAmount,
     required String email,
     required String contact,
+    String? apiKey,
+    String? appliedPromoCode,
   }) async {
     _pendingPoIds = poIds;
+
+    final prefs = await SharedPreferences.getInstance();
+    String? firstReferrerRaw = prefs.getString('first_touch_source');
+    String? lastReferrerRaw = prefs.getString('second_touch_source');
+
+    if (firstReferrerRaw == null || firstReferrerRaw.isEmpty) {
+      firstReferrerRaw =
+          'utm_source=organic&utm_medium=direct&utm_campaign=none';
+    }
+    if (lastReferrerRaw == null || lastReferrerRaw.isEmpty) {
+      lastReferrerRaw = firstReferrerRaw;
+    }
+
+    final packageInfo = await PackageInfo.fromPlatform();
 
     _razorpayService.openCheckout(
       description: "Payment for ${poIds.length} Birthdate Analysis",
       amount: totalAmount,
       contact: contact,
       email: email,
+      apiKey: apiKey,
+      notes: {
+        'package_name': packageInfo.packageName,
+        'promo_code_applied': appliedPromoCode ?? 'none',
+        'first_touch_referrer_raw': firstReferrerRaw,
+        'last_touch_referrer_raw': lastReferrerRaw,
+      },
     );
   }
 

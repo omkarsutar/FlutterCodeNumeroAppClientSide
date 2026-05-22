@@ -123,11 +123,13 @@ ThemeData buildDarkTheme() {
       ),
     ),
     snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFF1F2937),
       contentTextStyle: const TextStyle(
         color: Colors.white,
         fontWeight: FontWeight.w500,
         fontSize: 14,
       ),
+      actionTextColor: AppPalette.sacredGold,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       behavior: SnackBarBehavior.floating,
     ),
@@ -243,11 +245,13 @@ ThemeData buildLightTheme() {
       ),
     ),
     snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFF1F2937),
       contentTextStyle: const TextStyle(
         color: Colors.white,
         fontWeight: FontWeight.w500,
         fontSize: 14,
       ),
+      actionTextColor: AppPalette.sacredGold,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       behavior: SnackBarBehavior.floating,
     ),
