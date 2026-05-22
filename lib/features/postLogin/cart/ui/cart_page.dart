@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +26,7 @@ class CartPage extends ConsumerStatefulWidget {
 class _CartPageState extends ConsumerState<CartPage> {
   late final CartController _cartController;
   final TextEditingController _promoController = TextEditingController();
+  bool _remoteConfigDebugShown = false;
 
   String _appliedPromoCode = 'none';
   double _appliedDiscountPercent = 0;
@@ -245,6 +246,40 @@ class _CartPageState extends ConsumerState<CartPage> {
     final remoteConfigAsync = ref.watch(appRemoteConfigProvider);
     final basePrice = remoteConfigAsync.valueOrNull?.numerologyPriceInr ?? 299.0;
     final razorpayKey = remoteConfigAsync.valueOrNull?.razorpayKey ?? '';
+
+    // Temporary on-device visibility for remote config, useful when no console
+    // access is available on test devices.
+    if (!kReleaseMode && !_remoteConfigDebugShown) {
+      final loadedConfig = remoteConfigAsync.valueOrNull;
+      if (loadedConfig != null) {
+        _remoteConfigDebugShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(seconds: 8),
+              content: Text(
+                'RemoteConfig -> package=${loadedConfig.packageName}, '
+                'price=${loadedConfig.numerologyPriceInr}, '
+                'mode=${loadedConfig.razorpayMode}, '
+                'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"}',
+              ),
+            ),
+          );
+        });
+      } else if (remoteConfigAsync.hasError) {
+        _remoteConfigDebugShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(seconds: 8),
+              content: Text('RemoteConfig error -> ${remoteConfigAsync.error}'),
+            ),
+          );
+        });
+      }
+    }
 
     return Scaffold(
       appBar: CustomAppBar(title: l10n['my_cart'] ?? 'My Cart'),
