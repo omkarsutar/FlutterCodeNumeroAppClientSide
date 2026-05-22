@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -249,7 +249,7 @@ class _CartPageState extends ConsumerState<CartPage> {
 
     // Temporary on-device visibility for remote config, useful when no console
     // access is available on test devices.
-    if (!kReleaseMode && !_remoteConfigDebugShown) {
+    if (!kIsWeb && !_remoteConfigDebugShown) {
       final loadedConfig = remoteConfigAsync.valueOrNull;
       if (loadedConfig != null) {
         _remoteConfigDebugShown = true;

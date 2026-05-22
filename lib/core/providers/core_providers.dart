@@ -97,6 +97,15 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
         .replaceAll('.debug', '');
   }
 
+  bool _isExactPackageMatch(Map<String, dynamic> row, String targetPackage) {
+    final rowPackage = (row['package_name'] ?? '')
+        .toString()
+        .trim()
+        .replaceAll('"', '')
+        .replaceAll("'", '');
+    return rowPackage == targetPackage;
+  }
+
   Future<void> _persistConfig(Map<String, dynamic> row) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -147,8 +156,13 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
 
     if (rows.isNotEmpty) {
       final preferred = rows.firstWhere(
-        (row) => _normalizePackage((row['package_name'] ?? '').toString()) == normalizedPackage,
-        orElse: () => rows.first,
+        (row) => _isExactPackageMatch(row, packageName),
+        orElse: () => rows.firstWhere(
+          (row) =>
+              _normalizePackage((row['package_name'] ?? '').toString()) ==
+              normalizedPackage,
+          orElse: () => rows.first,
+        ),
       );
       await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
@@ -167,16 +181,23 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
         .cast<Map<String, dynamic>>();
     if (recentRows.isNotEmpty) {
       final preferred = recentRows.firstWhere(
-        (row) => _normalizePackage((row['package_name'] ?? '').toString()) == normalizedPackage,
+        (row) => _isExactPackageMatch(row, packageName),
         orElse: () => recentRows.firstWhere(
-          (row) => _normalizePackage((row['package_name'] ?? '').toString()) == appPackage,
-          orElse: () => recentRows.first,
+          (row) =>
+              _normalizePackage((row['package_name'] ?? '').toString()) ==
+              normalizedPackage,
+          orElse: () => recentRows.firstWhere(
+            (row) =>
+                _normalizePackage((row['package_name'] ?? '').toString()) ==
+                appPackage,
+            orElse: () => recentRows.first,
+          ),
         ),
       );
       await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
       debugPrint(
-        'AppRemoteConfig: no IN match; using normalized lookup ${config.packageName}, price=${config.numerologyPriceInr}',
+        'AppRemoteConfig: no IN match; selected ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
       );
       return config;
     }
