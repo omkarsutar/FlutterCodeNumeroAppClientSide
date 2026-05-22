@@ -1,117 +1,368 @@
-I have completed the requested changes. The "What you get in Detailed Analysis" tile is now moved to the Cart page with corrected visibility logic, and the navigation experience has been improved.
+backupSchemasOfsupaDbNumeroApp01On22May2025.sql this modified file is provided. we have below code Here is the complete, finalized production code for your Flutter Checkout Page.This file is fully integrated with your Robust v1.1.0 Tracking SDK, dynamically fetches your keys and pricing from your app_remote_configs table using package_info_plus, handles backward compatibility transitions for older device memory states, and routes the entire un-parsed tracking payloads straight into Razorpay notes for server-side processing. 
 
-Summary of Improvements:
-Relocated Premium Tile:
-Removed the marketing tile from the BirthdateAnalysisPage to declutter the analysis view.
-Implemented it in cart_page.dart within the promotional footer.
-Logic Fix: The tile now checks if any order currently in the cart is in a pending state, ensuring it only appears when relevant to the user's immediate purchase.
-Enhanced Navigation:
-Updated custom_app_bar.dart to be context-aware.
-When navigating from the Birthdate Analysis page to the Cart (via the "Unlock Full Analysis" button), the Cart page now displays a Back Arrow instead of a drawer icon, allowing for an intuitive return to the analysis.
-UI Polish:
-Resolved syntax and indentation issues on the Cart page.
-Ensured full localization support (English, Hindi, Marathi) for all new UI elements.
-All features are now correctly integrated and follow the intended user flow.
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:central_tracker_sdk/central_tracker_sdk.dart';
 
-Task Completion Status:
-[Completed] Moved 'Detailed Analysis' tile to Cart page.
-[Completed] Implemented smarter visibility logic based on cart contents.
-[Completed] Added automatic back-arrow support for Cart page when reached via analysis.
-[Completed] Fixed all reported syntax and linting errors.
+class CheckoutPage extends StatefulWidget {
+  const CheckoutPage({super.key});
 
+  @override
+  State<CheckoutPage> createState() => _CheckoutPageState();
+}
 
+class _CheckoutPageState extends State<CheckoutPage> {
+  late Razorpay _razorpay;
+  final _supabase = Supabase.instance.client;
+  final TextEditingController _promoController = TextEditingController();
+  
+  double _baseAmountINR = 0.0;
+  double _finalAmountINR = 0.0;
+  String _razorpayPublicKey = '';
+  String _appliedCode = 'none';
+  
+  bool _isLoadingConfigs = true;
+  bool _isValidatingPromo = false;
 
------------------------------------------------------------------
-
-
-https://zaenvrciiycqctpldldr.supabase.co/rest/v1/rpc/get_lucky_unlucky_values
-
-
-[
-    {
-        "unlucky_numbers": [
-            1,
-            2,
-            3
-        ],
-        "unlucky_colors": [
-            "Black",
-            "Red",
-            "Yellow"
-        ],
-        "unlucky_colors_hindi": [
-            "काला",
-            "पीला",
-            "लाल"
-        ],
-        "unlucky_colors_marathi": [
-            "काळा",
-            "पिवळा",
-            "लाल"
-        ],
-        "lucky_numbers": [
-            5,
-            8,
-            9,
-            7,
-            6
-        ],
-        "lucky_colors": [
-            "Green",
-            "White"
-        ],
-        "lucky_colors_hindi": [
-            "हरा",
-            "सफेद"
-        ],
-        "lucky_colors_marathi": [
-            "पांढरा",
-            "हिरवा"
-        ],
-        "lucky_days": [
-            "Friday",
-            "Saturday"
-        ],
-        "lucky_days_hindi": [
-            "शनिवार",
-            "शुक्रवार"
-        ],
-        "lucky_days_marathi": [
-            "शनिवार",
-            "शुक्रवार"
-        ],
-        "numbers_for_remedy": [
-            7,
-            5
-        ],
-        "numbers_not_for_remedy": [
-            3
-        ]
-    }
-]
-
----------------------------------------------------
-SELECT * FROM public.get_share_market_advice(
-    birthdate_id => '8cc21ed8-06c1-4084-915e-14fed06db17d'
-);
-
-[
-  {
-    "included_numbers": [
-      "2",
-      "1"
-    ],
-    "description_en": "Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.",
-    "description_hi": "आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।",
-    "description_mr": "तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता."
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize standard native Razorpay listeners
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    
+    // Load pricing matrices and public keys dynamically from Supabase
+    _fetchRemoteConfigurations();
   }
-]
+
+  @override
+  void dispose() {
+    _razorpay.clear(); // Drop listeners to avoid background execution memory leaks
+    _promoController.dispose();
+    super.dispose();
+  }
+
+  /// Queries Supabase using the active OS package bundle to load correct keys/prices dynamically
+  Future<void> _fetchRemoteConfigurations() async {
+    try {
+      // 1. Inspect the operating system to retrieve the active runtime package name
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      String activePackageName = packageInfo.packageName; 
+      // Returns 'com.numeroshastra.client.debug' on local emulators, 'com.numeroshastra.client' from Play Store
+
+      // 2. Query your public RLS-protected remote configurations table configuration
+      final data = await _supabase
+          .from('app_remote_configs')
+          .select('numerology_price_inr, razorpay_key')
+          .eq('package_name', activePackageName)
+          .single();
+
+      setState(() {
+        _baseAmountINR = (data['numerology_price_inr'] as num).toDouble();
+        _finalAmountINR = _baseAmountINR;
+        _razorpayPublicKey = data['razorpay_key'] ?? '';
+        _isLoadingConfigs = false;
+      });
+    } catch (e) {
+      print("Remote configuration fetch failure error: \$e");
+      // Fallback boundaries if network connectivity cuts out on initialization
+      setState(() {
+        _baseAmountINR = 299.00;
+        _finalAmountINR = 299.00;
+        _razorpayPublicKey = 'rzp_test_FALLBACK_DEFAULT';
+        _isLoadingConfigs = false;
+      });
+    }
+  }
+
+  /// Sends the coupon identifier string to CentralTrackerSDK for database validation
+  void _validateAndApplyPromo() async {
+    String inputCode = _promoController.text.trim().toUpperCase();
+    if (inputCode.isEmpty) return;
+
+    setState(() {
+      _isValidatingPromo = true;
+    });
+
+    // Run remote validation down your SDK infrastructure pipeline
+    final result = await CentralTrackerSDK.verifyPromoCode(inputCode);
+
+    setState(() {
+      _isValidatingPromo = false;
+    });
+
+    if (result['valid'] == true) {
+      double discountPercent = (result['discount_percentage'] as num).toDouble();
+      
+      setState(() {
+        _appliedCode = inputCode;
+        _finalAmountINR = _baseAmountINR * (1 - (discountPercent / 100));
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Success! Applied influencer discount code: -\$discountPercent%")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? "Invalid promo code structure.")),
+      );
+    }
+  }
+
+  /// Fetches unparsed tracking records from local storage memory and spins up Razorpay checkout
+  void _startCheckoutSequence() async {
+    if (_razorpayPublicKey.isEmpty) return;
+    
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Fetch multi-touch tracking strings populated by your version 1.1.0 tracker SDK
+    String? firstReferrerRaw = prefs.getString('first_touch_source');
+    String? lastReferrerRaw = prefs.getString('second_touch_source');
+
+    // 2. Migration Guard: Read legacy parameters if user downloaded app before v1.1.0 setup
+    if (firstReferrerRaw == null || lastReferrerRaw == null) {
+      String legacyReferrer = prefs.getString('sdk_attribution_logged_com.numeroshastra.client') 
+          ?? 'utm_source=organic&utm_medium=direct&utm_campaign=none';
+      
+      firstReferrerRaw ??= legacyReferrer;
+      lastReferrerRaw ??= legacyReferrer;
+    }
+
+    // 3. Convert target price to Razorpay Paisa currency values (e.g. ₹299 = 29900)
+    int finalAmountInPaisa = (_finalAmountINR * 100).toInt();
+
+    // 4. Extract active application bundle identity dynamically for backend logging
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    // 5. Structure options package payload mapping parameters
+    var options = {
+      'key': _razorpayPublicKey, // ◄ DYNAMIC KEY: Loaded securely from your Supabase row!
+      'amount': finalAmountInPaisa,
+      'name': 'NumeroShastra Services',
+      'description': 'Premium App Consultation Checkout',
+      'timeout': 300, 
+      'prefill': {
+        'contact': '9876543210', 
+        'email': 'customer@numeroshastra.com'
+      },
+      
+      // CRITICAL LOG COUPLING: Captured server-to-server by your track-purchase webhook function
+      'notes': {
+        'package_name': packageInfo.packageName,
+        'promo_code_applied': _appliedCode,
+        
+        // Forward entire unparsed parameter tracks directly to your database logs
+        'first_touch_referrer_raw': firstReferrerRaw,
+        'last_touch_referrer_raw': lastReferrerRaw,
+      }
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      print("Razorpay native checkout interface screen failed to render: \$e");
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Payment processed locally. Your server-side webhook catches the confirmation notes, 
+    // extracts parameters, splits attribution streams, and writes database rows securely!
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Payment Received"),
+        content: Text("Transaction ID: \${response.paymentId}\nYour consultation profile allocation is being initialized."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text("Continue"),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Payment Declined: [Error Code \({response.code}]\){response.message}"),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {}
+
+  @override
+  Widget build(BuildContext context) {
+    // Show smooth rendering progress indicators while fetching server variables
+    if (_isLoadingConfigs) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Secure Checkout")),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Cost Aggregations Metrics Visual Card Panel
+              Card(
+                elevation: 0,
+                color: Colors.grey.shade100,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.between,
+                        children: [
+                          const Text("Consultation Price", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                          Text("₹\${_baseAmountINR.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.between,
+                        children: [
+                          const Text("Total Outstanding", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          Text("₹\${_finalAmountINR.toStringAsFixed(2)}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Dynamic Promocode Validation Entry Input Block
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _promoController,
+                      decoration: InputDecoration(
+                        hintText: "ENTER INFLUENCER CODE",
+                        labelText: "Promocode",
+border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),prefixIcon: const Icon(Icons.confirmation_number_outlined),),textCapitalization: TextCapitalization.characters,),),const SizedBox(width: 12),ElevatedButton(onPressed: _isValidatingPromo ? null : _validateAndApplyPromo,style: ElevatedButton.styleFrom(minimumSize: const Size(100, 56),shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),child: _isValidatingPromo? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)): const Text("Apply"),)],),const Spacer(),// Native Gateway Access Key Execution ButtonElevatedButton.icon(onPressed: _startCheckoutSequence,icon: const Icon(Icons.verified_user, color: Colors.white),label: const Text("Proceed to Payment Verification", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),style: ElevatedButton.styleFrom(backgroundColor: Colors.blue,padding: const EdgeInsets.symmetric(vertical: 16),shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),)],),),),);}} 
+
+this code is generated by gemini ai. we have to refer this. i want to enhance install tracker, then want to implement promocode while purchase. want to show dynamic price for numerology purchase from app_remote_configs supabase table. central_tracker_sdk is updated.  
+
+
+# Implementation Plan - Dynamic Pricing, Attribution, and Promocodes
+
+Enhance the application's checkout process by introducing dynamic pricing from Supabase, integrating the attribution tracker cache fallbacks, and adding promocode validation/discounts.
+
+## User Review Required
+
+> [!IMPORTANT]
+> The checkout flow price calculation rules will dynamically transition from using a hardcoded `₹299/₹249` pricing model to utilizing the dynamic base price retrieved from the `app_remote_configs` table in Supabase.
+> The logic is:
+> - `subtotal = count * basePrice`
+> - If promocode applied: `subtotal * (1 - (discountPercentage / 100))`
+
+> [!NOTE]
+> CentralTrackerSDK only tracks installations on Android devices with Google Play Services. To prevent attribution parameters from being null on other platforms, we introduce fallback attribution caching.
+
+---
+
+## Proposed Changes
+
+### Component 1: Models & Core Configuration
+
+#### [NEW] [app_remote_config.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/models/app_remote_config.dart)
+- Model representing the `app_remote_configs` database table with fields:
+  - `packageName` (string)
+  - `numerologyPriceInr` (double)
+  - `razorpayMode` (string)
+  - `razorpayKey` (string)
+
+#### [MODIFY] [core_models_barrel.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/models/core_models_barrel.dart)
+- Export the new `app_remote_config.dart` model.
+
+#### [MODIFY] [core_providers.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/providers/core_providers.dart)
+- Implement `appRemoteConfigProvider` which fetches the configuration dynamically based on the current platform's package name (`package_info_plus`).
+
+---
+
+### Component 2: Attribution Tracker Enhancements
+
+#### [MODIFY] [web_utils_interface.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/utils/platform/web_utils_interface.dart)
+- Declare `String? getFullUtmParams()` in the interface.
+
+#### [MODIFY] [web_utils_web.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/utils/platform/web_utils_web.dart)
+- Implement `getFullUtmParams()` to capture and return URL UTM parameter query strings on Web platforms.
+
+#### [MODIFY] [web_utils_mobile.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/utils/platform/web_utils_mobile.dart)
+- Implement no-op fallback returning `null` for `getFullUtmParams()`.
+
+#### [MODIFY] [main.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/main.dart)
+- Introduce the helper function `enhanceAttributionTracking()` and execute it at startup to ensure `first_touch_source` and `second_touch_source` keys are always initialized (e.g. fallback to UTMs on web, platform direct routes on iOS/Android emulators).
+
+---
+
+### Component 3: Payment Gateway & Controller Routing
+
+#### [MODIFY] [razorpay_service.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/core/services/razorpay_service.dart)
+- Enhance `openCheckout` signature to accept optional `apiKey` and custom `notes` parameters. If `apiKey` is provided, use it dynamically; otherwise fallback to the class initialized `_apiKey`.
+
+#### [MODIFY] [cart_controller.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/features/postLogin/cart/providers/cart_controller.dart)
+- Accept optional `apiKey` and `appliedPromoCode` in `startPaymentFlow()`.
+- Query `SharedPreferences` for tracking attributions (`first_touch_source`, `second_touch_source`), package name details via `PackageInfo`, and bundle them into the Razorpay notes parameter object.
+
+---
+
+### Component 4: Cart Checkout UI
+
+#### [MODIFY] [cart_page.dart](file:///e:/Flutter%20Projects%20after%2010Oct2025/NumeroAppClientSide/main%20branch/mainBranchNumeroAppClientSide/lib/features/postLogin/cart/ui/cart_page.dart)
+- Fetch pricing dynamically from `appRemoteConfigProvider`.
+- Insert a beautiful, responsive promocode entry input block and active promo card in the cart payment footer layout.
+- Bind promocode validation routines using `CentralTrackerSDK.verifyPromoCode`.
+- Wire payment action triggers to pass the dynamically selected price, dynamic Razorpay api key, and applied promo metadata to the payment flow controller.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Build and run the app to check for any compilation or syntax warnings.
+  ```powershell
+  flutter test
+  ```
+
+### Manual Verification
+- Verify that dynamic prices load correctly.
+- Enter a promocode in the cart, verify the validation state, the success state showing the applied percentage discount, and check the adjusted total price.
+- Cancel the promocode, check that the price updates back to the base dynamic price.
+- Confirm the Razorpay options payload contains the custom `notes` with attribution variables.
 
 
 
-----------------------------------------------------
 
-protect static tables on supabase
+
+
+
+
+
+
+
 
 
 
