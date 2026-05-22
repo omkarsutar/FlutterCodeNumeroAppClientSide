@@ -12,9 +12,19 @@ class AppRemoteConfig {
   });
 
   factory AppRemoteConfig.fromMap(Map<String, dynamic> map) {
+    final dynamic rawPrice = map['numerology_price_inr'];
+    double parsedPrice;
+    if (rawPrice is num) {
+      parsedPrice = rawPrice.toDouble();
+    } else if (rawPrice is String) {
+      parsedPrice = double.tryParse(rawPrice) ?? 299.0;
+    } else {
+      parsedPrice = 299.0;
+    }
+
     return AppRemoteConfig(
       packageName: map['package_name'] ?? '',
-      numerologyPriceInr: (map['numerology_price_inr'] as num?)?.toDouble() ?? 299.0,
+      numerologyPriceInr: parsedPrice,
       razorpayMode: map['razorpay_mode'] ?? 'test',
       razorpayKey: map['razorpay_key'] ?? '',
     );

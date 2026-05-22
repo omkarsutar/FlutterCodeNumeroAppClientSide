@@ -85,33 +85,65 @@ final roleNameProvider = Provider<String?>((ref) {
 /// Fetches app remote configuration (pricing, Razorpay key) from Supabase
 /// based on the runtime package name. Falls back gracefully on error.
 final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
+  String _normalizePackage(String value) {
+    return value
+        .trim()
+        .replaceAll('"', '')
+        .replaceAll("'", '')
+        .replaceAll('.debug', '');
+  }
+
   try {
     final packageInfo = await PackageInfo.fromPlatform();
     final packageName = packageInfo.packageName.trim();
-    final normalizedPackage = packageName.replaceAll('.debug', '');
-    final appPackage = AppConstants.appPackageName.trim();
-    final candidates = <String>{
+    final normalizedPackage = _normalizePackage(packageName);
+    final appPackage = _normalizePackage(AppConstants.appPackageName);
+    final candidates = <String>[
       appPackage,
       '${appPackage}.debug',
-      packageName,
+      packageName.trim().replaceAll('"', '').replaceAll("'", ''),
       normalizedPackage,
-    }.toList();
+      'com.numeroshastra.client',
+      'com.numeroshastra.client.debug',
+    ].toSet().toList();
 
     final client = ref.read(supabaseClientProvider);
-    final rows = await client
+    final rows = (await client
         .from('app_remote_configs')
         .select()
-        .inFilter('package_name', candidates);
+        .inFilter('package_name', candidates))
+        .cast<Map<String, dynamic>>();
 
     if (rows.isNotEmpty) {
-      final preferred =
-              rows.cast<Map<String, dynamic>>().firstWhere(
-                    (row) => (row['package_name'] ?? '').toString() == packageName,
-                    orElse: () => rows.cast<Map<String, dynamic>>().first,
-                  );
+      final preferred = rows.firstWhere(
+        (row) => _normalizePackage((row['package_name'] ?? '').toString()) == normalizedPackage,
+        orElse: () => rows.first,
+      );
       final config = AppRemoteConfig.fromMap(preferred);
       debugPrint(
         'AppRemoteConfig: loaded ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
+      );
+      return config;
+    }
+
+    // Secondary strategy: pull recent rows and do normalized matching locally.
+    final recentRows = (await client
+            .from('app_remote_configs')
+            .select()
+            .order('updated_at', ascending: false)
+            .limit(50))
+        .cast<Map<String, dynamic>>();
+    if (recentRows.isNotEmpty) {
+      final preferred = recentRows.firstWhere(
+        (row) => _normalizePackage((row['package_name'] ?? '').toString()) == normalizedPackage,
+        orElse: () => recentRows.firstWhere(
+          (row) => _normalizePackage((row['package_name'] ?? '').toString()) == appPackage,
+          orElse: () => recentRows.first,
+        ),
+      );
+      final config = AppRemoteConfig.fromMap(preferred);
+      debugPrint(
+        'AppRemoteConfig: no IN match; using normalized lookup ${config.packageName}, price=${config.numerologyPriceInr}',
       );
       return config;
     }
@@ -133,7 +165,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     }
 
     debugPrint(
-      'AppRemoteConfig: No config found for candidates=$candidates, using fallback.',
+      'AppRemoteConfig: No config found for candidates=$candidates, runtimePackage=$packageName, using fallback.',
     );
     return AppRemoteConfig.fallback();
   } catch (e) {
