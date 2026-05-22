@@ -1,3 +1,19 @@
+[{"idx":0,"id":"71bc89bd-707c-49d4-bfaa-4f0709cf7a71","package_name":"com.numeroshastra.client.debug","numerology_price_inr":"1.00","razorpay_mode":"test","razorpay_key":"rzp_test_SYxEd8SaQvfl81","updated_at":"2026-05-22 04:03:01.243051+00"},{"idx":1,"id":"e8767d7d-8620-4a96-9b96-179a634c6214","package_name":"com.numeroshastra.client","numerology_price_inr":"399.00","razorpay_mode":"live","razorpay_key":"rzp_live_EESyiZv7gEQo8u","updated_at":"2026-05-22 04:03:01.243051+00"}]
+
+still error observed while doing adb logcat | Select-String "com.numeroshastra.client" is
+
+AppRemoteConfig fallback:
+
+Code
+AppRemoteConfig: No config found for candidates=[com.numeroshastra.client, com.numeroshastra.client.debug], using fallback.
+→ Means your remote config didn’t return values, so defaults are used. Again, not a crash.
+
+FPS drops when Razorpay CheckoutActivity starts:
+
+Code
+queueBuffer: fps=1.95 dur=1534.80 max=1466.49 min=33.70
+→ This shows rendering slowed dramatically when the Razorpay checkout screen opened. That’s consistent with the “stuck” feeling you described — the UI thread is blocked or waiting for the WebView inside Razorpay to load.
+
 backupSchemasOfsupaDbNumeroApp01On22May2025.sql this modified file is provided. we have below code Here is the complete, finalized production code for your Flutter Checkout Page.This file is fully integrated with your Robust v1.1.0 Tracking SDK, dynamically fetches your keys and pricing from your app_remote_configs table using package_info_plus, handles backward compatibility transitions for older device memory states, and routes the entire un-parsed tracking payloads straight into Razorpay notes for server-side processing. 
 
 import 'dart:convert';
