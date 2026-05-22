@@ -157,11 +157,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: e4dd6b8b3419b73ca1aea76de6b19e1734041ee9
+      ref: "v1.1.0"
+      resolved-ref: "12a2a4d64dc0fe2d3664d9ffea74371b5151dfb4"
       url: "https://github.com/omkarsutar/central_tracker_sdk.git"
     source: git
-    version: "1.0.0"
+    version: "1.1.0"
   characters:
     dependency: transitive
     description:
@@ -769,6 +769,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  package_info_plus:
+    dependency: "direct main"
+    description:
+      name: package_info_plus
+      sha256: "468c26b4254ab01979fa5e4a98cb343ea3631b9acee6f21028997419a80e1a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.0.1"
+  package_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: package_info_plus_platform_interface
+      sha256: "202a487f08836a592a6bd4f901ac69b3a8f146af552bbd14407b6b41e1c3f086"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.1"
   path:
     dependency: transitive
     description:

@@ -30,7 +30,8 @@ void main() async {
   // Configure your custom tracking plugin layout rules
   CentralTrackerSDK.initialize(
     packageName: AppConstants.trackingPackageName,
-    edgeFunctionUrl: AppConstants.trackingEdgeFunctionUrl,
+    trackInstallUrl: AppConstants.trackInstallEdgeFunctionUrl,
+    validateCodeUrl: AppConstants.validatePromoCodeEdgeFunctionUrl,
   );
 
   // Command the client engine to silently check and stream metrics in the background
@@ -42,7 +43,6 @@ void main() async {
     );
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     debugPrint('Firebase initialized successfully');
-
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
@@ -86,11 +86,10 @@ void main() async {
   // Initialize messaging in background to avoid blocking the UI startup
   container.read(messagingServiceProvider).initialize();
 
-
-  runApp(UncontrolledProviderScope(container: container, child: const MainApp()));
-
+  runApp(
+    UncontrolledProviderScope(container: container, child: const MainApp()),
+  );
 }
-
 
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
@@ -112,4 +111,3 @@ class MainApp extends ConsumerWidget {
     );
   }
 }
-
