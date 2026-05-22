@@ -244,6 +244,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     final selectedIds = ref.watch(selectedOrdersProvider);
     final theme = Theme.of(context);
     final remoteConfigAsync = ref.watch(appRemoteConfigProvider);
+    final remoteConfigDebugInfo = ref.watch(appRemoteConfigDebugInfoProvider);
     final basePrice = remoteConfigAsync.valueOrNull?.numerologyPriceInr ?? 299.0;
     final razorpayKey = remoteConfigAsync.valueOrNull?.razorpayKey ?? '';
 
@@ -262,7 +263,8 @@ class _CartPageState extends ConsumerState<CartPage> {
                 'RemoteConfig -> package=${loadedConfig.packageName}, '
                 'price=${loadedConfig.numerologyPriceInr}, '
                 'mode=${loadedConfig.razorpayMode}, '
-                'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"}',
+                'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"} | '
+                '$remoteConfigDebugInfo',
               ),
             ),
           );
@@ -274,7 +276,9 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 8),
-              content: Text('RemoteConfig error -> ${remoteConfigAsync.error}'),
+              content: Text(
+                'RemoteConfig error -> ${remoteConfigAsync.error} | $remoteConfigDebugInfo',
+              ),
             ),
           );
         });

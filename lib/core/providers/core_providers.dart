@@ -84,6 +84,11 @@ final roleNameProvider = Provider<String?>((ref) {
   return profile?.roleId;
 });
 
+/// Debug info for remote config resolution path on device.
+final appRemoteConfigDebugInfoProvider = StateProvider<String>((ref) {
+  return 'NOT_FETCHED';
+});
+
 /// Fetches app remote configuration (pricing, Razorpay key) from Supabase
 /// based on the runtime package name. Falls back gracefully on error.
 final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
@@ -146,6 +151,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       'com.numeroshastra.client',
       'com.numeroshastra.client.debug',
     ].toSet().toList();
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+        'REQUEST runtime=$packageName candidates=${candidates.join(",")}';
 
     final client = ref.read(supabaseClientProvider);
     final rows = (await client
@@ -166,6 +173,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       );
       await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'LIVE_IN_FILTER row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
       debugPrint(
         'AppRemoteConfig: loaded ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
       );
@@ -196,6 +205,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       );
       await _persistConfig(preferred);
       final config = AppRemoteConfig.fromMap(preferred);
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'LIVE_RECENT row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
       debugPrint(
         'AppRemoteConfig: no IN match; selected ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
       );
@@ -213,6 +224,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     if (latest != null) {
       await _persistConfig(latest);
       final config = AppRemoteConfig.fromMap(latest);
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'LIVE_LATEST row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
       debugPrint(
         'AppRemoteConfig: no package match; using latest row ${config.packageName}, price=${config.numerologyPriceInr}',
       );
@@ -224,22 +237,29 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     );
     final cached = await _readCachedConfig();
     if (cached != null) {
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'CACHE row=${cached.packageName} price=${cached.numerologyPriceInr} mode=${cached.razorpayMode} key=${cached.razorpayKey.isEmpty ? "missing" : "present"}';
       debugPrint(
         'AppRemoteConfig: using cached config ${cached.packageName}, price=${cached.numerologyPriceInr}',
       );
       return cached;
     }
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 no_rows';
     return AppRemoteConfig.fallback();
   } catch (e, st) {
     debugPrint('AppRemoteConfig: Failed to fetch config: $e');
     debugPrint('AppRemoteConfig: Stack trace: $st');
     final cached = await _readCachedConfig();
     if (cached != null) {
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'CACHE_AFTER_ERROR row=${cached.packageName} price=${cached.numerologyPriceInr} err=$e';
       debugPrint(
         'AppRemoteConfig: using cached config after error ${cached.packageName}, price=${cached.numerologyPriceInr}',
       );
       return cached;
     }
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+        'FALLBACK_299 error=$e';
     return AppRemoteConfig.fallback();
   }
 });
