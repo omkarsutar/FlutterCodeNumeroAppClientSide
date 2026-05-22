@@ -94,33 +94,14 @@ final appRemoteConfigDebugInfoProvider = StateProvider<String>((ref) {
 final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
   const cacheKey = 'app_remote_config_cache_v1';
 
-  String _normalizePackage(String value) {
-    return value
-        .trim()
-        .replaceAll('"', '')
-        .replaceAll("'", '')
-        .replaceAll('.debug', '');
-  }
-
-  bool _isExactPackageMatch(Map<String, dynamic> row, String targetPackage) {
-    final rowPackage = (row['package_name'] ?? '')
-        .toString()
-        .trim()
-        .replaceAll('"', '')
-        .replaceAll("'", '');
-    return rowPackage == targetPackage;
-  }
-
-  Future<void> _persistConfig(Map<String, dynamic> row) async {
+  Future<void> persistConfig(Map<String, dynamic> row) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(cacheKey, jsonEncode(row));
-    } catch (_) {
-      // Best-effort cache only
-    }
+    } catch (_) {}
   }
 
-  Future<AppRemoteConfig?> _readCachedConfig() async {
+  Future<AppRemoteConfig?> readCachedConfig() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(cacheKey);
@@ -129,140 +110,114 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       if (decoded is Map<String, dynamic>) {
         return AppRemoteConfig.fromMap(decoded);
       }
-      if (decoded is Map) {
-        return AppRemoteConfig.fromMap(decoded.cast<String, dynamic>());
-      }
-    } catch (_) {
-      // Ignore cache decode errors and continue with defaults
-    }
+    } catch (_) {}
     return null;
   }
 
   try {
     final packageInfo = await PackageInfo.fromPlatform();
     final packageName = packageInfo.packageName.trim();
-    final normalizedPackage = _normalizePackage(packageName);
-    final appPackage = _normalizePackage(AppConstants.appPackageName);
-    final candidates = <String>[
-      appPackage,
-      '${appPackage}.debug',
-      packageName.trim().replaceAll('"', '').replaceAll("'", ''),
-      normalizedPackage,
-      'com.numeroshastra.client',
-      'com.numeroshastra.client.debug',
-    ].toSet().toList();
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-        'REQUEST runtime=$packageName candidates=${candidates.join(",")}';
+    
+    // Log the start of the request
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 
+        'FETCHING runtime=$packageName';
 
     final client = ref.read(supabaseClientProvider);
-    final rows = (await client
+
+    // Strategy 1: Exact match on current package name (Highest Priority)
+    final primaryRow = await client
         .from('app_remote_configs')
         .select()
-        .inFilter('package_name', candidates))
-        .cast<Map<String, dynamic>>();
+        .eq('package_name', packageName)
+        .maybeSingle();
 
-    if (rows.isNotEmpty) {
-      final preferred = rows.firstWhere(
-        (row) => _isExactPackageMatch(row, packageName),
-        orElse: () => rows.firstWhere(
-          (row) =>
-              _normalizePackage((row['package_name'] ?? '').toString()) ==
-              normalizedPackage,
-          orElse: () => rows.first,
-        ),
-      );
-      await _persistConfig(preferred);
-      final config = AppRemoteConfig.fromMap(preferred);
+    if (primaryRow != null) {
+      await persistConfig(primaryRow);
+      final config = AppRemoteConfig.fromMap(primaryRow);
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'LIVE_IN_FILTER row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
-      debugPrint(
-        'AppRemoteConfig: loaded ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
-      );
+          'LIVE_MATCH row=${config.packageName} price=${config.numerologyPriceInr}';
       return config;
     }
 
-    // Secondary strategy: pull recent rows and do normalized matching locally.
-    final recentRows = (await client
-            .from('app_remote_configs')
-            .select()
-            .order('updated_at', ascending: false)
-            .limit(50))
-        .cast<Map<String, dynamic>>();
-    if (recentRows.isNotEmpty) {
-      final preferred = recentRows.firstWhere(
-        (row) => _isExactPackageMatch(row, packageName),
-        orElse: () => recentRows.firstWhere(
-          (row) =>
-              _normalizePackage((row['package_name'] ?? '').toString()) ==
-              normalizedPackage,
-          orElse: () => recentRows.firstWhere(
-            (row) =>
-                _normalizePackage((row['package_name'] ?? '').toString()) ==
-                appPackage,
-            orElse: () => recentRows.first,
-          ),
-        ),
-      );
-      await _persistConfig(preferred);
-      final config = AppRemoteConfig.fromMap(preferred);
-      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'LIVE_RECENT row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
-      debugPrint(
-        'AppRemoteConfig: no IN match; selected ${config.packageName} for runtime package $packageName, price=${config.numerologyPriceInr}',
-      );
-      return config;
+    // Strategy 2: Match on base package name (if current is .debug)
+    final basePackage = packageName.replaceAll('.debug', '');
+    if (basePackage != packageName) {
+      final secondaryRow = await client
+          .from('app_remote_configs')
+          .select()
+          .eq('package_name', basePackage)
+          .maybeSingle();
+
+      if (secondaryRow != null) {
+        await persistConfig(secondaryRow);
+        final config = AppRemoteConfig.fromMap(secondaryRow);
+        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+            'LIVE_BASE row=${config.packageName} price=${config.numerologyPriceInr}';
+        return config;
+      }
     }
 
-    // Final fallback: pick the latest updated config row.
-    // This keeps pricing/key dynamic even when package names are misaligned.
-    final latest = await client
+    // Strategy 3: Try AppConstants.appPackageName
+    if (AppConstants.appPackageName != packageName) {
+       final constRow = await client
+          .from('app_remote_configs')
+          .select()
+          .eq('package_name', AppConstants.appPackageName)
+          .maybeSingle();
+
+      if (constRow != null) {
+        await persistConfig(constRow);
+        final config = AppRemoteConfig.fromMap(constRow);
+        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+            'LIVE_CONST row=${config.packageName} price=${config.numerologyPriceInr}';
+        return config;
+      }
+    }
+
+    // Strategy 4: Fallback to the latest updated row in the table
+    final latestRow = await client
         .from('app_remote_configs')
         .select()
         .order('updated_at', ascending: false)
         .limit(1)
         .maybeSingle();
-    if (latest != null) {
-      await _persistConfig(latest);
-      final config = AppRemoteConfig.fromMap(latest);
+
+    if (latestRow != null) {
+      await persistConfig(latestRow);
+      final config = AppRemoteConfig.fromMap(latestRow);
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'LIVE_LATEST row=${config.packageName} price=${config.numerologyPriceInr} mode=${config.razorpayMode} key=${config.razorpayKey.isEmpty ? "missing" : "present"}';
-      debugPrint(
-        'AppRemoteConfig: no package match; using latest row ${config.packageName}, price=${config.numerologyPriceInr}',
-      );
+          'LIVE_LATEST row=${config.packageName} price=${config.numerologyPriceInr}';
       return config;
     }
 
-    debugPrint(
-      'AppRemoteConfig: No config found for candidates=$candidates, runtimePackage=$packageName, using fallback.',
-    );
-    final cached = await _readCachedConfig();
+    // Strategy 5: Use cached data if available
+    final cached = await readCachedConfig();
     if (cached != null) {
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'CACHE row=${cached.packageName} price=${cached.numerologyPriceInr} mode=${cached.razorpayMode} key=${cached.razorpayKey.isEmpty ? "missing" : "present"}';
-      debugPrint(
-        'AppRemoteConfig: using cached config ${cached.packageName}, price=${cached.numerologyPriceInr}',
-      );
+          'CACHE row=${cached.packageName} price=${cached.numerologyPriceInr}';
       return cached;
     }
+
+    // Ultimate fallback (The Hardcoded 299)
     ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 no_rows';
+    debugPrint('AppRemoteConfig: No rows found in DB for $packageName, using fallback.');
     return AppRemoteConfig.fallback();
+
   } catch (e, st) {
-    debugPrint('AppRemoteConfig: Failed to fetch config: $e');
-    debugPrint('AppRemoteConfig: Stack trace: $st');
-    final cached = await _readCachedConfig();
+    debugPrint('AppRemoteConfig: Error fetching: $e\n$st');
+    
+    final cached = await readCachedConfig();
     if (cached != null) {
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'CACHE_AFTER_ERROR row=${cached.packageName} price=${cached.numerologyPriceInr} err=$e';
-      debugPrint(
-        'AppRemoteConfig: using cached config after error ${cached.packageName}, price=${cached.numerologyPriceInr}',
-      );
+          'CACHE_ERROR err=$e';
       return cached;
     }
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-        'FALLBACK_299 error=$e';
+    
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 error=$e';
     return AppRemoteConfig.fallback();
   }
 });
+
 
 /// Provides the Razorpay service instance
 final razorpayServiceProvider = Provider<RazorpayService>((ref) {

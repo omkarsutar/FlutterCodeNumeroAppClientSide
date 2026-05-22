@@ -18,7 +18,7 @@ import '../core/models/route_permission.dart';
 import 'route_guards.dart';
 import '../core/services/analytics_service.dart';
 
-import 'package:flutter/material.dart';
+
 import '../core/providers/auth_providers.dart';
 import '../core/globals.dart';
 

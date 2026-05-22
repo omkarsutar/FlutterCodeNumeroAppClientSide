@@ -121,18 +121,24 @@ Future<void> _enhanceAttributionTracking() async {
   final first = prefs.getString('first_touch_source');
   final second = prefs.getString('second_touch_source');
 
+  // If already tracked by v1.1.0 logic, we are done
   if (first != null && first.isNotEmpty && second != null && second.isNotEmpty) {
     return;
   }
 
-  String fallback = 'utm_source=organic&utm_medium=direct&utm_campaign=none';
+  // Migration Guard: Read legacy parameters if user downloaded app before v1.1.0 setup
+  final legacyKey = 'sdk_attribution_logged_${AppConstants.appPackageName}';
+  final legacyReferrer = prefs.getString(legacyKey);
+
+  String fallback = legacyReferrer ?? 'utm_source=organic&utm_medium=direct&utm_campaign=none';
 
   if (kIsWeb) {
     final utm = webUtils.getFullUtmParams();
     if (utm != null && utm.isNotEmpty) {
       fallback = utm;
     }
-  } else {
+  } else if (legacyReferrer == null) {
+    // If no legacy record and not on web, use a mobile-specific fallback if appropriate
     fallback = 'utm_source=app&utm_medium=direct&utm_campaign=mobile_fallback';
   }
 

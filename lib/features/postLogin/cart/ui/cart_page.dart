@@ -245,13 +245,18 @@ class _CartPageState extends ConsumerState<CartPage> {
     final theme = Theme.of(context);
     final remoteConfigAsync = ref.watch(appRemoteConfigProvider);
     final remoteConfigDebugInfo = ref.watch(appRemoteConfigDebugInfoProvider);
-    final basePrice = remoteConfigAsync.valueOrNull?.numerologyPriceInr ?? 299.0;
-    final razorpayKey = remoteConfigAsync.valueOrNull?.razorpayKey ?? '';
+    
+    // We favor the loaded config, but avoid defaulting to 299 while still loading
+    // to prevent the "price flicker" reported by the user.
+    final loadedConfig = remoteConfigAsync.valueOrNull;
+    final isInitialLoading = remoteConfigAsync.isLoading && loadedConfig == null;
+    
+    final basePrice = loadedConfig?.numerologyPriceInr ?? 299.0;
+    final razorpayKey = loadedConfig?.razorpayKey ?? '';
 
     // Temporary on-device visibility for remote config, useful when no console
     // access is available on test devices.
     if (!kIsWeb && !_remoteConfigDebugShown) {
-      final loadedConfig = remoteConfigAsync.valueOrNull;
       if (loadedConfig != null) {
         _remoteConfigDebugShown = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -259,12 +264,15 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 8),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: theme.colorScheme.secondaryContainer,
               content: Text(
                 'RemoteConfig -> package=${loadedConfig.packageName}, '
                 'price=${loadedConfig.numerologyPriceInr}, '
                 'mode=${loadedConfig.razorpayMode}, '
                 'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"} | '
                 '$remoteConfigDebugInfo',
+                style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontSize: 12),
               ),
             ),
           );
@@ -276,8 +284,10 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 8),
+              backgroundColor: theme.colorScheme.errorContainer,
               content: Text(
                 'RemoteConfig error -> ${remoteConfigAsync.error} | $remoteConfigDebugInfo',
+                style: TextStyle(color: theme.colorScheme.onErrorContainer),
               ),
             ),
           );
@@ -485,6 +495,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                   l10n,
                   basePrice: basePrice,
                   razorpayKey: razorpayKey,
+                  isConfigLoading: isInitialLoading,
                 ),
               ],
             ),
@@ -836,7 +847,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     BuildContext context,
     Set<String> selectedIds,
     Map<String, String> l10n,
-    {required double basePrice, required String razorpayKey}
+    {required double basePrice, required String razorpayKey, required bool isConfigLoading}
   ) {
     final theme = Theme.of(context);
     final count = selectedIds.length;
@@ -977,64 +988,110 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
             ),
             const SizedBox(height: 20),
+            // Row 2: Promocode Entry Block (Modified for premium look)
             if (_appliedPromoCode != 'none') ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.25)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.2), width: 1.5),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.discount_rounded, color: Colors.green, size: 18),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        '$_appliedPromoCode applied (-${_appliedDiscountPercent.toStringAsFixed(0)}%)',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.green.shade800,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PROMO APPLIED: $_appliedPromoCode',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.green.shade800,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          Text(
+                            'You saved ${totalAmount < subtotal ? "\u20B9${(subtotal - totalAmount).toStringAsFixed(0)}" : "${_appliedDiscountPercent.toStringAsFixed(0)}%"}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    TextButton(onPressed: _clearPromo, child: const Text('Remove')),
+                    TextButton(
+                      onPressed: _clearPromo,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _promoController,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: InputDecoration(
-                      hintText: 'Enter promo code',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.confirmation_number_outlined),
+                      child: TextField(
+                        controller: _promoController,
+                        textCapitalization: TextCapitalization.characters,
+                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                        decoration: InputDecoration(
+                          hintText: 'Enter promo code',
+                          hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            fontWeight: FontWeight.normal,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          prefixIcon: Icon(Icons.confirmation_number_outlined, 
+                            color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                FilledButton(
-                  onPressed: _isValidatingPromo ? null : _validateAndApplyPromo,
-                  child: _isValidatingPromo
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Apply'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: _isValidatingPromo ? null : _validateAndApplyPromo,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
+                      child: _isValidatingPromo
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // Row 3: Selection Count and Pay Button
             Row(
@@ -1043,17 +1100,24 @@ class _CartPageState extends ConsumerState<CartPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        count == 0
-                            ? (l10n['select'] ?? 'Select')
-                            : '$count ${count == 1 ? "birthdate" : "birthdates"}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
+                      if (isConfigLoading)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        Text(
+                          count == 0
+                              ? (l10n['select'] ?? 'Select')
+                              : '$count ${count == 1 ? "birthdate" : "birthdates"}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
-                      ),
                       Text(
-                        'Selected',
+                        'Total to Pay',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.bold,
@@ -1064,7 +1128,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton(
-                  onPressed: count == 0
+                  onPressed: (count == 0 || isConfigLoading)
                       ? null
                       : () => _handlePaymentAction(
                           selectedIds.toList(),
@@ -1078,9 +1142,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                       horizontal: 32,
                       vertical: 18,
                     ),
-                    elevation: 4,
+                    elevation: 8,
                     shadowColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.3,
+                      alpha: 0.4,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -1089,22 +1153,25 @@ class _CartPageState extends ConsumerState<CartPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (count > 0) ...[
-                        Text(
-                          '\u20B9${subtotal.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.lineThrough,
-                            color: Colors.white.withValues(alpha: 0.7),
+                      if (count > 0 && !isConfigLoading) ...[
+                        if (_appliedPromoCode != 'none')
+                          Text(
+                            '\u20B9${subtotal.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.lineThrough,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
+                        if (_appliedPromoCode != 'none') const SizedBox(width: 8),
                       ],
                       Text(
-                        count == 0
-                            ? 'Pay'
-                            : 'Pay \u20B9${totalAmount.toStringAsFixed(2)}',
+                        isConfigLoading
+                            ? 'Loading...'
+                            : (count == 0
+                                ? 'Select Items'
+                                : 'Pay \u20B9${totalAmount.toStringAsFixed(0)}'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -1121,6 +1188,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       ),
     );
   }
+
 
   Widget _buildPromoFooter(BuildContext context, double basePrice) {
     final theme = Theme.of(context);

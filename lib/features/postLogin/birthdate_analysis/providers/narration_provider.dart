@@ -431,7 +431,15 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
         String det = l10n['narrator_pinnacle_detail'] ?? 'For age {range}, pinnacle is {number}: ';
         det = det.replaceAll('{range}', p.lifePeriodRange).replaceAll('{number}', p.pinnacleno.toString());
         chunks.add(NarrationChunk(text: det, section: NarrationSection.pinnacles, subIndex: subIndex));
-        for (final item in d) chunks.add(NarrationChunk(text: item.getDescription(lang), section: NarrationSection.pinnacles, subIndex: subIndex));
+        for (final item in d) {
+          chunks.add(
+            NarrationChunk(
+              text: item.getDescription(lang),
+              section: NarrationSection.pinnacles,
+              subIndex: subIndex,
+            ),
+          );
+        }
       }
       addP(pinnacle1, 'pinnacle_1', 0); 
       addP(pinnacle2, 'pinnacle_2', 1); 
@@ -500,7 +508,9 @@ class NarrationNotifier extends AutoDisposeNotifier<NarrationState> {
 
     for (int i = 0; i < chunks.length; i++) {
       if (_isNarrationStopped) break;
-      while (state.isPaused && !_isNarrationStopped) await Future.delayed(const Duration(milliseconds: 300));
+      while (state.isPaused && !_isNarrationStopped) {
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
       if (_isNarrationStopped) break;
 
       state = state.copyWith(
