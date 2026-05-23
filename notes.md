@@ -1,3 +1,6 @@
+# In PowerShell, use single quotes for the whole URL:
+adb shell am start -a android.intent.action.VIEW -d "'com.numeroshastra.client://login-callback?utm_source=meta_ads&utm_medium=cpc&utm_campaign=launch_2026'"
+
 first_touch_referrer_raw: utm_source=google-play&utm_medium=organic
 
 last_touch_referrer_raw: utm_source=meta_ads
