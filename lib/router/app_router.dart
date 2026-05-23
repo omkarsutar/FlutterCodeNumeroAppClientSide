@@ -1,6 +1,6 @@
 import '../features/postLogin/notifications/ui/notification_admin_page.dart';
 import '../features/postLogin/purchase_orders/ui/purchase_order_list_page.dart';
-import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
+import 'package:numero_shastra/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/models/entity_meta.dart';

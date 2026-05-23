@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_supabase_order_app_mobile/core/services/connectivity_service.dart';
-import 'package:flutter_supabase_order_app_mobile/core/interfaces/connectivity_service_interface.dart';
+import 'package:numero_shastra/core/services/connectivity_service.dart';
+import 'package:numero_shastra/core/interfaces/connectivity_service_interface.dart';
 
 void main() {
   group('ConnectivityServiceImpl Tests', () {

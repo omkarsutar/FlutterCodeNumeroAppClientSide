@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/app_localization_provider.dart';
+import 'package:numero_shastra/core/providers/app_localization_provider.dart';
 
 class AppErrorView extends ConsumerWidget {
   final Object error;

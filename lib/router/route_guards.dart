@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:flutter_supabase_order_app_mobile/core/providers/app_config_provider.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/routing/module_route_generator.dart';
-import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
+import 'package:numero_shastra/core/providers/app_config_provider.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/core/routing/module_route_generator.dart';
+import 'package:numero_shastra/router/app_routes.dart';
 
 class RouteGuardService {
   const RouteGuardService();

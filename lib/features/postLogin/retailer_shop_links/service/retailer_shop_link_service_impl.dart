@@ -1,7 +1,7 @@
-import 'package:flutter_supabase_order_app_mobile/core/config/core_config_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/core/services/core_services_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/shops/shop_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
+import 'package:numero_shastra/core/config/core_config_barrel.dart';
+import 'package:numero_shastra/core/services/core_services_barrel.dart';
+import 'package:numero_shastra/features/postLogin/shops/shop_barrel.dart';
+import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/retailer_shop_link_model.dart';
 

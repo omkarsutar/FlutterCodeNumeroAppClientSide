@@ -1,4 +1,4 @@
-import 'package:flutter_supabase_order_app_mobile/core/models/entity_meta.dart';
+import 'package:numero_shastra/core/models/entity_meta.dart';
 import '../../../../core/services/entity_service.dart';
 
 /// Entity metadata for RBAC permissions

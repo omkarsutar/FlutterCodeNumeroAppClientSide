@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/rbac_permissions/rbac_permission_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
+import 'package:numero_shastra/features/postLogin/rbac_permissions/rbac_permission_barrel.dart';
+import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../exceptions/app_exceptions.dart';
 import '../interfaces/connectivity_service_interface.dart';

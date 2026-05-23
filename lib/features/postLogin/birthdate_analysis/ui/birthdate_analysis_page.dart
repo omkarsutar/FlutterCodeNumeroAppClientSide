@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
+import 'package:numero_shastra/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';

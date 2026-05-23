@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
 import '../../core/services/rbac_service.dart';
 
 // Use the centralized rbacServiceProvider from core_providers.dart

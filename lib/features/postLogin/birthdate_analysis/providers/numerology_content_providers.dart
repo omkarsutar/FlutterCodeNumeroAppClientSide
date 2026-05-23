@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/numerology_models.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/services/numerology_rpc_service.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/cart/providers/birthdate_record_providers.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/numerology_models.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/services/numerology_rpc_service.dart';
+import 'package:numero_shastra/features/postLogin/cart/providers/birthdate_record_providers.dart';
 
 final numerologyRpcServiceProvider = Provider<NumerologyRpcService>((ref) {
   return NumerologyRpcService(ref.watch(supabaseClientProvider));

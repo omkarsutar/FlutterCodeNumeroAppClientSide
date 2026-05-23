@@ -1,7 +1,7 @@
 import 'dart:async';
-// import 'package:flutter_supabase_order_app_mobile/features/postLogin/routes/route_barrel.dart';
-// import 'package:flutter_supabase_order_app_mobile/features/postLogin/shops/shop_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
+// import 'package:numero_shastra/features/postLogin/routes/route_barrel.dart';
+// import 'package:numero_shastra/features/postLogin/shops/shop_barrel.dart';
+import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/field_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

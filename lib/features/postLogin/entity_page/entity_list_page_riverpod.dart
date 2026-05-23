@@ -6,7 +6,7 @@ import '../../../core/config/field_config.dart';
 import '../../../core/config/module_config.dart';
 import '../../../core/models/entity_meta.dart';
 import '../../../core/services/entity_service.dart';
-import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
+import 'package:numero_shastra/shared/widgets/shared_widget_barrel.dart';
 import 'entity_card.dart';
 import 'providers/generic_list_controller.dart';
 import 'providers/generic_list_logic.dart';

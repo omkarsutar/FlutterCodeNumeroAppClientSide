@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = flutter_supabase_order_app_mobile
+PRODUCT_NAME = numero_shastra
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterSupabaseOrderAppMobile
+PRODUCT_BUNDLE_IDENTIFIER = com.numeroshastra.client
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.numeroshastra. All rights reserved.

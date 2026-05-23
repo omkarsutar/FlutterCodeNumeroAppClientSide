@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 
 class LoadingPage extends ConsumerWidget {

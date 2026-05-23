@@ -3,8 +3,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cart_order_service.dart';
 import '../../../../core/services/razorpay_service.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/providers/numerology_content_providers.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/providers/numerology_content_providers.dart';
 import 'cart_providers.dart';
 
 final cartOrderServiceProvider = Provider(

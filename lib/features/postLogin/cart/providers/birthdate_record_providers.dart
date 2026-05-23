@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/auth_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/birthdate_localization_provider.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
+import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/core/providers/auth_providers.dart';
+import 'package:numero_shastra/core/providers/birthdate_localization_provider.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 
 final birthdateProvider = StateProvider<DateTime?>((ref) => null);
 

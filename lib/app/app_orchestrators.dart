@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:flutter_supabase_order_app_mobile/core/globals.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/auth_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/app_localization_provider.dart';
-import 'package:flutter_supabase_order_app_mobile/core/services/connectivity_service.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/cart/providers/cart_providers.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/features/postLogin/users/user_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/router/app_router.dart';
-import 'package:flutter_supabase_order_app_mobile/core/providers/localization_provider.dart';
-import 'package:flutter_supabase_order_app_mobile/shared/widgets/language_selection_dialog.dart';
+import 'package:numero_shastra/core/globals.dart';
+import 'package:numero_shastra/core/providers/auth_providers.dart';
+import 'package:numero_shastra/core/providers/app_localization_provider.dart';
+import 'package:numero_shastra/core/services/connectivity_service.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
+import 'package:numero_shastra/features/postLogin/cart/providers/cart_providers.dart';
+import 'package:numero_shastra/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
+import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
+import 'package:numero_shastra/router/app_router.dart';
+import 'package:numero_shastra/core/providers/localization_provider.dart';
+import 'package:numero_shastra/shared/widgets/language_selection_dialog.dart';
 
 class AppOrchestratorScope extends StatelessWidget {
   final Widget child;

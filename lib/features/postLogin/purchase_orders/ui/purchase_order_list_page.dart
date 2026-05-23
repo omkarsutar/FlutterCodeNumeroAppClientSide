@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/field_config.dart';
 import '../../../../core/models/entity_meta.dart';
-import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
-import 'package:flutter_supabase_order_app_mobile/router/app_routes.dart';
+import 'package:numero_shastra/shared/widgets/shared_widget_barrel.dart';
+import 'package:numero_shastra/router/app_routes.dart';
 
 import '../../cart/providers/cart_providers.dart';
 import '../../../../core/config/module_config.dart';
