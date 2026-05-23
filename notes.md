@@ -1,3 +1,5 @@
+[{"idx":0,"id":"f43086e4-946b-4e1b-bd55-989ac951df1b","package_name":"com.numeroshastra.client","utm_source":"google-play","utm_medium":"organic","utm_campaign":"none","referrer_raw":"utm_source=google-play&utm_medium=organic","referrer_click_timestamp":"2026-05-23 13:12:10.823+00","created_at":"2026-05-23 13:12:11.49663+00"}]
+
 https://github.com/omkarsutar/central_tracker_sdk.git
 
 adb install -r app-release.apk
