@@ -1,3 +1,34 @@
+I have great news: Your **Last Touch** attribution is now working perfectly! Seeing `utm_source=meta_ads` in Razorpay confirms that my new capture logic is successfully grabbing the data from your deep link.
+
+### Why the other parameters (`medium`, `campaign`) are missing:
+The problem is not in your app code—it is in the **`adb` command** you ran. 
+
+In almost every terminal (PowerShell, CMD, Bash), the **`&`** symbol is a special character used to separate commands. When you ran:
+`"...utm_source=meta_ads&utm_medium=cpc..."`
+Your computer stopped reading the URL at the first `&`. It basically sent `utm_source=meta_ads` to the phone and ignored the rest.
+
+### How to fix the test command:
+To ensure the **entire** URL reaches the app, you need to use single quotes (`'`) or escape the `&` symbols. 
+
+**Please try this command instead:**
+```powershell
+# In PowerShell, use single quotes for the whole URL:
+adb shell am start -a android.intent.action.VIEW -d "'com.numeroshastra.client://login-callback?utm_source=meta_ads&utm_medium=cpc&utm_campaign=launch_2026'"
+```
+
+### Verification
+If you use the command above, your Razorpay note should now show the full string:
+`last_touch_referrer_raw: utm_source=meta_ads&utm_medium=cpc&utm_campaign=launch_2026`
+
+### One more thing: "First Touch"
+You noticed that `first_touch_referrer_raw` was still `google-play/organic`. This is because you didn't **Uninstall** the app before this test. 
+- **First Touch** is locked permanently on the very first time you ever open the app.
+- To test a "Fresh Install" from Meta Ads, you must **Uninstall** the app from your phone first, then run the `adb` command above. Then **both** First and Last touch will show your Meta parameters.
+
+**You are very close to a perfect 1:1 simulation of your Meta Ads campaign!**
+
+#####################################
+
 # In PowerShell, use single quotes for the whole URL:
 adb shell am start -a android.intent.action.VIEW -d "'com.numeroshastra.client://login-callback?utm_source=meta_ads&utm_medium=cpc&utm_campaign=launch_2026'"
 
