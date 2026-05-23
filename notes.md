@@ -1,3 +1,5 @@
+https://github.com/omkarsutar/central_tracker_sdk.git
+
 adb install -r app-release.apk
 
 'adb shell am start -a android.intent.action.VIEW -d 'market://details?id=com.numeroshastra.client&referrer=utm_source%3Dmeta_ads%26utm_medium%3Dcpc%26utm_campaign%3Dlaunch_2026'
