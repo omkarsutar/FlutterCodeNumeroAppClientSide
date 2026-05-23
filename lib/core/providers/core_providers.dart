@@ -15,6 +15,7 @@ import '../services/rbac_service.dart';
 import '../services/razorpay_service.dart';
 import '../interfaces/connectivity_service_interface.dart';
 import '../config/supabase_config.dart';
+import 'package:collection/collection.dart';
 
 /// Provides the global Supabase client instance
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -137,9 +138,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
 
     if (rowCount > 0) {
       // 1. Try Exact match in Dart
-      final match = allRows.firstWhere(
+      final match = allRows.firstWhereOrNull(
         (row) => row['package_name']?.toString().trim() == packageName,
-        orElse: () => null,
       );
 
       if (match != null) {
@@ -153,9 +153,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       // 2. Try Base package match in Dart
       final basePackage = packageName.replaceAll('.debug', '');
       if (basePackage != packageName) {
-        final baseMatch = allRows.firstWhere(
+        final baseMatch = allRows.firstWhereOrNull(
           (row) => row['package_name']?.toString().trim() == basePackage,
-          orElse: () => null,
         );
         if (baseMatch != null) {
           await persistConfig(baseMatch);
@@ -167,9 +166,8 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
       }
 
       // 3. Try AppConstants matching in Dart
-      final constMatch = allRows.firstWhere(
+      final constMatch = allRows.firstWhereOrNull(
         (row) => row['package_name']?.toString().trim() == AppConstants.appPackageName,
-        orElse: () => null,
       );
       if (constMatch != null) {
         await persistConfig(constMatch);
