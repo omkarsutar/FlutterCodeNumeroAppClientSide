@@ -61,7 +61,7 @@ dependencies:
   central_tracker_sdk:
     git:
       url: https://github.com/omkarsutar/central_tracker_sdk.git
-      ref: v1.1.0 # ◄ Lock this application strictly to your robust 1.1.0 release branch tag
+      ref: v1.2.0  # ◄ Update this to your new tag
   package_info_plus: ^9.0.1
 
 dev_dependencies:
