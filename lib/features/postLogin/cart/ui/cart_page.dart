@@ -967,7 +967,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                   Text(
-                    '\u20B9${basePrice.toStringAsFixed(0)}',
+                    isConfigLoading ? '---' : '\u20B9${basePrice.toStringAsFixed(0)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(
                         alpha: 0.6,
@@ -976,9 +976,11 @@ class _CartPageState extends ConsumerState<CartPage> {
                     ),
                   ),
                   Text(
-                    _appliedDiscountPercent > 0
-                        ? ' -${_appliedDiscountPercent.toStringAsFixed(0)}% promo'
-                        : ' ${birthdateL10n['each'] ?? 'each'}.',
+                    isConfigLoading
+                        ? ' ${birthdateL10n['each'] ?? 'each'}.'
+                        : (_appliedDiscountPercent > 0
+                            ? ' -${_appliedDiscountPercent.toStringAsFixed(0)}% promo'
+                            : ' ${birthdateL10n['each'] ?? 'each'}.'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w900,
@@ -1168,7 +1170,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                       ],
                       Text(
                         isConfigLoading
-                            ? 'Loading...'
+                            ? '...'
                             : (count == 0
                                 ? 'Select Items'
                                 : 'Pay \u20B9${totalAmount.toStringAsFixed(0)}'),

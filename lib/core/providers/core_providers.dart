@@ -14,6 +14,7 @@ import '../services/error_handler.dart';
 import '../services/rbac_service.dart';
 import '../services/razorpay_service.dart';
 import '../interfaces/connectivity_service_interface.dart';
+import '../config/supabase_config.dart';
 
 /// Provides the global Supabase client instance
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -117,99 +118,101 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
   try {
     final packageInfo = await PackageInfo.fromPlatform();
     final packageName = packageInfo.packageName.trim();
+    final client = ref.read(supabaseClientProvider);
+    
+    // Extract project ID for debugging
+    final pId = SupabaseConfig.supabaseUrl.split('//').last.split('.').first;
     
     // Log the start of the request
     ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 
-        'FETCHING runtime=$packageName';
+        'FETCHING pid=$pId runtime=$packageName';
 
-    final client = ref.read(supabaseClientProvider);
-
-    // Strategy 1: Exact match on current package name (Highest Priority)
-    final primaryRow = await client
+    // Strategy: Fetch ALL rows to prevent filter/collation issues
+    // and to verify exactly what is in the table.
+    final List<dynamic> allRows = await client
         .from('app_remote_configs')
-        .select()
-        .eq('package_name', packageName)
-        .maybeSingle();
+        .select();
 
-    if (primaryRow != null) {
-      await persistConfig(primaryRow);
-      final config = AppRemoteConfig.fromMap(primaryRow);
+    final rowCount = allRows.length;
+
+    if (rowCount > 0) {
+      // 1. Try Exact match in Dart
+      final match = allRows.firstWhere(
+        (row) => row['package_name']?.toString().trim() == packageName,
+        orElse: () => null,
+      );
+
+      if (match != null) {
+        await persistConfig(match);
+        final config = AppRemoteConfig.fromMap(match);
+        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+            'LIVE_MATCH count=$rowCount price=${config.numerologyPriceInr} pid=$pId';
+        return config;
+      }
+
+      // 2. Try Base package match in Dart
+      final basePackage = packageName.replaceAll('.debug', '');
+      if (basePackage != packageName) {
+        final baseMatch = allRows.firstWhere(
+          (row) => row['package_name']?.toString().trim() == basePackage,
+          orElse: () => null,
+        );
+        if (baseMatch != null) {
+          await persistConfig(baseMatch);
+          final config = AppRemoteConfig.fromMap(baseMatch);
+          ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+              'LIVE_BASE count=$rowCount price=${config.numerologyPriceInr} pid=$pId';
+          return config;
+        }
+      }
+
+      // 3. Try AppConstants matching in Dart
+      final constMatch = allRows.firstWhere(
+        (row) => row['package_name']?.toString().trim() == AppConstants.appPackageName,
+        orElse: () => null,
+      );
+      if (constMatch != null) {
+        await persistConfig(constMatch);
+        final config = AppRemoteConfig.fromMap(constMatch);
+        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+            'LIVE_CONST count=$rowCount price=${config.numerologyPriceInr} pid=$pId';
+        return config;
+      }
+
+      // 4. Fallback to Latest row from the fetched list
+      // Sort by updated_at descending if possible
+      allRows.sort((a, b) {
+        final dateA = a['updated_at'] ?? '';
+        final dateB = b['updated_at'] ?? '';
+        return dateB.toString().compareTo(dateA.toString());
+      });
+      
+      final latest = allRows.first;
+      await persistConfig(latest);
+      final config = AppRemoteConfig.fromMap(latest);
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'LIVE_MATCH row=${config.packageName} price=${config.numerologyPriceInr}';
+          'LIVE_LATEST total=$rowCount price=${config.numerologyPriceInr} pid=$pId';
       return config;
     }
 
-    // Strategy 2: Match on base package name (if current is .debug)
-    final basePackage = packageName.replaceAll('.debug', '');
-    if (basePackage != packageName) {
-      final secondaryRow = await client
-          .from('app_remote_configs')
-          .select()
-          .eq('package_name', basePackage)
-          .maybeSingle();
-
-      if (secondaryRow != null) {
-        await persistConfig(secondaryRow);
-        final config = AppRemoteConfig.fromMap(secondaryRow);
-        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-            'LIVE_BASE row=${config.packageName} price=${config.numerologyPriceInr}';
-        return config;
-      }
-    }
-
-    // Strategy 3: Try AppConstants.appPackageName
-    if (AppConstants.appPackageName != packageName) {
-       final constRow = await client
-          .from('app_remote_configs')
-          .select()
-          .eq('package_name', AppConstants.appPackageName)
-          .maybeSingle();
-
-      if (constRow != null) {
-        await persistConfig(constRow);
-        final config = AppRemoteConfig.fromMap(constRow);
-        ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-            'LIVE_CONST row=${config.packageName} price=${config.numerologyPriceInr}';
-        return config;
-      }
-    }
-
-    // Strategy 4: Fallback to the latest updated row in the table
-    final latestRow = await client
-        .from('app_remote_configs')
-        .select()
-        .order('updated_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
-
-    if (latestRow != null) {
-      await persistConfig(latestRow);
-      final config = AppRemoteConfig.fromMap(latestRow);
-      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'LIVE_LATEST row=${config.packageName} price=${config.numerologyPriceInr}';
-      return config;
-    }
-
-    // Strategy 5: Use cached data if available
+    // Strategy 5: Use cached data if available (if table was empty)
     final cached = await readCachedConfig();
     if (cached != null) {
       ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'CACHE row=${cached.packageName} price=${cached.numerologyPriceInr}';
+          'CACHE total=0 price=${cached.numerologyPriceInr} pid=$pId';
       return cached;
     }
 
-    // Ultimate fallback (The Hardcoded 299)
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 no_rows';
-    debugPrint('AppRemoteConfig: No rows found in DB for $packageName, using fallback.');
+    // Ultimate fallback
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 table_empty pid=$pId';
     return AppRemoteConfig.fallback();
 
   } catch (e, st) {
-    debugPrint('AppRemoteConfig: Error fetching: $e\n$st');
+    debugPrint('AppRemoteConfig: Error: $e\n$st');
     
     final cached = await readCachedConfig();
     if (cached != null) {
-      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
-          'CACHE_ERROR err=$e';
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'CACHE_ERROR err=$e';
       return cached;
     }
     
