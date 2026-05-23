@@ -1,3 +1,15 @@
+-- Option A: Add a specific policy for logged-in users
+CREATE POLICY "Allow authenticated read access to app configs" 
+ON public.app_remote_configs 
+FOR SELECT TO authenticated 
+USING (true);
+-- Option B (Recommended): Change the policy to "public" (covers both anon and logged-in)
+DROP POLICY "Allow anonymous read access to app configs" ON public.app_remote_configs;
+CREATE POLICY "Allow public read access to app configs" 
+ON public.app_remote_configs 
+FOR SELECT TO anon, authenticated 
+USING (true);
+
 [{"idx":0,"id":"71bc89bd-707c-49d4-bfaa-4f0709cf7a71","package_name":"com.numeroshastra.client.debug","numerology_price_inr":"1.00","razorpay_mode":"test","razorpay_key":"rzp_test_SYxEd8SaQvfl81","updated_at":"2026-05-22 04:03:01.243051+00"},{"idx":1,"id":"e8767d7d-8620-4a96-9b96-179a634c6214","package_name":"com.numeroshastra.client","numerology_price_inr":"399.00","razorpay_mode":"live","razorpay_key":"rzp_live_EESyiZv7gEQo8u","updated_at":"2026-05-22 04:03:01.243051+00"}]
 
 app showing RemoteConfig -> package=com.numeroshastra.client, price=299.0, mode=test, key=missing | FALLBACK_299 no_rows. but database is not having price value ₹299 in both live and test rows. and in this case app always showing ₹299 on every install, reinstall and reopen. when i created app after doing flutter clean and then installed first time it was showing data fetched from live row. but then on every reinstall or reopen it was showing 299. when it showed 399 it was showing 299 for a moment then suddenly data came and replaced the text with 399 automatically. i am so much confused
