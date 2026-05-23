@@ -1,10 +1,10 @@
 first_touch_referrer_raw: utm_source=google-play&utm_medium=organic
 
-last_touch_referrer_raw: utm_source=google-play&utm_medium=organic
+last_touch_referrer_raw: utm_source=meta_ads
 
 package_name: com.numeroshastra.client
 
-promo_code_applied: RANI01
+promo_code_applied: none
 
 'adb shell am start -a android.intent.action.VIEW -d "com.numeroshastra.client://login-callback?utm_source=meta_ads&utm_medium=cpc&utm_campaign=launch_2026"'
 
