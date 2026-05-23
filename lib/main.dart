@@ -34,11 +34,8 @@ void main() async {
     validateCodeUrl: AppConstants.validatePromoCodeEdgeFunctionUrl,
   );
 
-  // Command the client engine to silently check and stream metrics in the background
+  // Automatically captures attribution from Play Store or Deep Links
   CentralTrackerSDK.trackInstallation();
-
-  // Ensure attribution keys are always populated, even on non-Android platforms
-  await _enhanceAttributionTracking();
 
   try {
     await Firebase.initializeApp(
@@ -113,35 +110,4 @@ class MainApp extends ConsumerWidget {
       ),
     );
   }
-}
-
-Future<void> _enhanceAttributionTracking() async {
-  final prefs = await SharedPreferences.getInstance();
-
-  final first = prefs.getString('first_touch_source');
-  final second = prefs.getString('second_touch_source');
-
-  // If already tracked by v1.1.0 logic, we are done
-  if (first != null && first.isNotEmpty && second != null && second.isNotEmpty) {
-    return;
-  }
-
-  // Migration Guard: Read legacy parameters if user downloaded app before v1.1.0 setup
-  final legacyKey = 'sdk_attribution_logged_${AppConstants.appPackageName}';
-  final legacyReferrer = prefs.getString(legacyKey);
-
-  String fallback = legacyReferrer ?? 'utm_source=organic&utm_medium=direct&utm_campaign=none';
-
-  if (kIsWeb) {
-    final utm = webUtils.getFullUtmParams();
-    if (utm != null && utm.isNotEmpty) {
-      fallback = utm;
-    }
-  } else if (legacyReferrer == null) {
-    // If no legacy record and not on web, use a mobile-specific fallback if appropriate
-    fallback = 'utm_source=app&utm_medium=direct&utm_campaign=mobile_fallback';
-  }
-
-  await prefs.setString('first_touch_source', first ?? fallback);
-  await prefs.setString('second_touch_source', second ?? fallback);
 }

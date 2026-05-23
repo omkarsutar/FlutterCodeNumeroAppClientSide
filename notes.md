@@ -1,8 +1,8 @@
 adb install -r app-release.apk
 
-adb shell am start -a android.intent.action.VIEW -d 'market://details?id=com.numeroshastra.client&referrer=utm_source%3Dmeta_ads%26utm_medium%3Dcpc%26utm_campaign%3Dlaunch_2026'
+'adb shell am start -a android.intent.action.VIEW -d 'market://details?id=com.numeroshastra.client&referrer=utm_source%3Dmeta_ads%26utm_medium%3Dcpc%26utm_campaign%3Dlaunch_2026'
 
-utm_source=google-play&utm_medium=organic
+'utm_source=google-play&utm_medium=organic'
 
 
 -- Option A: Add a specific policy for logged-in users
