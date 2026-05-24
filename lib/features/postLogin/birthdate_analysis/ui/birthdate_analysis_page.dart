@@ -610,9 +610,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isPending
-                  ? theme.colorScheme.secondary
+                  ? const Color(0xFFF4C542)
                   : AnalysisTheme.getAccent(theme),
-              foregroundColor: Colors.white,
+              foregroundColor: isPending
+                  ? const Color(0xFF2B1A00)
+                  : Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
               elevation: 0,
               shape: RoundedRectangleBorder(

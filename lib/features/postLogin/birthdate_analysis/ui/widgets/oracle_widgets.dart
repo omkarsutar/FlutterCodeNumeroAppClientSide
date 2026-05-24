@@ -25,17 +25,18 @@ class OracleButton extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = AnalysisTheme.getAccent(theme);
     final baseColor = isPrimary
-        ? theme.colorScheme.secondary
+        ? const Color(0xFFF4C542)
         : isError
         ? theme.colorScheme.error
         : accent;
+    final foreColor = isPrimary ? const Color(0xFF2B1A00) : Colors.white;
 
     if (label != null) {
       return FilledButton.icon(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: baseColor,
-          foregroundColor: Colors.white,
+          foregroundColor: foreColor,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -97,9 +98,7 @@ class OracleAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.secondary.withValues(
-                      alpha: 0.2,
-                    ),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.2),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -116,16 +115,12 @@ class OracleAvatar extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                theme.colorScheme.secondary.withValues(
-                  alpha: 0.2,
-                ),
+                theme.colorScheme.secondary.withValues(alpha: 0.2),
                 accent.withValues(alpha: 0.1),
               ],
             ),
             border: Border.all(
-              color: theme.colorScheme.secondary.withValues(
-                alpha: 0.3,
-              ),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -142,7 +137,9 @@ class OracleAvatar extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.4,
+                        ),
                         blurRadius: 10,
                       ),
                     ],
@@ -184,16 +181,12 @@ class OracleAvatar extends StatelessWidget {
                           ),
                         ),
                         child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 2,
-                          ),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
                           width: 5,
                           height: 15,
                           decoration: BoxDecoration(
                             color: theme.colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(
-                              10,
-                            ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       );
@@ -207,29 +200,29 @@ class OracleAvatar extends StatelessWidget {
     );
   }
 }
+
 class OracleGuideVideoDialog extends ConsumerStatefulWidget {
   final AnimationController pulseController;
 
-  const OracleGuideVideoDialog({
-    super.key,
-    required this.pulseController,
-  });
+  const OracleGuideVideoDialog({super.key, required this.pulseController});
 
   @override
-  ConsumerState<OracleGuideVideoDialog> createState() => _OracleGuideVideoDialogState();
+  ConsumerState<OracleGuideVideoDialog> createState() =>
+      _OracleGuideVideoDialogState();
 }
 
-class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog> {
+class _OracleGuideVideoDialogState
+    extends ConsumerState<OracleGuideVideoDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final narrationState = ref.watch(narrationProvider);
     final narrationNotifier = ref.read(narrationProvider.notifier);
     final accent = AnalysisTheme.getAccent(theme);
-    
+
     // Progress calculation
-    final progress = narrationState.totalChunks > 0 
-        ? narrationState.currentChunk / narrationState.totalChunks 
+    final progress = narrationState.totalChunks > 0
+        ? narrationState.currentChunk / narrationState.totalChunks
         : 0.0;
 
     return Dialog(
@@ -262,9 +255,7 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                 children: [
                   // Background/Character Image
                   Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF1E293B),
-                    ),
+                    decoration: const BoxDecoration(color: Color(0xFF1E293B)),
                     child: Center(
                       child: Opacity(
                         opacity: 0.9,
@@ -280,7 +271,7 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                       ),
                     ),
                   ),
-                  
+
                   // Talking Animation (Subtle Pulse on character)
                   if (narrationState.isPlaying)
                     AnimatedBuilder(
@@ -290,7 +281,9 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                           decoration: BoxDecoration(
                             gradient: RadialGradient(
                               colors: [
-                                accent.withValues(alpha: 0.2 * widget.pulseController.value),
+                                accent.withValues(
+                                  alpha: 0.2 * widget.pulseController.value,
+                                ),
                                 Colors.transparent,
                               ],
                             ),
@@ -326,7 +319,10 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.secondary,
                               borderRadius: BorderRadius.circular(4),
@@ -353,7 +349,10 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                           ),
                           IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -363,8 +362,14 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                   // Center Play/Pause Overlay
                   if (narrationState.isPaused)
                     IconButton(
-                      icon: const Icon(Icons.play_arrow_rounded, size: 80, color: Colors.white70),
-                      onPressed: () => narrationNotifier.playNarration(ref.read(languageProvider)),
+                      icon: const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 80,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () => narrationNotifier.playNarration(
+                        ref.read(languageProvider),
+                      ),
                     ),
 
                   // Bottom Progress Bar
@@ -382,12 +387,17 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                           minHeight: 3,
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Row(
                             children: [
                               IconButton(
                                 icon: Icon(
-                                  narrationState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                  narrationState.isPlaying
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
                                   color: Colors.white,
                                   size: 30,
                                 ),
@@ -395,21 +405,35 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                                   if (narrationState.isPlaying) {
                                     narrationNotifier.pauseNarration();
                                   } else {
-                                    narrationNotifier.playNarration(ref.read(languageProvider));
+                                    narrationNotifier.playNarration(
+                                      ref.read(languageProvider),
+                                    );
                                   }
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.stop_rounded, color: Colors.white, size: 30),
-                                onPressed: () => narrationNotifier.stopNarration(),
+                                icon: const Icon(
+                                  Icons.stop_rounded,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                onPressed: () =>
+                                    narrationNotifier.stopNarration(),
                               ),
                               const Spacer(),
                               Text(
                                 "${(progress * 100).toInt()}%",
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(width: 10),
-                              const Icon(Icons.fullscreen_rounded, color: Colors.white),
+                              const Icon(
+                                Icons.fullscreen_rounded,
+                                color: Colors.white,
+                              ),
                             ],
                           ),
                         ),
@@ -419,7 +443,7 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                 ],
               ),
             ),
-            
+
             // Info Area
             Padding(
               padding: const EdgeInsets.all(20),
@@ -430,7 +454,11 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                     children: [
                       const CircleAvatar(
                         backgroundColor: Color(0xFF1E293B),
-                        child: Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+                        child: Icon(
+                          Icons.auto_awesome,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -439,11 +467,18 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
                           children: [
                             const Text(
                               "Personalized Oracle Guide",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                             Text(
                               "Listening to your mystical patterns...",
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -459,6 +494,7 @@ class _OracleGuideVideoDialogState extends ConsumerState<OracleGuideVideoDialog>
     );
   }
 }
+
 class NarrationPlayerBar extends ConsumerWidget {
   const NarrationPlayerBar({super.key});
 
@@ -471,8 +507,8 @@ class NarrationPlayerBar extends ConsumerWidget {
 
     if (narrationState.isStopped) return const SizedBox.shrink();
 
-    final progress = narrationState.totalChunks > 0 
-        ? narrationState.currentChunk / narrationState.totalChunks 
+    final progress = narrationState.totalChunks > 0
+        ? narrationState.currentChunk / narrationState.totalChunks
         : 0.0;
 
     return Container(
@@ -505,7 +541,7 @@ class NarrationPlayerBar extends ConsumerWidget {
               valueColor: AlwaysStoppedAnimation<Color>(accent),
               minHeight: 4,
             ),
-            
+
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
               child: Column(
@@ -515,7 +551,10 @@ class NarrationPlayerBar extends ConsumerWidget {
                     children: [
                       // Progress Text
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white10,
                           borderRadius: BorderRadius.circular(20),
@@ -530,16 +569,18 @@ class NarrationPlayerBar extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      
+
                       const Spacer(),
-                      
+
                       // Controls
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
                             icon: Icon(
-                              narrationState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                              narrationState.isPlaying
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
                               color: Colors.white,
                               size: 32,
                             ),
@@ -547,20 +588,26 @@ class NarrationPlayerBar extends ConsumerWidget {
                               if (narrationState.isPlaying) {
                                 narrationNotifier.pauseNarration();
                               } else {
-                                narrationNotifier.playNarration(ref.read(languageProvider));
+                                narrationNotifier.playNarration(
+                                  ref.read(languageProvider),
+                                );
                               }
                             },
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(Icons.stop_rounded, color: Colors.white, size: 32),
+                            icon: const Icon(
+                              Icons.stop_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
                             onPressed: () => narrationNotifier.stopNarration(),
                           ),
                         ],
                       ),
-                      
+
                       const Spacer(),
-                      
+
                       // Fullscreen/Watch toggle button
                       IconButton(
                         icon: Icon(Icons.smart_display_rounded, color: accent),

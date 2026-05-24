@@ -260,46 +260,54 @@ class _CartPageState extends ConsumerState<CartPage> {
     final razorpayKey = loadedConfig?.razorpayKey ?? '';
 
     // Temporary on-device visibility for remote config, useful when no console
-    // access is available on test devices.
+    // access is available on test devices. Show only for admin users.
     if (!kIsWeb && !_remoteConfigDebugShown) {
       if (loadedConfig != null) {
-        _remoteConfigDebugShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(seconds: 8),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: theme.colorScheme.secondaryContainer,
-              content: Text(
-                'RemoteConfig -> package=${loadedConfig.packageName}, '
-                'price=${loadedConfig.numerologyPriceInr}, '
-                'mode=${loadedConfig.razorpayMode}, '
-                'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"} | '
-                '$remoteConfigDebugInfo',
-                style: TextStyle(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontSize: 12,
+        final roleName = ref.read(roleNameProvider);
+        final isAdmin = roleName?.toLowerCase() == 'admin';
+        if (isAdmin) {
+          _remoteConfigDebugShown = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(seconds: 8),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                content: Text(
+                  'RemoteConfig -> package=${loadedConfig.packageName}, '
+                  'price=${loadedConfig.numerologyPriceInr}, '
+                  'mode=${loadedConfig.razorpayMode}, '
+                  'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"} | '
+                  '$remoteConfigDebugInfo',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSecondaryContainer,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-            ),
-          );
-        });
+            );
+          });
+        }
       } else if (remoteConfigAsync.hasError) {
-        _remoteConfigDebugShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(seconds: 8),
-              backgroundColor: theme.colorScheme.errorContainer,
-              content: Text(
-                'RemoteConfig error -> ${remoteConfigAsync.error} | $remoteConfigDebugInfo',
-                style: TextStyle(color: theme.colorScheme.onErrorContainer),
+        final roleName = ref.read(roleNameProvider);
+        final isAdmin = roleName?.toLowerCase() == 'admin';
+        if (isAdmin) {
+          _remoteConfigDebugShown = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(seconds: 8),
+                backgroundColor: theme.colorScheme.errorContainer,
+                content: Text(
+                  'RemoteConfig error -> ${remoteConfigAsync.error} | $remoteConfigDebugInfo',
+                  style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                ),
               ),
-            ),
-          );
-        });
+            );
+          });
+        }
       }
     }
 
@@ -872,7 +880,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     final oldPerBirthdatePrice = basePrice * 2;
     final savingsPercent = oldPerBirthdatePrice > 0
         ? (((oldPerBirthdatePrice - basePrice) / oldPerBirthdatePrice) * 100)
-            .round()
+              .round()
         : 0;
 
     return Container(
@@ -905,7 +913,9 @@ class _CartPageState extends ConsumerState<CartPage> {
               height: 5,
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.28),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.28,
+                ),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -926,7 +936,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                       ),
                     ),
                     label: Text(
-                      _showPromoInput ? 'Hide promo code' : 'Have a promo code?',
+                      _showPromoInput
+                          ? 'Hide promo code'
+                          : 'Have a promo code?',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant.withValues(
                           alpha: 0.45,
@@ -995,16 +1007,22 @@ class _CartPageState extends ConsumerState<CartPage> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    isConfigLoading ? '---' : '\u20B9${oldPerBirthdatePrice.toStringAsFixed(0)}',
+                    isConfigLoading
+                        ? '---'
+                        : '\u20B9${oldPerBirthdatePrice.toStringAsFixed(0)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.6,
+                      ),
                       decoration: TextDecoration.lineThrough,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isConfigLoading ? 'Per birthdate: ---' : '\u20B9${basePrice.toStringAsFixed(0)}',
+                    isConfigLoading
+                        ? 'Per birthdate: ---'
+                        : '\u20B9${basePrice.toStringAsFixed(0)}',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w900,
@@ -1013,11 +1031,16 @@ class _CartPageState extends ConsumerState<CartPage> {
                   if (!isConfigLoading) const SizedBox(width: 8),
                   if (!isConfigLoading)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         'Saved $savingsPercent%',
@@ -1231,7 +1254,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                       vertical: 18,
                     ),
                     elevation: 8,
-                    shadowColor: const Color(0xFFC08A00).withValues(alpha: 0.45),
+                    shadowColor: const Color(
+                      0xFFC08A00,
+                    ).withValues(alpha: 0.45),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -1279,58 +1304,62 @@ class _CartPageState extends ConsumerState<CartPage> {
   Widget _buildPromoFooter(BuildContext context, double basePrice) {
     final theme = Theme.of(context);
     final l10n = ref.watch(birthdateL10nProvider);
+    final hasBirthdates = ref
+        .watch(effectiveBirthdateRecordsProvider)
+        .isNotEmpty;
 
     return Column(
       children: [
         _buildPremiumFeaturesTile(context, l10n),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        if (hasBirthdates)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Special Offers',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildOfferRow(
+                  context,
+                  title: '1 Birthdate Analysis',
+                  price: '\u20B9${basePrice.toStringAsFixed(0)}',
+                  originalPrice: '\u20B9999',
+                ),
+                const Divider(height: 24),
+                _buildOfferRow(
+                  context,
+                  title: 'Dynamic Pricing',
+                  price: '\u20B9${basePrice.toStringAsFixed(0)} each',
+                  originalPrice: '\u20B9${basePrice.toStringAsFixed(0)}',
+                  isSpecial: true,
+                ),
+              ],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.auto_awesome,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Special Offers',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _buildOfferRow(
-                context,
-                title: '1 Birthdate Analysis',
-                price: '\u20B9${basePrice.toStringAsFixed(0)}',
-                originalPrice: '\u20B9999',
-              ),
-              const Divider(height: 24),
-              _buildOfferRow(
-                context,
-                title: 'Dynamic Pricing',
-                price: '\u20B9${basePrice.toStringAsFixed(0)} each',
-                originalPrice: '\u20B9${basePrice.toStringAsFixed(0)}',
-                isSpecial: true,
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
