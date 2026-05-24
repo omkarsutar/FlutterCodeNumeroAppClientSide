@@ -14,72 +14,79 @@ class BirthdateShareTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = const Color(0xFF6C63FF); // Modern Purple
-    final secondaryColor = const Color(0xFFFF6B6B); // Soft Red
+    final accentColor = const Color(0xFFF4C542);
+    final secondaryColor = const Color(0xFF66D1C1);
+    final cardColor = const Color(0xFF16263E);
+    final title = l10n['share_subject'] ?? 'My Numero Shastra Analysis';
 
     return Container(
-      width: 1080, // High resolution for sharing
-      height: 1920, // Story format
+      width: 1080,
+      height: 1920,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF0F172A),
-            const Color(0xFF1E293B),
-            const Color(0xFF0F172A),
+            const Color(0xFF0B1422),
+            const Color(0xFF13243A),
+            const Color(0xFF0C1727),
           ],
         ),
       ),
       child: Stack(
         children: [
-          // Background Decorative Elements
           Positioned(
-            top: -100,
-            right: -100,
-            child: _buildDecorativeCircle(400, accentColor.withValues(alpha: 0.1)),
+            top: -120,
+            right: -80,
+            child: _buildDecorativeCircle(360, accentColor.withValues(alpha: 0.09)),
           ),
           Positioned(
-            bottom: -50,
-            left: -50,
-            child: _buildDecorativeCircle(300, secondaryColor.withValues(alpha: 0.1)),
+            bottom: -70,
+            left: -70,
+            child: _buildDecorativeCircle(320, secondaryColor.withValues(alpha: 0.08)),
           ),
-          
+
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 80),
+            padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 78),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Header
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 Text(
                   "NUMERO SHASTRA",
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 10,
+                    color: Colors.white.withValues(alpha: 0.66),
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 8,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Text(
-                  "MYSTICAL ANALYSIS",
+                  title.toUpperCase(),
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 64,
+                    fontSize: 52,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 54),
 
-                // Name & Date
                 Container(
-                  padding: const EdgeInsets.all(40),
+                  padding: const EdgeInsets.all(34),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(40),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    color: cardColor.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.24),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -88,25 +95,24 @@ class BirthdateShareTemplate extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 54,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 50,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       Text(
                         DateFormat('dd MMMM yyyy').format(birthdate.birthdate),
                         style: TextStyle(
                           color: accentColor,
-                          fontSize: 40,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 50),
 
-                // Core Numbers
                 Row(
                   children: [
                     Expanded(
@@ -114,6 +120,7 @@ class BirthdateShareTemplate extends StatelessWidget {
                         "Psychic Number",
                         birthdate.personalityNumber?.toString() ?? "?",
                         accentColor,
+                        cardColor,
                       ),
                     ),
                     const SizedBox(width: 40),
@@ -122,63 +129,75 @@ class BirthdateShareTemplate extends StatelessWidget {
                         "Destiny Number",
                         birthdate.lifePathNumber?.toString() ?? "?",
                         secondaryColor,
+                        cardColor,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 48),
 
-                // Loshu Grid Title
                 Text(
                   "LO SHU GRID",
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
+                    color: Colors.white.withValues(alpha: 0.86),
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 3,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 22),
 
-                // Loshu Grid
-                _buildLoshuGrid(birthdate.loShuGrid),
-                
+                _buildLoshuGrid(birthdate.loShuGrid, cardColor, accentColor),
+
                 const Spacer(),
 
-                // Call to Action
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
                   decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(30),
+                    gradient: LinearGradient(
+                      colors: [accentColor, const Color(0xFFE2B53C)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.download_rounded, color: Colors.white, size: 40),
-                      const SizedBox(width: 20),
-                      const Flexible(
-                        child: Text(
-                          "Download Numero Shastra",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      const Icon(Icons.auto_awesome_rounded, color: Color(0xFF2B1A00), size: 34),
+                      const SizedBox(width: 14),
+                      const Text(
+                        "Unlock Full Analysis",
+                        style: TextStyle(
+                          color: Color(0xFF2B1A00),
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
-                Text(
-                  "Get your detailed analysis today!",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 28,
+                const SizedBox(height: 20),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 80),
+                  child: Text(
+                    "Get your complete numerology report on Numero Shastra.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.fade,
+                    maxLines: 2,
                   ),
                 ),
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -198,31 +217,39 @@ class BirthdateShareTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildNumberCard(String title, String value, Color color) {
+  Widget _buildNumberCard(
+    String title,
+    String value,
+    Color accent,
+    Color cardColor,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: cardColor.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: accent.withValues(alpha: 0.42)),
       ),
       child: Column(
         children: [
           Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: color.withValues(alpha: 0.8),
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+              color: accent,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
-              fontSize: 96,
+              fontSize: 88,
               fontWeight: FontWeight.w900,
+              height: 0.95,
             ),
           ),
         ],
@@ -230,17 +257,16 @@ class BirthdateShareTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildLoshuGrid(List<dynamic>? grid) {
+  Widget _buildLoshuGrid(List<dynamic>? grid, Color cardColor, Color accent) {
     if (grid == null || grid.isEmpty) return const SizedBox.shrink();
 
-    // Custom Grid using Column/Row to avoid GridView's View.of() dependencies
     return Container(
-      width: 600,
-      padding: const EdgeInsets.all(20),
+      width: 640,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: cardColor.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         children: List.generate(3, (rowIndex) {
@@ -252,26 +278,27 @@ class BirthdateShareTemplate extends StatelessWidget {
 
               return Expanded(
                 child: Container(
-                  height: 180,
-                  margin: const EdgeInsets.all(5),
+                  height: 170,
+                  margin: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: hasNumber
-                        ? const Color(0xFF6C63FF).withValues(alpha: 0.2)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
+                        ? accent.withValues(alpha: 0.18)
+                        : Colors.white.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: hasNumber
-                          ? const Color(0xFF6C63FF).withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.05),
+                          ? accent.withValues(alpha: 0.55)
+                          : Colors.white.withValues(alpha: 0.1),
+                      width: 1.4,
                     ),
                   ),
                   child: Center(
                     child: Text(
-                      hasNumber ? cell.toString() : "",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
+                      hasNumber ? cell.toString() : "•",
+                      style: TextStyle(
+                        color: hasNumber ? Colors.white : Colors.white24,
+                        fontSize: hasNumber ? 44 : 26,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
