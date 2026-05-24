@@ -21,15 +21,16 @@ class LanguageNotifier extends Notifier<AppLanguage> {
     // 1. Priority: Local Storage (SharedPreferences)
     if (prefsAsync.hasValue) {
       final prefs = prefsAsync.value!;
-      final localCode = prefs.getString(_prefKey);
-      if (localCode != null) {
+      final localCode = prefs.getString(_prefKey)?.trim();
+      if (localCode != null && localCode.isNotEmpty) {
         return _mapCodeToLanguage(localCode);
       }
     }
 
     // 2. Priority: User Profile (DB)
-    if (profile?.userLanguage != null) {
-      final lang = _mapCodeToLanguage(profile!.userLanguage!);
+    final profileCode = profile?.userLanguage?.trim();
+    if (profileCode != null && profileCode.isNotEmpty) {
+      final lang = _mapCodeToLanguage(profileCode);
       // Sync to local storage if prefs are ready
       if (prefsAsync.hasValue) {
         _saveToLocal(lang, silent: true);
@@ -110,18 +111,23 @@ final languageProvider = NotifierProvider<LanguageNotifier, AppLanguage>(() {
 final isLanguageSetProvider = Provider<bool>((ref) {
   final prefsAsync = ref.watch(sharedPrefsProvider);
   final profile = ref.watch(userProfileStateProvider).profile;
-  
-  // While loading prefs, assume it's set to avoid dialog flickers
+
+  // While loading prefs, assume it's set to avoid dialog flickers.
+  // Once loaded, we require an actual language code (not just a boolean flag).
   if (prefsAsync.isLoading) return true;
-  
+
   final prefs = prefsAsync.value;
-  if (prefs != null && prefs.getBool('has_set_language') == true) {
+  final localCode = prefs?.getString('user_language')?.trim();
+  if (localCode != null &&
+      localCode.isNotEmpty &&
+      (localCode == 'en' || localCode == 'hi' || localCode == 'mr')) {
     return true;
   }
-  
-  if (profile?.userLanguage != null) {
+
+  final profileCode = profile?.userLanguage?.trim();
+  if (profileCode != null && profileCode.isNotEmpty) {
     return true;
   }
-  
+
   return false;
 });
