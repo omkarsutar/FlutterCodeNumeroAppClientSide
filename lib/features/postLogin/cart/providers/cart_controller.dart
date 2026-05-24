@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cart_order_service.dart';
@@ -122,6 +125,18 @@ class CartController {
     }
 
     final packageInfo = await PackageInfo.fromPlatform();
+    final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+
+    final selectedBirthdates = ref
+        .read(effectiveBirthdateRecordsProvider)
+        .where((record) => poIds.contains(record.id))
+        .map((record) => DateFormat('yyyy-MM-dd').format(record.birthdate))
+        .toList();
+
+    final extraInfo = jsonEncode({
+      'user_id': userId,
+      'birthdates': selectedBirthdates,
+    });
 
     _razorpayService.openCheckout(
       description: "Payment for ${poIds.length} Birthdate Analysis",
@@ -130,6 +145,7 @@ class CartController {
       email: email,
       apiKey: apiKey,
       notes: {
+        'extra_info': extraInfo,
         'package_name': packageInfo.packageName,
         'promo_code_applied': appliedPromoCode ?? 'none',
         'first_touch_referrer_raw': firstReferrerRaw,
