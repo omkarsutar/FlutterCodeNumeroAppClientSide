@@ -260,6 +260,50 @@ class BirthdateShareTemplate extends StatelessWidget {
   Widget _buildLoshuGrid(List<dynamic>? grid, Color cardColor, Color accent) {
     if (grid == null || grid.isEmpty) return const SizedBox.shrink();
 
+    String normalizeCellValue(dynamic cell) {
+      if (cell == null) return '';
+
+      if (cell is List) {
+        final parts = <String>[];
+        for (final item in cell) {
+          final text = normalizeCellValue(item).trim();
+          if (text.isNotEmpty) parts.add(text);
+        }
+        // For repeated digits in a cell, keep them compact like 999 or 11.
+        return parts.join('');
+      }
+
+      final raw = cell.toString().trim();
+      if (raw.isEmpty) return '';
+
+      // Clean up serialized-list style values like "[, 999,2]"
+      final cleaned = raw
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll(RegExp(r'\s+'), '')
+          .replaceAll(',', '')
+          .trim();
+
+      return cleaned;
+    }
+
+    dynamic getRawCellValue(int rowIndex, int colIndex) {
+      // Preferred shape: [[a,b,c],[d,e,f],[g,h,i]]
+      if (grid.length == 3 &&
+          grid[0] is List &&
+          grid[1] is List &&
+          grid[2] is List) {
+        final row = grid[rowIndex] as List;
+        if (colIndex < row.length) return row[colIndex];
+        return null;
+      }
+
+      // Fallback shape: flat [a,b,c,d,e,f,g,h,i]
+      final flatIndex = (rowIndex * 3) + colIndex;
+      if (flatIndex < grid.length) return grid[flatIndex];
+      return null;
+    }
+
     return Container(
       width: 640,
       padding: const EdgeInsets.all(16),
@@ -272,9 +316,9 @@ class BirthdateShareTemplate extends StatelessWidget {
         children: List.generate(3, (rowIndex) {
           return Row(
             children: List.generate(3, (colIndex) {
-              final index = rowIndex * 3 + colIndex;
-              final cell = index < grid.length ? grid[index] : null;
-              final hasNumber = cell != null && cell.toString().isNotEmpty;
+              final cell = getRawCellValue(rowIndex, colIndex);
+              final cellText = normalizeCellValue(cell);
+              final hasNumber = cellText.isNotEmpty;
 
               return Expanded(
                 child: Container(
@@ -294,12 +338,15 @@ class BirthdateShareTemplate extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      hasNumber ? cell.toString() : "•",
+                      hasNumber ? cellText : "•",
                       style: TextStyle(
                         color: hasNumber ? Colors.white : Colors.white24,
-                        fontSize: hasNumber ? 44 : 26,
+                        fontSize: hasNumber ? 38 : 26,
                         fontWeight: FontWeight.w800,
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
