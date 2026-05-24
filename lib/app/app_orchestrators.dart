@@ -40,13 +40,26 @@ class LanguageOrchestrator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    void tryShowLanguageDialog() {
+      final navContext = navigatorKey.currentContext;
+      if (navContext != null) {
+        LanguageSelectionDialog.show(navContext);
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final retryContext = navigatorKey.currentContext;
+        if (retryContext != null) {
+          LanguageSelectionDialog.show(retryContext);
+        }
+      });
+    }
+
     // Listen for language selection state
     ref.listen<bool>(isLanguageSetProvider, (previous, next) {
       if (!next) {
         // Delay slightly to ensure context is ready and other orchestrators settled
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final targetContext = navigatorKey.currentContext ?? context;
-          LanguageSelectionDialog.show(targetContext);
+          tryShowLanguageDialog();
         });
       }
     });
@@ -55,8 +68,7 @@ class LanguageOrchestrator extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isSet = ref.read(isLanguageSetProvider);
       if (!isSet) {
-        final targetContext = navigatorKey.currentContext ?? context;
-        LanguageSelectionDialog.show(targetContext);
+        tryShowLanguageDialog();
       }
     });
 

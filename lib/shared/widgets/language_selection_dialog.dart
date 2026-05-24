@@ -10,13 +10,18 @@ class LanguageSelectionDialog extends ConsumerWidget {
 
   static Future<void> show(BuildContext context) async {
     if (_isShowing) return;
+    if (!context.mounted) return;
+    if (Navigator.maybeOf(context, rootNavigator: true) == null) return;
     _isShowing = true;
-    await showDialog(
-      context: context,
-      barrierDismissible: false, // Force selection
-      builder: (context) => const LanguageSelectionDialog(),
-    );
-    _isShowing = false;
+    try {
+      await showDialog(
+        context: context,
+        barrierDismissible: false, // Force selection
+        builder: (context) => const LanguageSelectionDialog(),
+      );
+    } finally {
+      _isShowing = false;
+    }
   }
 
   @override
