@@ -31,6 +31,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   String _appliedPromoCode = 'none';
   double _appliedDiscountPercent = 0;
   bool _isValidatingPromo = false;
+  bool _showPromoInput = false;
 
   @override
   void initState() {
@@ -173,7 +174,10 @@ class _CartPageState extends ConsumerState<CartPage> {
                 const SizedBox(height: 24),
                 Text(
                   l10n['analysis_unlocked_title'] ?? 'Analysis Unlocked!',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -245,12 +249,13 @@ class _CartPageState extends ConsumerState<CartPage> {
     final theme = Theme.of(context);
     final remoteConfigAsync = ref.watch(appRemoteConfigProvider);
     final remoteConfigDebugInfo = ref.watch(appRemoteConfigDebugInfoProvider);
-    
+
     // We favor the loaded config, but avoid defaulting to 299 while still loading
     // to prevent the "price flicker" reported by the user.
     final loadedConfig = remoteConfigAsync.valueOrNull;
-    final isInitialLoading = remoteConfigAsync.isLoading && loadedConfig == null;
-    
+    final isInitialLoading =
+        remoteConfigAsync.isLoading && loadedConfig == null;
+
     final basePrice = loadedConfig?.numerologyPriceInr ?? 299.0;
     final razorpayKey = loadedConfig?.razorpayKey ?? '';
 
@@ -272,7 +277,10 @@ class _CartPageState extends ConsumerState<CartPage> {
                 'mode=${loadedConfig.razorpayMode}, '
                 'key=${loadedConfig.razorpayKey.isEmpty ? "missing" : "present"} | '
                 '$remoteConfigDebugInfo',
-                style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontSize: 12),
+                style: TextStyle(
+                  color: theme.colorScheme.onSecondaryContainer,
+                  fontSize: 12,
+                ),
               ),
             ),
           );
@@ -507,7 +515,8 @@ class _CartPageState extends ConsumerState<CartPage> {
     final confirm = await showConfirmationDialog(
       context: context,
       title: l10n['delete_order_title'] ?? 'Delete Order?',
-      content: l10n['delete_order_msg'] ??
+      content:
+          l10n['delete_order_msg'] ??
           'Are you sure you want to delete this specific analysis record?',
       confirmLabel: l10n['delete_all'] ?? 'Delete',
       cancelLabel: l10n['cancel'] ?? 'Cancel',
@@ -614,7 +623,8 @@ class _CartPageState extends ConsumerState<CartPage> {
       if (!mounted) return;
       showLoadingDialog(
         context: context,
-        message: l10n['redirecting_payment'] ?? 'Redirecting to Payment Gateway...',
+        message:
+            l10n['redirecting_payment'] ?? 'Redirecting to Payment Gateway...',
       );
 
       try {
@@ -700,7 +710,9 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
               const SizedBox(height: 24),
               Text(
-                (l10n['unlocking_analyses_msg'] ?? 'You are unlocking {count} birthdate analysis:').replaceAll('{count}', count.toString()),
+                (l10n['unlocking_analyses_msg'] ??
+                        'You are unlocking {count} birthdate analysis:')
+                    .replaceAll('{count}', count.toString()),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -846,15 +858,22 @@ class _CartPageState extends ConsumerState<CartPage> {
   Widget _buildPaymentFooter(
     BuildContext context,
     Set<String> selectedIds,
-    Map<String, String> l10n,
-    {required double basePrice, required String razorpayKey, required bool isConfigLoading}
-  ) {
+    Map<String, String> l10n, {
+    required double basePrice,
+    required String razorpayKey,
+    required bool isConfigLoading,
+  }) {
     final theme = Theme.of(context);
     final count = selectedIds.length;
     final birthdateL10n = ref.watch(birthdateL10nProvider);
 
     final subtotal = _subtotal(count, basePrice);
     final totalAmount = _discountedTotal(subtotal);
+    final oldPerBirthdatePrice = basePrice * 5;
+    final savingsPercent = oldPerBirthdatePrice > 0
+        ? (((oldPerBirthdatePrice - basePrice) / oldPerBirthdatePrice) * 100)
+            .round()
+        : 0;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -862,16 +881,17 @@ class _CartPageState extends ConsumerState<CartPage> {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 28,
+            spreadRadius: 2,
+            offset: const Offset(0, -8),
           ),
         ],
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(
           top: BorderSide(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            width: 1.5,
+            color: theme.colorScheme.primary.withValues(alpha: 0.22),
+            width: 2,
           ),
         ),
       ),
@@ -880,35 +900,50 @@ class _CartPageState extends ConsumerState<CartPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Row 1: Special Offer Title and Add Button
+            Container(
+              width: 44,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.28),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            // Row 1: Promo toggle and Add Birthdate
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.local_offer_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 20,
+                if (_appliedPromoCode == 'none')
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() => _showPromoInput = !_showPromoInput);
+                    },
+                    icon: Icon(
+                      Icons.confirmation_number_outlined,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.45,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      birthdateL10n['special_offer'] ?? 'Special Offer',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
+                    label: Text(
+                      _showPromoInput ? 'Hide promo code' : 'Have a promo code?',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.45,
+                        ),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ],
-                ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 8,
+                      ),
+                      foregroundColor: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.45),
+                    ),
+                  ),
+                if (_appliedPromoCode != 'none') const SizedBox.shrink(),
                 TextButton.icon(
                   onPressed: () {
                     ref
@@ -960,30 +995,44 @@ class _CartPageState extends ConsumerState<CartPage> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    '${birthdateL10n['for_limited_time'] ?? 'For 1+ analysis only'} ',
+                    isConfigLoading ? '---' : '\u20B9${oldPerBirthdatePrice.toStringAsFixed(0)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    isConfigLoading ? '---' : '\u20B9${basePrice.toStringAsFixed(0)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.6,
-                      ),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                       decoration: TextDecoration.lineThrough,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
-                    isConfigLoading
-                        ? ' ${birthdateL10n['each'] ?? 'each'}.'
-                        : (_appliedDiscountPercent > 0
-                            ? ' -${_appliedDiscountPercent.toStringAsFixed(0)}% promo'
-                            : ' ${birthdateL10n['each'] ?? 'each'}.'),
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    isConfigLoading ? 'Per birthdate: ---' : '\u20B9${basePrice.toStringAsFixed(0)}',
+                    style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (!isConfigLoading) const SizedBox(width: 8),
+                  if (!isConfigLoading)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'Saved $savingsPercent%',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.green.shade800,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'per birthdate',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -994,12 +1043,18 @@ class _CartPageState extends ConsumerState<CartPage> {
             if (_appliedPromoCode != 'none') ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.2), width: 1.5),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1009,7 +1064,11 @@ class _CartPageState extends ConsumerState<CartPage> {
                         color: Colors.green,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check, color: Colors.white, size: 14),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1040,34 +1099,49 @@ class _CartPageState extends ConsumerState<CartPage> {
                         foregroundColor: Colors.red.shade700,
                         visualDensity: VisualDensity.compact,
                       ),
-                      child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Remove',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ] else ...[
+            ] else if (_showPromoInput) ...[
               Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TextField(
                         controller: _promoController,
                         textCapitalization: TextCapitalization.characters,
-                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Enter promo code',
                           hintStyle: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
                             fontWeight: FontWeight.normal,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          prefixIcon: Icon(Icons.confirmation_number_outlined, 
-                            color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.confirmation_number_outlined,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1076,18 +1150,28 @@ class _CartPageState extends ConsumerState<CartPage> {
                   SizedBox(
                     height: 52,
                     child: FilledButton(
-                      onPressed: _isValidatingPromo ? null : _validateAndApplyPromo,
+                      onPressed: _isValidatingPromo
+                          ? null
+                          : _validateAndApplyPromo,
                       style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                       ),
                       child: _isValidatingPromo
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                          : const Text(
+                              'Apply',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ),
                 ],
@@ -1111,7 +1195,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                       else
                         Text(
                           count == 0
-                              ? (l10n['select'] ?? 'Select')
+                              ? 'No birthdates'
                               : '$count ${count == 1 ? "birthdate" : "birthdates"}',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
@@ -1119,7 +1203,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                           ),
                         ),
                       Text(
-                        'Total to Pay',
+                        'selected',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.bold,
@@ -1138,16 +1222,16 @@ class _CartPageState extends ConsumerState<CartPage> {
                           razorpayKey: razorpayKey,
                         ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFF4C542),
+                    foregroundColor: const Color(0xFF2B1A00),
+                    disabledBackgroundColor: const Color(0xFFE5D39A),
+                    disabledForegroundColor: const Color(0xFF7A6440),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 18,
                     ),
                     elevation: 8,
-                    shadowColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.4,
-                    ),
+                    shadowColor: const Color(0xFFC08A00).withValues(alpha: 0.45),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -1166,14 +1250,15 @@ class _CartPageState extends ConsumerState<CartPage> {
                               color: Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
-                        if (_appliedPromoCode != 'none') const SizedBox(width: 8),
+                        if (_appliedPromoCode != 'none')
+                          const SizedBox(width: 8),
                       ],
                       Text(
                         isConfigLoading
                             ? '...'
                             : (count == 0
-                                ? 'Select Items'
-                                : 'Pay \u20B9${totalAmount.toStringAsFixed(0)}'),
+                                  ? 'Select Items'
+                                  : 'Pay \u20B9${totalAmount.toStringAsFixed(0)}'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -1190,7 +1275,6 @@ class _CartPageState extends ConsumerState<CartPage> {
       ),
     );
   }
-
 
   Widget _buildPromoFooter(BuildContext context, double basePrice) {
     final theme = Theme.of(context);
@@ -1265,9 +1349,11 @@ class _CartPageState extends ConsumerState<CartPage> {
       l10n['premium_feature_6'] ?? 'Oracle Voice Guide for Deeper Insights',
       l10n['premium_feature_7'] ?? 'Stock Market & Financial Nature Analysis',
       l10n['premium_feature_8'] ?? 'Detailed Number Occurrence Insights',
-      l10n['premium_feature_9'] ?? 'Horizontal, Vertical & Diagonal Planes Analysis',
+      l10n['premium_feature_9'] ??
+          'Horizontal, Vertical & Diagonal Planes Analysis',
       l10n['premium_feature_10'] ?? 'Personalized Lucky Colors, Days & Numbers',
-      l10n['premium_feature_11'] ?? 'Personality & Life Path Synergy (Combinations)',
+      l10n['premium_feature_11'] ??
+          'Personality & Life Path Synergy (Combinations)',
       l10n['premium_feature_12'] ?? 'Practical Tips to Boost Your Energy',
     ];
 
