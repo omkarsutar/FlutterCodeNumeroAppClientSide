@@ -670,12 +670,26 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AnalysisTheme.getAccent(theme),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "${l10n['birthdate_label'] ?? 'Birthdate'} : $dateDisplay",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AnalysisTheme.getAccent(theme),
+                      ),
+                    ),
+                    if (birthdate == null)
+                      Text(
+                        'Select a birthdate to start',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Icon(
@@ -1105,10 +1119,10 @@ class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get minExtent => 76;
+  double get minExtent => 88;
 
   @override
-  double get maxExtent => 76;
+  double get maxExtent => 88;
 
   @override
   Widget build(

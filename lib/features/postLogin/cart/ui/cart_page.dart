@@ -869,7 +869,7 @@ class _CartPageState extends ConsumerState<CartPage> {
 
     final subtotal = _subtotal(count, basePrice);
     final totalAmount = _discountedTotal(subtotal);
-    final oldPerBirthdatePrice = basePrice * 5;
+    final oldPerBirthdatePrice = basePrice * 2;
     final savingsPercent = oldPerBirthdatePrice > 0
         ? (((oldPerBirthdatePrice - basePrice) / oldPerBirthdatePrice) * 100)
             .round()
@@ -1244,10 +1244,10 @@ class _CartPageState extends ConsumerState<CartPage> {
                           Text(
                             '\u20B9${subtotal.toStringAsFixed(0)}',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
                               decoration: TextDecoration.lineThrough,
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: const Color(0xFF5B4300),
                             ),
                           ),
                         if (_appliedPromoCode != 'none')
