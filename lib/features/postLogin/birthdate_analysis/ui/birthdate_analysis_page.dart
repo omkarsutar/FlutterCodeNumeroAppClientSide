@@ -126,7 +126,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       // Update selected orders provider to include this birthdate
       final currentSelection = ref.read(selectedOrdersProvider);
       if (!currentSelection.contains(birthdateId)) {
-        final newSelection = Set<String>.from(currentSelection)..add(birthdateId);
+        final newSelection = Set<String>.from(currentSelection)
+          ..add(birthdateId);
         ref.read(selectedOrdersProvider.notifier).state = newSelection;
       }
 
@@ -1086,7 +1087,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           "$psychicLabel: $psychic\n"
           "$destinyLabel: $destiny\n\n"
           "$sharePromo\n\n"
-          "$shareDownload: https://play.google.com/store/apps/details?id=com.numero.shastra";
+          "$shareDownload: https://play.google.com/store/apps/details?id=com.numeroshastra.client&utm_source=share_button&utm_medium=android_app&utm_campaign=launch_2026";
 
       // Share the file
       await Share.shareXFiles(
