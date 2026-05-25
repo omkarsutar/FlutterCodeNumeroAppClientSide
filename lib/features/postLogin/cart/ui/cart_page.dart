@@ -1042,12 +1042,23 @@ class _CartPageState extends ConsumerState<CartPage> {
                           color: Colors.green.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: Text(
-                        'Saved $savingsPercent%',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.green.shade800,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.emoji_events,
+                            size: 14,
+                            color: Colors.green.shade800,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Saved $savingsPercent%',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.green.shade800,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   const SizedBox(width: 8),

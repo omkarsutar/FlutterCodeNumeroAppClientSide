@@ -125,8 +125,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
 
       // Update selected orders provider to include this birthdate
       final currentSelection = ref.read(selectedOrdersProvider);
-      final newSelection = Set<String>.from(currentSelection)..add(birthdateId);
-      ref.read(selectedOrdersProvider.notifier).state = newSelection;
+      if (!currentSelection.contains(birthdateId)) {
+        final newSelection = Set<String>.from(currentSelection)..add(birthdateId);
+        ref.read(selectedOrdersProvider.notifier).state = newSelection;
+      }
 
       // Navigate to cart page (push so back arrow shows on cart)
       if (mounted) {
