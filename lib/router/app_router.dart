@@ -10,6 +10,7 @@ import '../features/preLogin/welcome_page.dart';
 import '../features/auth/auth_page.dart';
 import '../features/postLogin/cart/cart_barrel.dart';
 import '../features/postLogin/birthdate_analysis/ui/birthdate_analysis_page.dart';
+import '../features/postLogin/birthday_cards/ui/birthday_cards_page.dart';
 import '../shared/widgets/shared_widget_barrel.dart';
 import '../features/postLogin/vacation_mode/vacation_mode_screen.dart';
 import '../core/routing/module_route_generator.dart';
@@ -17,7 +18,6 @@ import '../core/services/rbac_service.dart';
 import '../core/models/route_permission.dart';
 import 'route_guards.dart';
 import '../core/services/analytics_service.dart';
-
 
 import '../core/providers/auth_providers.dart';
 import '../core/globals.dart';
@@ -111,6 +111,11 @@ final List<RouteBase> authRoutes = [
     name: AppRoute.birthdateAnalysisName,
     path: AppRoute.birthdateAnalysis,
     builder: (context, state) => const BirthdateAnalysisPage(),
+  ),
+  GoRoute(
+    name: AppRoute.birthdayCardsName,
+    path: AppRoute.birthdayCards,
+    builder: (context, state) => const BirthdayCardsPage(),
   ),
   GoRoute(
     name: AppRoute.notificationAdminName,
