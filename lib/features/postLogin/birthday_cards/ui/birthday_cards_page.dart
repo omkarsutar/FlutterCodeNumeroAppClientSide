@@ -130,7 +130,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
           [XFile(imagePath)],
           text:
               l10n['birthday_card_share_text'] ??
-              'Check out this beautiful birthday card on Numero Shastra!',
+              'Check out this beautiful birthday card on Numero Shastra!\n#numeroshastra\nhttps://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026',
         );
       }
     } catch (e) {
@@ -171,6 +171,39 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
         centerTitle: true,
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: () {
+                ref.read(languageProvider.notifier).toggleLanguage();
+                final newLang = ref.read(languageProvider);
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent(
+                      'language_toggled',
+                      parameters: {'new_language': newLang.name},
+                    );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: accent,
+                backgroundColor: accent.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              child: Text(
+                lang == AppLanguage.english
+                    ? 'EN'
+                    : lang == AppLanguage.hindi
+                    ? 'हि'
+                    : 'म',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(

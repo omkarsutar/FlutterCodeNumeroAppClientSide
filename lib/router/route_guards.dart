@@ -21,7 +21,8 @@ class RouteGuardService {
     final path = state.uri.path;
     final isAtRoot = path == AppRoute.welcome;
     final isAuthPage = path == AppRoute.login || path == AppRoute.signup;
-    final isPublicRoute = path.startsWith('/cart');
+    final isPublicRoute =
+        path.startsWith('/cart') || path == AppRoute.birthdayCards;
 
     final pendingOrderRedirect = await _handlePendingOrderRedirect(
       isLoggedIn: isLoggedIn,

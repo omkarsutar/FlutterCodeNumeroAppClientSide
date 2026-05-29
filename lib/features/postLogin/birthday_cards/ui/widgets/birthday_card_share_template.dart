@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:intl/intl.dart';
+import 'package:screenshot/screenshot.dart';
+
 import '../../../../../core/providers/localization_provider.dart';
 
 class BirthdayCardShareTemplate extends StatelessWidget {
@@ -26,6 +27,30 @@ class BirthdayCardShareTemplate extends StatelessWidget {
     return template.replaceAll('{years}', years.toString());
   }
 
+  String _getYearLabel() {
+    return switch (lang) {
+      AppLanguage.hindi => 'साल',
+      AppLanguage.marathi => 'वर्ष',
+      AppLanguage.english => 'Years',
+    };
+  }
+
+  String _getMonthLabel() {
+    return switch (lang) {
+      AppLanguage.hindi => 'महीने',
+      AppLanguage.marathi => 'महिने',
+      AppLanguage.english => 'Months',
+    };
+  }
+
+  String _getDayLabel() {
+    return switch (lang) {
+      AppLanguage.hindi => 'दिन',
+      AppLanguage.marathi => 'दिवस',
+      AppLanguage.english => 'Days',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final accentColor = const Color(0xFFF4C542);
@@ -35,228 +60,219 @@ class BirthdayCardShareTemplate extends StatelessWidget {
 
     return Screenshot(
       controller: screenshotController,
-      child: Container(
-        width: 1080,
-        height: 1920,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF0B1422),
-              const Color(0xFF13243A),
-              const Color(0xFF0C1727),
-            ],
+      child: AspectRatio(
+        aspectRatio: 3 / 4,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFF0B1422),
+                const Color(0xFF13243A),
+                const Color(0xFF0C1727),
+              ],
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Decorative circles
-            Positioned(
-              top: -120,
-              right: -80,
-              child: _buildDecorativeCircle(
-                360,
-                accentColor.withValues(alpha: 0.09),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -120,
+                right: -80,
+                child: _buildDecorativeCircle(
+                  360,
+                  accentColor.withValues(alpha: 0.09),
+                ),
               ),
-            ),
-            Positioned(
-              bottom: -70,
-              left: -70,
-              child: _buildDecorativeCircle(
-                320,
-                secondaryColor.withValues(alpha: 0.08),
+              Positioned(
+                bottom: -70,
+                left: -70,
+                child: _buildDecorativeCircle(
+                  320,
+                  secondaryColor.withValues(alpha: 0.08),
+                ),
               ),
-            ),
-
-            // Main content
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 12),
-                  // App name header
-                  Text(
-                    "NUMERO SHASTRA",
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.66),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Title
-                  Text(
-                    (l10n['happy_birthday'] ?? 'Happy Birthday').toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Person info card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: cardColor.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 18,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'NUMERO SHASTRA',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.66),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 3,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.24),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      (l10n['happy_birthday'] ?? 'Happy Birthday')
+                          .toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 27,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: cardColor.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.24),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              personName,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            DateFormat('dd MMMM yyyy').format(birthdate),
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildNumberCard(
+                            ageComponents['years'].toString(),
+                            _getYearLabel(),
+                            accentColor,
+                            cardColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildNumberCard(
+                            ageComponents['months'].toString(),
+                            _getMonthLabel(),
+                            secondaryColor,
+                            cardColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildNumberCard(
+                            ageComponents['days'].toString(),
+                            _getDayLabel(),
+                            accentColor,
+                            cardColor,
+                          ),
                         ),
                       ],
                     ),
-                    child: Column(
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Icon(Icons.cake_rounded, color: accentColor, size: 24),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            _getTurningYearsText(years),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Divider(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          height: 16,
+                        ),
+                        const SizedBox(height: 4),
                         Text(
-                          personName,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
+                          (l10n['birthday_card_by'] ?? 'Birthday card by')
+                              .toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.2,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          DateFormat('dd MMMM yyyy').format(birthdate),
-                          style: TextStyle(
-                            color: accentColor,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/app_logo.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'NUMERO SHASTRA',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: accentColor,
+                                    fontSize: 23,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Age metrics
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildNumberCard(
-                          ageComponents['years'].toString(),
-                          lang == AppLanguage.hindi
-                              ? 'साल'
-                              : lang == AppLanguage.marathi
-                              ? 'वर्ष'
-                              : 'Years',
-                          accentColor,
-                          cardColor,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _buildNumberCard(
-                          ageComponents['months'].toString(),
-                          lang == AppLanguage.hindi
-                              ? 'महीने'
-                              : lang == AppLanguage.marathi
-                              ? 'महिने'
-                              : 'Months',
-                          secondaryColor,
-                          cardColor,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _buildNumberCard(
-                          ageComponents['days'].toString(),
-                          lang == AppLanguage.hindi
-                              ? 'दिन'
-                              : lang == AppLanguage.marathi
-                              ? 'दिवस'
-                              : 'Days',
-                          accentColor,
-                          cardColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Wish text
-                  Text(
-                    _getTurningYearsText(years),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: accentColor,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Age text
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: secondaryColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      'You are ${ageComponents['years']} years ${ageComponents['months']} months ${ageComponents['days']} days old',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-
-                  // Footer branding
-                  Column(
-                    children: [
-                      Divider(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        height: 24,
-                      ),
-                      Text(
-                        (l10n['birthday_card_by'] ?? 'Birthday card by')
-                            .toUpperCase(),
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'NUMERO SHASTRA',
-                        style: TextStyle(
-                          color: accentColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -269,7 +285,7 @@ class BirthdayCardShareTemplate extends StatelessWidget {
     Color cardColor,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: cardColor.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(12),
@@ -288,7 +304,7 @@ class BirthdayCardShareTemplate extends StatelessWidget {
             number,
             style: TextStyle(
               color: color,
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -298,7 +314,7 @@ class BirthdayCardShareTemplate extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
             ),
