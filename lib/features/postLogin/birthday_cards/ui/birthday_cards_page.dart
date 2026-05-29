@@ -103,6 +103,20 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
     }
   }
 
+  String _buildBirthdayCardShareText(AppLanguage lang) {
+    const appInstallUrl =
+        'https://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026';
+    final typedName = _nameController.text.trim();
+    final nameSuffix = typedName.isEmpty ? '' : ' $typedName';
+    final greeting = switch (lang) {
+      AppLanguage.english => 'Happy Birthday$nameSuffix 🥳 🎉 ✨',
+      AppLanguage.hindi => 'जन्मदिन की शुभकामनाएँ$nameSuffix 🥳 🎉 ✨',
+      AppLanguage.marathi => 'वाढदिवसाच्या शुभेच्छा$nameSuffix 🥳 🎉 ✨',
+    };
+
+    return '$greeting\n\n#numeroshastra\n\n$appInstallUrl';
+  }
+
   Future<void> _shareCard() async {
     if (_selectedBirthdate == null) return;
 
@@ -112,6 +126,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
 
     try {
       final l10n = ref.read(appL10nProvider);
+      final lang = ref.read(languageProvider);
       await Future.delayed(const Duration(milliseconds: 500));
 
       final image = await _screenshotController.capture();
@@ -128,9 +143,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
 
         await Share.shareXFiles(
           [XFile(imagePath)],
-          text:
-              l10n['birthday_card_share_text'] ??
-              'Check out this beautiful birthday card on Numero Shastra!\n#numeroshastra\nhttps://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026',
+          text: _buildBirthdayCardShareText(lang),
         );
       }
     } catch (e) {
