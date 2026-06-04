@@ -100,8 +100,6 @@ const _appTranslations = {
     'turning_years': 'Turning {years} years',
     'happy_birthday': 'Happy Birthday',
     'birthday_card_share_loading': 'Generating birthday card...',
-    'birthday_card_share_text':
-        'Check out this beautiful birthday card on Numero Shastra!\n#numeroshastra\nhttps://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026',
   },
   AppLanguage.marathi: {
     'app_title': 'Numero Shastra',
@@ -198,8 +196,6 @@ const _appTranslations = {
     'turning_years': 'तुम्ही {years} वर्षांचे होत आहात',
     'happy_birthday': 'वाढदिवसाच्या शुभेच्छा',
     'birthday_card_share_loading': 'वाढदिवसाचे कार्ड तयार करत आहे...',
-    'birthday_card_share_text':
-        'Numero Shastra वर हा सुंदर वाढदिवसाचे कार्ड पहा!\n#numeroshastra\nhttps://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026',
   },
   AppLanguage.hindi: {
     'app_title': 'Numero Shastra',
@@ -292,9 +288,7 @@ const _appTranslations = {
     'enter_name': 'नाम दर्ज करें',
     'birthday_card_by': 'जन्मदिन कार्ड by',
     'turning_years': 'आप {years} साल के हो रहे हैं',
-    'happy_birthday': 'जन्मदिन की शुभकामनाएँ',
+    'happy_birthday': 'हॅपी बर्थडे',
     'birthday_card_share_loading': 'जन्मदिन कार्ड तैयार किया जा रहा है...',
-    'birthday_card_share_text':
-        'Numero Shastra पर इस सुंदर जन्मदिन कार्ड को देखें!\n#numeroshastra\nhttps://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026',
   },
 };

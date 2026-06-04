@@ -1087,7 +1087,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           "$psychicLabel: $psychic\n"
           "$destinyLabel: $destiny\n\n"
           "$sharePromo\n\n"
-          "$shareDownload: https://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dshare_button%26utm_medium%3Dlaunch_2026";
+          "$shareDownload: https://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dlaunch_2026%26utm_medium%3Dshare_button";
 
       // Share the file
       await Share.shareXFiles(

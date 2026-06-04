@@ -105,7 +105,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
 
   String _buildBirthdayCardShareText(AppLanguage lang) {
     const appInstallUrl =
-        'https://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dandroid_app%26utm_campaign%3Dbirthday_card%26utm_medium%3Dlaunch_2026';
+        'https://play.google.com/store/apps/details?id=com.numeroshastra.client&referrer=utm_source%3Dsocial_media%26utm_campaign%3Dlaunch_2026%26utm_medium%3Dbirthday_card';
     final typedName = _nameController.text.trim();
     final nameSuffix = typedName.isEmpty ? '' : ' $typedName';
     final greeting = switch (lang) {
@@ -114,7 +114,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
       AppLanguage.marathi => 'वाढदिवसाच्या शुभेच्छा$nameSuffix 🥳 🎉 ✨',
     };
 
-    return '$greeting\n\n#numeroshastra\n\n$appInstallUrl';
+    return '$greeting\n\nOpen in app:\n$appInstallUrl\n\n#astrology #numerology #numeroshastra #birthday';
   }
 
   Future<void> _shareCard() async {
@@ -141,10 +141,9 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
             .read(analyticsServiceProvider)
             .logClickEvent('birthday_card_shared');
 
-        await Share.shareXFiles(
-          [XFile(imagePath)],
-          text: _buildBirthdayCardShareText(lang),
-        );
+        await Share.shareXFiles([
+          XFile(imagePath),
+        ], text: _buildBirthdayCardShareText(lang));
       }
     } catch (e) {
       if (mounted) {
