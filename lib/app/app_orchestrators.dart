@@ -8,7 +8,7 @@ import 'package:numero_shastra/core/providers/app_localization_provider.dart';
 import 'package:numero_shastra/core/services/connectivity_service.dart';
 import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
 import 'package:numero_shastra/features/postLogin/cart/providers/cart_providers.dart';
-import 'package:numero_shastra/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
+// import 'package:numero_shastra/features/postLogin/retailer_shop_links/retailer_shop_link_barrel.dart';
 import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
 import 'package:numero_shastra/router/app_router.dart';
 import 'package:numero_shastra/core/providers/localization_provider.dart';
@@ -25,7 +25,8 @@ class AppOrchestratorScope extends StatelessWidget {
       child: ConnectivityToastOrchestrator(
         child: LanguageOrchestrator(
           child: RoleChangeOrchestrator(
-            child: RetailerShopLinkChangeOrchestrator(child: child),
+            child: child,
+            // child: RetailerShopLinkChangeOrchestrator(child: child),
           ),
         ),
       ),
@@ -165,7 +166,7 @@ class RoleChangeOrchestrator extends ConsumerWidget {
   }
 }
 
-class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
+/* class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
   final Widget child;
 
   const RetailerShopLinkChangeOrchestrator({super.key, required this.child});
@@ -236,7 +237,7 @@ class RetailerShopLinkChangeOrchestrator extends ConsumerWidget {
 
     return currentMap.keys.any((linkId) => !previousMap.containsKey(linkId));
   }
-}
+} */
 
 class ConnectivityToastOrchestrator extends ConsumerStatefulWidget {
   final Widget child;
@@ -286,14 +287,14 @@ class _ConnectivityToastOrchestratorState
       }
     });
 
-    ref.listen<AsyncValue<List<ModelRetailerShopLink>>>(
+    /* ref.listen<AsyncValue<List<ModelRetailerShopLink>>>(
       retailerShopLinksStreamProvider,
       (previous, next) {
         if (next.hasError) {
           _handleRealtimeError(next.error);
         }
       },
-    );
+    ); */
 
     ref.listen<AsyncValue<List<ModelBirthdate>>>(birthdatesStreamProvider, (
       previous,
