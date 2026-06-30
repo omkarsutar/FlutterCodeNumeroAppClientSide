@@ -20,20 +20,17 @@ class UserProfilePage extends ConsumerStatefulWidget {
 class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _routeController;
   bool _hasImageError = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _routeController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _routeController.dispose();
     super.dispose();
   }
 
@@ -41,7 +38,6 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     if (_formKey.currentState!.validate()) {
       final updatedData = {
         ModelUserFields.fullName: _nameController.text,
-        ModelUserFields.preferredRouteId: _routeController.text,
       };
 
       if (!await ref.read(connectivityServiceProvider).isOnline()) {
@@ -73,9 +69,6 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
         // Initialize controllers with profile data if empty
         if (_nameController.text.isEmpty && profile.fullName != null) {
           _nameController.text = profile.fullName!;
-        }
-        if (_routeController.text.isEmpty && profile.preferredRouteId != null) {
-          _routeController.text = profile.preferredRouteId!;
         }
 
         final fullName = profile.fullName ?? '';

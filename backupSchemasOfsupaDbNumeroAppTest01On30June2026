@@ -2541,7 +2541,6 @@ CREATE TABLE public.users (
     user_id uuid NOT NULL,
     full_name text,
     role_id uuid,
-    preferred_route_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     user_language text DEFAULT 'hi'::text,
@@ -2831,15 +2830,12 @@ CREATE VIEW public.view_users AS
  SELECT u.user_id,
     u.full_name,
     u.role_id,
-    u.preferred_route_id,
     u.user_language,
     u.created_at,
     u.updated_at,
-    r.role_name AS role_id_label,
-    rt.route_name AS preferred_route_id_label
-   FROM ((public.users u
-     LEFT JOIN public.rbac_roles r ON ((u.role_id = r.role_id)))
-     LEFT JOIN public.routes rt ON ((u.preferred_route_id = rt.route_id)));
+    r.role_name AS role_id_label
+   FROM (public.users u
+     LEFT JOIN public.rbac_roles r ON ((u.role_id = r.role_id)));
 
 
 ALTER VIEW public.view_users OWNER TO postgres;
@@ -3638,14 +3634,6 @@ ALTER TABLE ONLY public.route_shop_links
 ALTER TABLE ONLY public.shops
     ADD CONSTRAINT shops_shops_primary_route_fkey FOREIGN KEY (shops_primary_route) REFERENCES public.routes(route_id) ON DELETE SET NULL;
 
-
---
--- TOC entry 4031 (class 2606 OID 19783)
--- Name: users users_preferred_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_preferred_route_id_fkey FOREIGN KEY (preferred_route_id) REFERENCES public.routes(route_id);
 
 
 --

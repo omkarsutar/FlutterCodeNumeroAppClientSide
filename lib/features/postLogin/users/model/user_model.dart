@@ -7,7 +7,6 @@ class ModelUserFields {
   static const String userId = 'user_id';
   static const String fullName = 'full_name';
   static const String roleId = 'role_id';
-  static const String preferredRouteId = 'preferred_route_id';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
   static const String userLanguage = 'user_language';
@@ -20,7 +19,6 @@ class ModelUser {
   final String userId; // required, PK
   final String? fullName; // nullable
   final String? roleId; // nullable FK
-  final String? preferredRouteId; // nullable FK
   final DateTime? createdAt; // nullable, DB default
   final DateTime? updatedAt; // nullable, DB default
   final String? userLanguage; // nullable
@@ -33,7 +31,6 @@ class ModelUser {
     required this.userId,
     this.fullName,
     this.roleId,
-    this.preferredRouteId,
     this.createdAt,
     this.updatedAt,
     this.userLanguage,
@@ -57,7 +54,6 @@ class ModelUser {
       userId: map[ModelUserFields.userId].toString(),
       fullName: map[ModelUserFields.fullName],
       roleId: map[ModelUserFields.roleId],
-      preferredRouteId: map[ModelUserFields.preferredRouteId],
       createdAt: _parseDate(map[ModelUserFields.createdAt]),
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
       userLanguage: map[ModelUserFields.userLanguage],
@@ -73,8 +69,6 @@ class ModelUser {
       if (userId.isNotEmpty && userId != 'null') ModelUserFields.userId: userId,
       if (fullName != null) ModelUserFields.fullName: fullName,
       if (roleId != null) ModelUserFields.roleId: roleId,
-      if (preferredRouteId != null)
-        ModelUserFields.preferredRouteId: preferredRouteId,
       if (createdAt != null)
         ModelUserFields.createdAt: createdAt!.toIso8601String(),
       if (updatedAt != null)
@@ -91,7 +85,6 @@ class ModelUser {
       'userId': userId,
       'fullName': fullName,
       'roleId': roleId,
-      'preferredRouteId': preferredRouteId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'userLanguage': userLanguage,
@@ -107,7 +100,6 @@ class ModelUser {
       userId: json['userId'] as String,
       fullName: json['fullName'] as String?,
       roleId: json['roleId'] as String?,
-      preferredRouteId: json['preferredRouteId'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
       userLanguage: json['userLanguage'] as String?,
