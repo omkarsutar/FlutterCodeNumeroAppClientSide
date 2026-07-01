@@ -125,7 +125,6 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
     });
 
     try {
-      final l10n = ref.read(appL10nProvider);
       final lang = ref.read(languageProvider);
       await Future.delayed(const Duration(milliseconds: 500));
 
@@ -410,7 +409,7 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
                 screenshotController: _screenshotController,
                 personName: personName,
                 birthdate: _selectedBirthdate!,
-                ageComponents: ageComponents!,
+                ageComponents: ageComponents,
                 l10n: l10n,
                 lang: lang,
               ),

@@ -11,10 +11,6 @@ class PurchaseOrderAdapter implements EntityAdapter<ModelPurchaseOrder> {
         return entity.poTotalAmount;
       case ModelPurchaseOrderFields.poLineItemCount:
         return entity.poLineItemCount;
-      case ModelPurchaseOrderFields.poRouteId:
-        return entity.poRouteId;
-      case ModelPurchaseOrderFields.poShopId:
-        return entity.poShopId;
       case ModelPurchaseOrderFields.userComment:
         return entity.userComment;
       case ModelPurchaseOrderFields.profitToShop:
@@ -33,8 +29,8 @@ class PurchaseOrderAdapter implements EntityAdapter<ModelPurchaseOrder> {
         return entity.createdAt;
       case ModelPurchaseOrderFields.updatedAt:
         return entity.updatedAt;
-      case ModelPurchaseOrderFields.adminComment:
-        return entity.adminComment;
+      case ModelPurchaseOrderFields.birthdateIds:
+        return entity.birthdateIds;
       default:
         return null;
     }
@@ -51,8 +47,6 @@ class PurchaseOrderAdapter implements EntityAdapter<ModelPurchaseOrder> {
       return entity.resolvedLabels['${fieldName}_label'];
     }
     switch (fieldName) {
-      case ModelPurchaseOrderFields.poRouteId:
-      case ModelPurchaseOrderFields.poShopId:
       case ModelPurchaseOrderFields.createdBy:
       case ModelPurchaseOrderFields.updatedBy:
         return entity.resolvedLabels['${fieldName}_label'];
