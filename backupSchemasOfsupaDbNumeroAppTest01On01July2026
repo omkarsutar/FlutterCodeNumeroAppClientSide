@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict lG41HBwGlKA9wGd8LF6sgdYHHZMgcMs7hUDSTJj5uZuTavDv7V8hleTYCTk4Dud
+\restrict ncdY2YtYh87fOhj62CZm79Nb74Ud9OvcbOpufTdxGCZMhEiYciJDZiSnxhpVViS
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.3
 
--- Started on 2026-06-30 13:11:46
+-- Started on 2026-07-01 08:52:00
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,7 +32,7 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 4242 (class 0 OID 0)
+-- TOC entry 4073 (class 0 OID 0)
 -- Dependencies: 32
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -41,153 +41,7 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- TOC entry 430 (class 1255 OID 19252)
--- Name: _po_item_count_and_status_adjust(uuid); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public._po_item_count_and_status_adjust(p_po_id uuid) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-
-DECLARE
-
-  cnt int;
-
-BEGIN
-
-  IF p_po_id IS NULL THEN
-
-    RETURN;
-
-  END IF;
-
-
-
-  SELECT COUNT(*) INTO cnt FROM public.po_item WHERE po_id = p_po_id;
-
-
-
-  -- keep po_line_item_count in sync
-
-  UPDATE public.purchase_order
-
-  SET po_line_item_count = cnt
-
-  WHERE po_id = p_po_id
-
-    AND (po_line_item_count IS DISTINCT FROM cnt);
-
-
-
-  -- If zero items -> ensure status = 'pending'
-
-  IF cnt = 0 THEN
-
-    UPDATE public.purchase_order
-
-    SET status = 'pending'
-
-    WHERE po_id = p_po_id
-
-      AND status IS DISTINCT FROM 'pending';
-
-    RETURN;
-
-  END IF;
-
-
-
-  -- If >=1 item and PO currently pending -> set confirmed
-
-  UPDATE public.purchase_order
-
-  SET status = 'confirmed'
-
-  WHERE po_id = p_po_id
-
-    AND status = 'pending';
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public._po_item_count_and_status_adjust(p_po_id uuid) OWNER TO postgres;
-
---
--- TOC entry 544 (class 1255 OID 19253)
--- Name: assign_visit_order(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.assign_visit_order() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  -- If visit_order is not provided, assign the next available number
-
-  IF NEW.visit_order IS NULL THEN
-
-    SELECT COALESCE(MAX(visit_order), 0) + 1
-
-    INTO NEW.visit_order
-
-    FROM route_shop_links
-
-    WHERE route_id = NEW.route_id;
-
-  END IF;
-
-  
-
-  RETURN NEW;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.assign_visit_order() OWNER TO postgres;
-
---
--- TOC entry 483 (class 1255 OID 19254)
--- Name: fill_po_item_defaults(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.fill_po_item_defaults() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  IF NEW.product_id IS NOT NULL THEN
-
-    -- Copy product_name and mrp into po_item
-
-    SELECT p.product_name, p.mrp
-
-    INTO NEW.item_name, NEW.item_unit_mrp
-
-    FROM public.product p
-
-    WHERE p.product_id = NEW.product_id;
-
-  END IF;
-
-
-
-  RETURN NEW;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.fill_po_item_defaults() OWNER TO postgres;
-
---
--- TOC entry 448 (class 1255 OID 19255)
+-- TOC entry 443 (class 1255 OID 19255)
 -- Name: generate_lucky_unlucky_values(integer, integer, integer[]); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -252,7 +106,7 @@ END;$$;
 ALTER FUNCTION public.generate_lucky_unlucky_values(pers_n integer, life_p integer, missing integer[]) OWNER TO postgres;
 
 --
--- TOC entry 465 (class 1255 OID 19256)
+-- TOC entry 460 (class 1255 OID 19256)
 -- Name: get_boosting_personality_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -296,7 +150,7 @@ $$;
 ALTER FUNCTION public.get_boosting_personality_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 428 (class 1255 OID 19257)
+-- TOC entry 426 (class 1255 OID 19257)
 -- Name: get_career_by_destiny(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -340,7 +194,7 @@ $$;
 ALTER FUNCTION public.get_career_by_destiny(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 459 (class 1255 OID 19258)
+-- TOC entry 454 (class 1255 OID 19258)
 -- Name: get_combination_personality_lifepath(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -390,7 +244,7 @@ $$;
 ALTER FUNCTION public.get_combination_personality_lifepath(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 550 (class 1255 OID 19259)
+-- TOC entry 538 (class 1255 OID 19259)
 -- Name: get_life_path_number_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -434,7 +288,7 @@ $$;
 ALTER FUNCTION public.get_life_path_number_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 508 (class 1255 OID 19260)
+-- TOC entry 498 (class 1255 OID 19260)
 -- Name: get_loshu_planes(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -550,7 +404,7 @@ $$;
 ALTER FUNCTION public.get_loshu_planes(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 527 (class 1255 OID 19261)
+-- TOC entry 516 (class 1255 OID 19261)
 -- Name: get_lucky_unlucky_values(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -590,7 +444,7 @@ END;$$;
 ALTER FUNCTION public.get_lucky_unlucky_values(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 445 (class 1255 OID 19262)
+-- TOC entry 441 (class 1255 OID 19262)
 -- Name: get_missing_number_tells(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -629,7 +483,7 @@ $$;
 ALTER FUNCTION public.get_missing_number_tells(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 417 (class 1255 OID 19263)
+-- TOC entry 415 (class 1255 OID 19263)
 -- Name: get_number_occurrence_descriptions(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -679,7 +533,7 @@ $$;
 ALTER FUNCTION public.get_number_occurrence_descriptions(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 515 (class 1255 OID 19264)
+-- TOC entry 505 (class 1255 OID 19264)
 -- Name: get_number_occurrence_details(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -733,7 +587,7 @@ $$;
 ALTER FUNCTION public.get_number_occurrence_details(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 431 (class 1255 OID 19265)
+-- TOC entry 428 (class 1255 OID 19265)
 -- Name: get_numbers_not_for_remedy(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -770,7 +624,7 @@ $$;
 ALTER FUNCTION public.get_numbers_not_for_remedy(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 507 (class 1255 OID 19266)
+-- TOC entry 497 (class 1255 OID 19266)
 -- Name: get_personality_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -823,7 +677,7 @@ $$;
 ALTER FUNCTION public.get_personality_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 522 (class 1255 OID 19267)
+-- TOC entry 512 (class 1255 OID 19267)
 -- Name: get_pinnacle_data_for_lifeperiod1(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -871,7 +725,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod1(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 468 (class 1255 OID 19268)
+-- TOC entry 463 (class 1255 OID 19268)
 -- Name: get_pinnacle_data_for_lifeperiod2(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -919,7 +773,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod2(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 444 (class 1255 OID 19269)
+-- TOC entry 440 (class 1255 OID 19269)
 -- Name: get_pinnacle_data_for_lifeperiod3(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -967,7 +821,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod3(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 509 (class 1255 OID 19270)
+-- TOC entry 499 (class 1255 OID 19270)
 -- Name: get_pinnacle_data_for_lifeperiod4(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1015,7 +869,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod4(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 547 (class 1255 OID 19271)
+-- TOC entry 535 (class 1255 OID 19271)
 -- Name: get_remedies_for_birthdate(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1054,7 +908,7 @@ $$;
 ALTER FUNCTION public.get_remedies_for_birthdate(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 425 (class 1255 OID 19272)
+-- TOC entry 423 (class 1255 OID 19272)
 -- Name: get_share_market_advice(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1166,7 +1020,7 @@ $$;
 ALTER FUNCTION public.get_share_market_advice(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 485 (class 1255 OID 19274)
+-- TOC entry 479 (class 1255 OID 19274)
 -- Name: get_some_imp_points(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1247,7 +1101,7 @@ $$;
 ALTER FUNCTION public.get_some_imp_points(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 503 (class 1255 OID 19275)
+-- TOC entry 493 (class 1255 OID 19275)
 -- Name: get_stock_market_info(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1321,7 +1175,7 @@ $$;
 ALTER FUNCTION public.get_stock_market_info(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 488 (class 1255 OID 19808)
+-- TOC entry 482 (class 1255 OID 19808)
 -- Name: handle_new_auth_user(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1352,7 +1206,7 @@ $$;
 ALTER FUNCTION public.handle_new_auth_user() OWNER TO postgres;
 
 --
--- TOC entry 478 (class 1255 OID 19276)
+-- TOC entry 473 (class 1255 OID 19276)
 -- Name: perform_numerology_analysis(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1480,85 +1334,7 @@ end;$$;
 ALTER FUNCTION public.perform_numerology_analysis() OWNER TO postgres;
 
 --
--- TOC entry 554 (class 1255 OID 19277)
--- Name: po_item_after_delete_tr(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.po_item_after_delete_tr() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  PERFORM public._po_item_count_and_status_adjust(OLD.po_id);
-
-  RETURN OLD;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.po_item_after_delete_tr() OWNER TO postgres;
-
---
--- TOC entry 525 (class 1255 OID 19278)
--- Name: po_item_after_insert_tr(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.po_item_after_insert_tr() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  PERFORM public._po_item_count_and_status_adjust(NEW.po_id);
-
-  RETURN NEW;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.po_item_after_insert_tr() OWNER TO postgres;
-
---
--- TOC entry 489 (class 1255 OID 19279)
--- Name: po_item_after_update_tr(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.po_item_after_update_tr() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  IF NEW.po_id IS DISTINCT FROM OLD.po_id THEN
-
-    PERFORM public._po_item_count_and_status_adjust(OLD.po_id);
-
-    PERFORM public._po_item_count_and_status_adjust(NEW.po_id);
-
-  ELSE
-
-    -- no change in po_id, nothing to do
-
-    NULL;
-
-  END IF;
-
-  RETURN NEW;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.po_item_after_update_tr() OWNER TO postgres;
-
---
--- TOC entry 497 (class 1255 OID 19280)
+-- TOC entry 489 (class 1255 OID 19280)
 -- Name: protect_created_by(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1580,7 +1356,7 @@ $$;
 ALTER FUNCTION public.protect_created_by() OWNER TO postgres;
 
 --
--- TOC entry 516 (class 1255 OID 19281)
+-- TOC entry 506 (class 1255 OID 19281)
 -- Name: reduce_to_single_digit(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1597,173 +1373,7 @@ $$;
 ALTER FUNCTION public.reduce_to_single_digit(val integer) OWNER TO postgres;
 
 --
--- TOC entry 433 (class 1255 OID 19282)
--- Name: reorder_route_shop_links(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.reorder_route_shop_links(p_link_id uuid, p_new_position integer) RETURNS TABLE(link_id uuid, route_id uuid, shop_id uuid, visit_order integer, created_at timestamp with time zone, updated_at timestamp with time zone)
-    LANGUAGE plpgsql
-    AS $$
-
-DECLARE
-
-  v_old_position INTEGER;
-
-  v_route_id UUID;
-
-BEGIN
-
-  -- Get the current position and route_id of the item being moved
-
-  SELECT rsl.visit_order, rsl.route_id 
-
-  INTO v_old_position, v_route_id
-
-  FROM route_shop_links rsl
-
-  WHERE rsl.link_id = p_link_id;
-
-
-
-  -- If moving down (increasing position)
-
-  IF p_new_position > v_old_position THEN
-
-    -- Shift items between old and new position up by 1
-
-    UPDATE route_shop_links rsl
-
-    SET visit_order = rsl.visit_order - 1
-
-    WHERE rsl.route_id = v_route_id
-
-      AND rsl.visit_order > v_old_position
-
-      AND rsl.visit_order <= p_new_position;
-
-  
-
-  -- If moving up (decreasing position)
-
-  ELSIF p_new_position < v_old_position THEN
-
-    -- Shift items between new and old position down by 1
-
-    UPDATE route_shop_links rsl
-
-    SET visit_order = rsl.visit_order + 1
-
-    WHERE rsl.route_id = v_route_id
-
-      AND rsl.visit_order >= p_new_position
-
-      AND rsl.visit_order < v_old_position;
-
-  END IF;
-
-
-
-  -- Update the moved item to its new position
-
-  UPDATE route_shop_links rsl
-
-  SET visit_order = p_new_position
-
-  WHERE rsl.link_id = p_link_id;
-
-
-
-  -- Return all items for this route in the new order
-
-  RETURN QUERY
-
-  SELECT 
-
-    rsl.link_id,
-
-    rsl.route_id,
-
-    rsl.shop_id,
-
-    rsl.visit_order,
-
-    rsl.created_at,
-
-    rsl.updated_at
-
-  FROM route_shop_links rsl
-
-  WHERE rsl.route_id = v_route_id
-
-  ORDER BY rsl.visit_order ASC;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.reorder_route_shop_links(p_link_id uuid, p_new_position integer) OWNER TO postgres;
-
---
--- TOC entry 499 (class 1255 OID 19283)
--- Name: resequence_visit_order_after_delete(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.resequence_visit_order_after_delete() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  -- Resequence all items in the same route that come after the deleted item
-
-  UPDATE route_shop_links rsl
-
-  SET visit_order = rsl.visit_order - 1
-
-  WHERE rsl.route_id = OLD.route_id
-
-    AND rsl.visit_order > OLD.visit_order;
-
-  
-
-  RETURN OLD;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.resequence_visit_order_after_delete() OWNER TO postgres;
-
---
--- TOC entry 502 (class 1255 OID 19284)
--- Name: set_profit_to_shop(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.set_profit_to_shop() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  -- Calculate profit_to_shop as (item_unit_mrp - item_sell_rate) * item_qty
-
-  NEW.profit_to_shop := (COALESCE(NEW.item_unit_mrp, 0) - NEW.item_sell_rate) * NEW.item_qty;
-
-
-
-  RETURN NEW;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.set_profit_to_shop() OWNER TO postgres;
-
---
--- TOC entry 560 (class 1255 OID 19285)
+-- TOC entry 547 (class 1255 OID 19285)
 -- Name: sync_po_birthdate_ids(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1786,97 +1396,7 @@ $$;
 ALTER FUNCTION public.sync_po_birthdate_ids() OWNER TO postgres;
 
 --
--- TOC entry 491 (class 1255 OID 19286)
--- Name: sync_purchase_orders_with_shop_link(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.sync_purchase_orders_with_shop_link() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$ BEGIN 
-
- UPDATE purchase_order SET po_shop_id = NEW.shop_id, po_route_id = ( SELECT shops_primary_route FROM shops WHERE shop_id = NEW.shop_id ) WHERE created_by = NEW.user_id; RETURN NEW; END; $$;
-
-
-ALTER FUNCTION public.sync_purchase_orders_with_shop_link() OWNER TO postgres;
-
---
--- TOC entry 447 (class 1255 OID 19287)
--- Name: update_purchase_order_totals(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.update_purchase_order_totals() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-
-BEGIN
-
-  -- Recalculate aggregates for the affected purchase order
-
-  UPDATE purchase_order
-
-  SET
-
-    -- Sum of (item_qty * item_sell_rate)
-
-    po_total_amount = COALESCE((
-
-      SELECT SUM(item_qty * item_sell_rate)
-
-      FROM po_item
-
-      WHERE po_id = COALESCE(NEW.po_id, OLD.po_id)
-
-    ), 0),
-
-
-
-    -- Count of line items
-
-    po_line_item_count = COALESCE((
-
-      SELECT COUNT(*)
-
-      FROM po_item
-
-      WHERE po_id = COALESCE(NEW.po_id, OLD.po_id)
-
-    ), 0),
-
-
-
-    -- Sum of profit_to_shop values
-
-    profit_to_shop = COALESCE((
-
-      SELECT SUM(profit_to_shop)
-
-      FROM po_item
-
-      WHERE po_id = COALESCE(NEW.po_id, OLD.po_id)
-
-    ), 0),
-
-
-
-    -- Always refresh updated_at
-
-    updated_at = NOW()
-
-  WHERE po_id = COALESCE(NEW.po_id, OLD.po_id);
-
-
-
-  RETURN NULL;
-
-END;
-
-$$;
-
-
-ALTER FUNCTION public.update_purchase_order_totals() OWNER TO postgres;
-
---
--- TOC entry 479 (class 1255 OID 19288)
+-- TOC entry 474 (class 1255 OID 19288)
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1902,7 +1422,7 @@ $$;
 ALTER FUNCTION public.update_updated_at_column() OWNER TO postgres;
 
 --
--- TOC entry 481 (class 1255 OID 19289)
+-- TOC entry 476 (class 1255 OID 19289)
 -- Name: validate_birthdate_access(uuid, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1945,7 +1465,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 372 (class 1259 OID 19290)
+-- TOC entry 386 (class 1259 OID 19290)
 -- Name: app_config; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1963,7 +1483,7 @@ CREATE TABLE public.app_config (
 ALTER TABLE public.app_config OWNER TO postgres;
 
 --
--- TOC entry 373 (class 1259 OID 19297)
+-- TOC entry 387 (class 1259 OID 19297)
 -- Name: app_remote_configs; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1982,7 +1502,7 @@ CREATE TABLE public.app_remote_configs (
 ALTER TABLE public.app_remote_configs OWNER TO postgres;
 
 --
--- TOC entry 374 (class 1259 OID 19307)
+-- TOC entry 388 (class 1259 OID 19307)
 -- Name: birthdates; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2030,7 +1550,7 @@ CREATE TABLE public.birthdates (
 ALTER TABLE public.birthdates OWNER TO postgres;
 
 --
--- TOC entry 375 (class 1259 OID 19317)
+-- TOC entry 389 (class 1259 OID 19317)
 -- Name: boosting_personality_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2045,7 +1565,7 @@ CREATE TABLE public.boosting_personality_numbers (
 ALTER TABLE public.boosting_personality_numbers OWNER TO postgres;
 
 --
--- TOC entry 376 (class 1259 OID 19322)
+-- TOC entry 390 (class 1259 OID 19322)
 -- Name: career_by_destiny_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2060,7 +1580,7 @@ CREATE TABLE public.career_by_destiny_numbers (
 ALTER TABLE public.career_by_destiny_numbers OWNER TO postgres;
 
 --
--- TOC entry 377 (class 1259 OID 19327)
+-- TOC entry 391 (class 1259 OID 19327)
 -- Name: combination_personality_lifepath; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2079,7 +1599,7 @@ CREATE TABLE public.combination_personality_lifepath (
 ALTER TABLE public.combination_personality_lifepath OWNER TO postgres;
 
 --
--- TOC entry 378 (class 1259 OID 19332)
+-- TOC entry 392 (class 1259 OID 19332)
 -- Name: lifepath_number_data; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2094,7 +1614,7 @@ CREATE TABLE public.lifepath_number_data (
 ALTER TABLE public.lifepath_number_data OWNER TO postgres;
 
 --
--- TOC entry 379 (class 1259 OID 19337)
+-- TOC entry 393 (class 1259 OID 19337)
 -- Name: loshu_grid_details; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2113,7 +1633,7 @@ CREATE TABLE public.loshu_grid_details (
 ALTER TABLE public.loshu_grid_details OWNER TO postgres;
 
 --
--- TOC entry 380 (class 1259 OID 19343)
+-- TOC entry 394 (class 1259 OID 19343)
 -- Name: missing_number_tells; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2128,7 +1648,7 @@ CREATE TABLE public.missing_number_tells (
 ALTER TABLE public.missing_number_tells OWNER TO postgres;
 
 --
--- TOC entry 381 (class 1259 OID 19348)
+-- TOC entry 395 (class 1259 OID 19348)
 -- Name: occurance_ofnumbers_ingridcell; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2144,7 +1664,7 @@ CREATE TABLE public.occurance_ofnumbers_ingridcell (
 ALTER TABLE public.occurance_ofnumbers_ingridcell OWNER TO postgres;
 
 --
--- TOC entry 382 (class 1259 OID 19353)
+-- TOC entry 396 (class 1259 OID 19353)
 -- Name: personality_number_data; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2172,7 +1692,7 @@ CREATE TABLE public.personality_number_data (
 ALTER TABLE public.personality_number_data OWNER TO postgres;
 
 --
--- TOC entry 383 (class 1259 OID 19358)
+-- TOC entry 397 (class 1259 OID 19358)
 -- Name: pinnaclenumbersdata; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2188,7 +1708,7 @@ CREATE TABLE public.pinnaclenumbersdata (
 ALTER TABLE public.pinnaclenumbersdata OWNER TO postgres;
 
 --
--- TOC entry 384 (class 1259 OID 19363)
+-- TOC entry 398 (class 1259 OID 19363)
 -- Name: planet_relations; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2212,91 +1732,7 @@ CREATE TABLE public.planet_relations (
 ALTER TABLE public.planet_relations OWNER TO postgres;
 
 --
--- TOC entry 385 (class 1259 OID 19374)
--- Name: po_collections; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.po_collections (
-    collection_id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
-    po_id uuid NOT NULL,
-    collected_amount numeric(10,2) DEFAULT 0.0 NOT NULL,
-    is_cash boolean DEFAULT false NOT NULL,
-    is_online boolean DEFAULT false NOT NULL,
-    is_cheque boolean DEFAULT false NOT NULL,
-    cheque_no text,
-    is_sign boolean DEFAULT false NOT NULL,
-    sign_amount numeric(10,2) DEFAULT 0.0,
-    comments text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    created_by uuid,
-    updated_by uuid,
-    CONSTRAINT cheque_no_required CHECK (((is_cheque = false) OR (cheque_no IS NOT NULL)))
-);
-
-
-ALTER TABLE public.po_collections OWNER TO postgres;
-
---
--- TOC entry 386 (class 1259 OID 19389)
--- Name: po_item; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.po_item (
-    po_item_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    po_id uuid NOT NULL,
-    item_name text,
-    item_qty numeric(4,1) NOT NULL,
-    item_sell_rate numeric NOT NULL,
-    item_price numeric NOT NULL,
-    item_unit_mrp numeric,
-    profit_to_shop numeric,
-    created_by uuid NOT NULL,
-    updated_by uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    product_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.po_item OWNER TO postgres;
-
---
--- TOC entry 387 (class 1259 OID 19397)
--- Name: product; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.product (
-    product_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    product_type text NOT NULL,
-    product_name text NOT NULL,
-    product_weight_value numeric NOT NULL,
-    product_weight_unit text NOT NULL,
-    purchase_rate_for_retailer numeric NOT NULL,
-    mrp numeric NOT NULL,
-    packaging_type text NOT NULL,
-    pieces_per_outer integer,
-    is_outer boolean DEFAULT false NOT NULL,
-    is_active boolean DEFAULT true NOT NULL,
-    is_available boolean DEFAULT true NOT NULL,
-    created_by uuid NOT NULL,
-    updated_by uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    product_image_url text,
-    qtyindecimal boolean DEFAULT false NOT NULL,
-    product_name_hindi text,
-    sku text,
-    CONSTRAINT product_packaging_type_check CHECK ((packaging_type = ANY (ARRAY['box'::text, 'pouch'::text]))),
-    CONSTRAINT product_product_weight_unit_check CHECK ((product_weight_unit = ANY (ARRAY['gms'::text, 'kg'::text, 'ml'::text]))),
-    CONSTRAINT product_type_check CHECK ((product_type = ANY (ARRAY['Aata'::text, 'Biscuit'::text, 'Color'::text, 'Essence'::text, 'Goli'::text, 'Pow Custard'::text, 'Pow Ice Cream Mix'::text, 'Pow Jelly'::text, 'Powder'::text, 'Pouch'::text])))
-);
-
-
-ALTER TABLE public.product OWNER TO postgres;
-
---
--- TOC entry 388 (class 1259 OID 19412)
+-- TOC entry 399 (class 1259 OID 19412)
 -- Name: purchase_order; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2325,7 +1761,7 @@ CREATE TABLE public.purchase_order (
 ALTER TABLE public.purchase_order OWNER TO postgres;
 
 --
--- TOC entry 389 (class 1259 OID 19423)
+-- TOC entry 400 (class 1259 OID 19423)
 -- Name: rbac_modules; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2342,7 +1778,7 @@ CREATE TABLE public.rbac_modules (
 ALTER TABLE public.rbac_modules OWNER TO postgres;
 
 --
--- TOC entry 390 (class 1259 OID 19432)
+-- TOC entry 401 (class 1259 OID 19432)
 -- Name: rbac_permissions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2362,7 +1798,7 @@ CREATE TABLE public.rbac_permissions (
 ALTER TABLE public.rbac_permissions OWNER TO postgres;
 
 --
--- TOC entry 391 (class 1259 OID 19442)
+-- TOC entry 402 (class 1259 OID 19442)
 -- Name: rbac_roles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2379,7 +1815,7 @@ CREATE TABLE public.rbac_roles (
 ALTER TABLE public.rbac_roles OWNER TO postgres;
 
 --
--- TOC entry 392 (class 1259 OID 19451)
+-- TOC entry 403 (class 1259 OID 19451)
 -- Name: remedies_for_missing_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2394,88 +1830,7 @@ CREATE TABLE public.remedies_for_missing_numbers (
 ALTER TABLE public.remedies_for_missing_numbers OWNER TO postgres;
 
 --
--- TOC entry 393 (class 1259 OID 19456)
--- Name: retailer_shop_link; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.retailer_shop_link (
-    link_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    shop_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    created_by uuid,
-    updated_by uuid
-);
-
-
-ALTER TABLE public.retailer_shop_link OWNER TO postgres;
-
---
--- TOC entry 394 (class 1259 OID 19462)
--- Name: route_shop_links; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.route_shop_links (
-    link_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    route_id uuid,
-    shop_id uuid,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    visit_order integer
-);
-
-
-ALTER TABLE public.route_shop_links OWNER TO postgres;
-
---
--- TOC entry 395 (class 1259 OID 19468)
--- Name: routes; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.routes (
-    route_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    route_name text NOT NULL,
-    route_note text,
-    is_active boolean DEFAULT true,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.routes OWNER TO postgres;
-
---
--- TOC entry 396 (class 1259 OID 19477)
--- Name: shops; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.shops (
-    shop_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    shop_name text NOT NULL,
-    shops_primary_route uuid,
-    shop_note text,
-    hidden_note text,
-    shop_mobile_1 character varying(15),
-    shop_mobile_2 character varying(15),
-    shop_person_name text,
-    is_active boolean DEFAULT true,
-    shop_location_url text,
-    shop_landmark text,
-    shop_address text,
-    shop_photo_id text,
-    shop_photo_url text,
-    shop_lat double precision,
-    shop_long double precision,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.shops OWNER TO postgres;
-
---
--- TOC entry 397 (class 1259 OID 19486)
+-- TOC entry 404 (class 1259 OID 19486)
 -- Name: static_testimonials; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2493,7 +1848,7 @@ CREATE TABLE public.static_testimonials (
 ALTER TABLE public.static_testimonials OWNER TO postgres;
 
 --
--- TOC entry 398 (class 1259 OID 19492)
+-- TOC entry 405 (class 1259 OID 19492)
 -- Name: static_testimonials_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -2509,8 +1864,8 @@ CREATE SEQUENCE public.static_testimonials_id_seq
 ALTER SEQUENCE public.static_testimonials_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4308 (class 0 OID 0)
--- Dependencies: 398
+-- TOC entry 4121 (class 0 OID 0)
+-- Dependencies: 405
 -- Name: static_testimonials_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -2518,22 +1873,7 @@ ALTER SEQUENCE public.static_testimonials_id_seq OWNED BY public.static_testimon
 
 
 --
--- TOC entry 399 (class 1259 OID 19493)
--- Name: tbl_notes; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.tbl_notes (
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    body text NOT NULL,
-    note_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.tbl_notes OWNER TO postgres;
-
---
--- TOC entry 400 (class 1259 OID 19501)
+-- TOC entry 406 (class 1259 OID 19501)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2554,151 +1894,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 401 (class 1259 OID 19511)
--- Name: view_po_collections; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_po_collections AS
- SELECT pc.collection_id,
-    pc.po_id,
-    pc.collected_amount,
-    pc.is_cash,
-    pc.is_online,
-    pc.is_cheque,
-    pc.cheque_no,
-    pc.is_sign,
-    pc.sign_amount,
-    pc.comments,
-    pc.created_at,
-    pc.updated_at,
-    pc.created_by,
-    pc.updated_by,
-    po.status AS po_status_label,
-    po.updated_at AS po_updated_at,
-    s.shop_name AS shop_id_label,
-    r.route_name AS route_id_label,
-    uc.full_name AS created_by_label,
-    uu.full_name AS updated_by_label
-   FROM (((((public.po_collections pc
-     LEFT JOIN public.purchase_order po ON ((pc.po_id = po.po_id)))
-     LEFT JOIN public.shops s ON ((po.po_shop_id = s.shop_id)))
-     LEFT JOIN public.routes r ON ((po.po_route_id = r.route_id)))
-     LEFT JOIN public.users uc ON ((pc.created_by = uc.user_id)))
-     LEFT JOIN public.users uu ON ((pc.updated_by = uu.user_id)));
-
-
-ALTER VIEW public.view_po_collections OWNER TO postgres;
-
---
--- TOC entry 402 (class 1259 OID 19516)
--- Name: view_po_items; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_po_items AS
- SELECT i.po_item_id,
-    i.po_id,
-    i.product_id,
-    i.item_name,
-    i.item_qty,
-    i.item_sell_rate,
-    i.item_price,
-    i.item_unit_mrp,
-    i.profit_to_shop,
-    i.created_by,
-    i.updated_by,
-    i.created_at,
-    i.updated_at,
-    pr.product_name AS product_id_label,
-    pr.product_weight_value AS product_weight_value_label,
-    pr.product_weight_unit AS product_weight_unit_label,
-    pr.product_type AS product_type_label,
-    uc.full_name AS created_by_label,
-    uu.full_name AS updated_by_label
-   FROM (((public.po_item i
-     LEFT JOIN public.product pr ON ((i.product_id = pr.product_id)))
-     LEFT JOIN public.users uc ON ((i.created_by = uc.user_id)))
-     LEFT JOIN public.users uu ON ((i.updated_by = uu.user_id)));
-
-
-ALTER VIEW public.view_po_items OWNER TO postgres;
-
---
--- TOC entry 403 (class 1259 OID 19521)
--- Name: view_products; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_products AS
- SELECT p.product_id,
-    p.product_type,
-    p.product_name,
-    p.product_name_hindi,
-    p.sku,
-    p.product_weight_value,
-    p.product_weight_unit,
-    p.purchase_rate_for_retailer,
-    p.mrp,
-    p.packaging_type,
-    p.pieces_per_outer,
-    p.is_outer,
-    p.is_active,
-    p.is_available,
-    p.qtyindecimal,
-    p.product_image_url,
-    p.created_by,
-    p.updated_by,
-    p.created_at,
-    p.updated_at,
-    uc.full_name AS created_by_label,
-    uu.full_name AS updated_by_label
-   FROM ((public.product p
-     LEFT JOIN public.users uc ON ((p.created_by = uc.user_id)))
-     LEFT JOIN public.users uu ON ((p.updated_by = uu.user_id)))
-  WHERE (p.is_active = true);
-
-
-ALTER VIEW public.view_products OWNER TO postgres;
-
---
--- TOC entry 404 (class 1259 OID 19526)
--- Name: view_purchase_orders; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_purchase_orders AS
- SELECT po.po_id,
-    po.po_total_amount,
-    po.po_line_item_count,
-    po.po_route_id,
-    po.po_shop_id,
-    po.user_comment,
-    po.admin_comment,
-    po.profit_to_shop,
-    po.po_lat,
-    po.po_long,
-    po.status,
-    po.created_by,
-    po.updated_by,
-    po.created_at,
-    po.updated_at,
-    r.route_name AS po_route_id_label,
-    s.shop_name AS po_shop_id_label,
-    s.shop_address AS shop_address_label,
-    s.shop_note AS shop_note_label,
-    s.shop_mobile_1 AS shop_mobile_label,
-    uc.full_name AS created_by_label,
-    uu.full_name AS updated_by_label,
-    l.visit_order
-   FROM (((((public.purchase_order po
-     LEFT JOIN public.routes r ON ((po.po_route_id = r.route_id)))
-     LEFT JOIN public.shops s ON ((po.po_shop_id = s.shop_id)))
-     LEFT JOIN public.route_shop_links l ON (((po.po_shop_id = l.shop_id) AND (po.po_route_id = l.route_id))))
-     LEFT JOIN public.users uc ON ((po.created_by = uc.user_id)))
-     LEFT JOIN public.users uu ON ((po.updated_by = uu.user_id)));
-
-
-ALTER VIEW public.view_purchase_orders OWNER TO postgres;
-
---
--- TOC entry 405 (class 1259 OID 19531)
+-- TOC entry 407 (class 1259 OID 19531)
 -- Name: view_rbac_permissions; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -2722,107 +1918,7 @@ CREATE VIEW public.view_rbac_permissions AS
 ALTER VIEW public.view_rbac_permissions OWNER TO postgres;
 
 --
--- TOC entry 406 (class 1259 OID 19536)
--- Name: view_retailer_shop_link; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_retailer_shop_link AS
- SELECT rsl.link_id,
-    rsl.user_id,
-    rsl.shop_id,
-    rsl.created_at,
-    rsl.updated_at,
-    rsl.created_by,
-    rsl.updated_by,
-    u.full_name AS user_id_label,
-    rr.role_name AS user_role_label,
-    s.shop_name AS shop_id_label,
-    r.route_name AS shop_route_label
-   FROM ((((public.retailer_shop_link rsl
-     LEFT JOIN public.users u ON ((rsl.user_id = u.user_id)))
-     LEFT JOIN public.rbac_roles rr ON ((u.role_id = rr.role_id)))
-     LEFT JOIN public.shops s ON ((rsl.shop_id = s.shop_id)))
-     LEFT JOIN public.routes r ON ((s.shops_primary_route = r.route_id)));
-
-
-ALTER VIEW public.view_retailer_shop_link OWNER TO postgres;
-
---
--- TOC entry 407 (class 1259 OID 19541)
--- Name: view_route_shop_links; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_route_shop_links AS
- SELECT l.link_id,
-    l.route_id,
-    l.shop_id,
-    l.visit_order,
-    l.created_at,
-    l.updated_at,
-    r.route_name AS route_id_label,
-    s.shop_name AS shop_id_label,
-    s.shops_primary_route,
-    sr.route_name AS shops_primary_route_label
-   FROM (((public.route_shop_links l
-     LEFT JOIN public.routes r ON ((l.route_id = r.route_id)))
-     LEFT JOIN public.shops s ON ((l.shop_id = s.shop_id)))
-     LEFT JOIN public.routes sr ON ((s.shops_primary_route = sr.route_id)))
-  WHERE ((s.is_active = true) AND ((r.is_active = true) OR (r.is_active IS NULL)) AND ((sr.is_active = true) OR (sr.is_active IS NULL)));
-
-
-ALTER VIEW public.view_route_shop_links OWNER TO postgres;
-
---
--- TOC entry 408 (class 1259 OID 19546)
--- Name: view_shop_dropdown; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_shop_dropdown AS
- SELECT shop_id,
-    shop_name
-   FROM public.shops
-  WHERE (is_active = true)
-  ORDER BY shop_name;
-
-
-ALTER VIEW public.view_shop_dropdown OWNER TO postgres;
-
---
--- TOC entry 409 (class 1259 OID 19550)
--- Name: view_shops; Type: VIEW; Schema: public; Owner: postgres
---
-
-CREATE VIEW public.view_shops AS
- SELECT s.shop_id,
-    s.shop_name,
-    s.shops_primary_route,
-    s.shop_note,
-    s.hidden_note,
-    s.shop_mobile_1,
-    s.shop_mobile_2,
-    s.shop_person_name,
-    s.is_active,
-    s.shop_location_url,
-    s.shop_landmark,
-    s.shop_address,
-    s.shop_photo_id,
-    s.shop_photo_url,
-    s.shop_lat,
-    s.shop_long,
-    s.created_at,
-    s.updated_at,
-    r.route_name AS shops_primary_route_label,
-    l.visit_order
-   FROM ((public.shops s
-     LEFT JOIN public.routes r ON ((s.shops_primary_route = r.route_id)))
-     LEFT JOIN public.route_shop_links l ON (((s.shop_id = l.shop_id) AND (s.shops_primary_route = l.route_id))))
-  WHERE ((s.is_active = true) AND ((r.is_active = true) OR (r.is_active IS NULL)));
-
-
-ALTER VIEW public.view_shops OWNER TO postgres;
-
---
--- TOC entry 410 (class 1259 OID 19555)
+-- TOC entry 414 (class 1259 OID 20239)
 -- Name: view_users; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -2841,7 +1937,7 @@ CREATE VIEW public.view_users AS
 ALTER VIEW public.view_users OWNER TO postgres;
 
 --
--- TOC entry 3918 (class 2604 OID 19560)
+-- TOC entry 3824 (class 2604 OID 19560)
 -- Name: static_testimonials id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -2849,7 +1945,7 @@ ALTER TABLE ONLY public.static_testimonials ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
--- TOC entry 3937 (class 2606 OID 19562)
+-- TOC entry 3836 (class 2606 OID 19562)
 -- Name: app_config app_config_config_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2858,7 +1954,7 @@ ALTER TABLE ONLY public.app_config
 
 
 --
--- TOC entry 3939 (class 2606 OID 19564)
+-- TOC entry 3838 (class 2606 OID 19564)
 -- Name: app_config app_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2867,7 +1963,7 @@ ALTER TABLE ONLY public.app_config
 
 
 --
--- TOC entry 3941 (class 2606 OID 19566)
+-- TOC entry 3840 (class 2606 OID 19566)
 -- Name: app_remote_configs app_remote_configs_package_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2876,7 +1972,7 @@ ALTER TABLE ONLY public.app_remote_configs
 
 
 --
--- TOC entry 3943 (class 2606 OID 19568)
+-- TOC entry 3842 (class 2606 OID 19568)
 -- Name: app_remote_configs app_remote_configs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2885,7 +1981,7 @@ ALTER TABLE ONLY public.app_remote_configs
 
 
 --
--- TOC entry 3945 (class 2606 OID 19570)
+-- TOC entry 3844 (class 2606 OID 19570)
 -- Name: birthdates birthdates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2894,7 +1990,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 3949 (class 2606 OID 19572)
+-- TOC entry 3848 (class 2606 OID 19572)
 -- Name: boosting_personality_numbers boosting_personality_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2903,7 +1999,7 @@ ALTER TABLE ONLY public.boosting_personality_numbers
 
 
 --
--- TOC entry 3951 (class 2606 OID 19574)
+-- TOC entry 3850 (class 2606 OID 19574)
 -- Name: career_by_destiny_numbers carrier_by_destiny_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2912,7 +2008,7 @@ ALTER TABLE ONLY public.career_by_destiny_numbers
 
 
 --
--- TOC entry 3957 (class 2606 OID 19576)
+-- TOC entry 3856 (class 2606 OID 19576)
 -- Name: loshu_grid_details loshu_grid_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2921,7 +2017,7 @@ ALTER TABLE ONLY public.loshu_grid_details
 
 
 --
--- TOC entry 3959 (class 2606 OID 19578)
+-- TOC entry 3858 (class 2606 OID 19578)
 -- Name: missing_number_tells missing_number_tells_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2930,7 +2026,7 @@ ALTER TABLE ONLY public.missing_number_tells
 
 
 --
--- TOC entry 3963 (class 2606 OID 19580)
+-- TOC entry 3862 (class 2606 OID 19580)
 -- Name: personality_number_data personality_number_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2939,7 +2035,7 @@ ALTER TABLE ONLY public.personality_number_data
 
 
 --
--- TOC entry 3953 (class 2606 OID 19582)
+-- TOC entry 3852 (class 2606 OID 19582)
 -- Name: combination_personality_lifepath pk_combination; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2948,7 +2044,7 @@ ALTER TABLE ONLY public.combination_personality_lifepath
 
 
 --
--- TOC entry 3955 (class 2606 OID 19584)
+-- TOC entry 3854 (class 2606 OID 19584)
 -- Name: lifepath_number_data pk_lifepath; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2957,7 +2053,7 @@ ALTER TABLE ONLY public.lifepath_number_data
 
 
 --
--- TOC entry 3961 (class 2606 OID 19586)
+-- TOC entry 3860 (class 2606 OID 19586)
 -- Name: occurance_ofnumbers_ingridcell pk_occurance; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2966,7 +2062,7 @@ ALTER TABLE ONLY public.occurance_ofnumbers_ingridcell
 
 
 --
--- TOC entry 3965 (class 2606 OID 19588)
+-- TOC entry 3864 (class 2606 OID 19588)
 -- Name: pinnaclenumbersdata pk_pinnacle; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2975,7 +2071,7 @@ ALTER TABLE ONLY public.pinnaclenumbersdata
 
 
 --
--- TOC entry 3967 (class 2606 OID 19590)
+-- TOC entry 3866 (class 2606 OID 19590)
 -- Name: planet_relations planet_relations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2984,34 +2080,7 @@ ALTER TABLE ONLY public.planet_relations
 
 
 --
--- TOC entry 3970 (class 2606 OID 19592)
--- Name: po_collections po_collections_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_collections
-    ADD CONSTRAINT po_collections_pkey PRIMARY KEY (collection_id);
-
-
---
--- TOC entry 3972 (class 2606 OID 19594)
--- Name: po_item po_item_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_item
-    ADD CONSTRAINT po_item_pkey PRIMARY KEY (po_item_id);
-
-
---
--- TOC entry 3974 (class 2606 OID 19596)
--- Name: product product_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.product
-    ADD CONSTRAINT product_pkey PRIMARY KEY (product_id);
-
-
---
--- TOC entry 3976 (class 2606 OID 19598)
+-- TOC entry 3868 (class 2606 OID 19598)
 -- Name: purchase_order purchase_order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3020,7 +2089,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 3978 (class 2606 OID 19600)
+-- TOC entry 3870 (class 2606 OID 19600)
 -- Name: rbac_modules rbac_modules_module_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3029,7 +2098,7 @@ ALTER TABLE ONLY public.rbac_modules
 
 
 --
--- TOC entry 3980 (class 2606 OID 19602)
+-- TOC entry 3872 (class 2606 OID 19602)
 -- Name: rbac_modules rbac_modules_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3038,7 +2107,7 @@ ALTER TABLE ONLY public.rbac_modules
 
 
 --
--- TOC entry 3982 (class 2606 OID 19604)
+-- TOC entry 3874 (class 2606 OID 19604)
 -- Name: rbac_permissions rbac_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3047,7 +2116,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3984 (class 2606 OID 19606)
+-- TOC entry 3876 (class 2606 OID 19606)
 -- Name: rbac_permissions rbac_permissions_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3056,7 +2125,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3986 (class 2606 OID 19608)
+-- TOC entry 3878 (class 2606 OID 19608)
 -- Name: rbac_roles rbac_roles_role_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3065,7 +2134,7 @@ ALTER TABLE ONLY public.rbac_roles
 
 
 --
--- TOC entry 3990 (class 2606 OID 19610)
+-- TOC entry 3882 (class 2606 OID 19610)
 -- Name: remedies_for_missing_numbers remedies_of_missing_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3074,16 +2143,7 @@ ALTER TABLE ONLY public.remedies_for_missing_numbers
 
 
 --
--- TOC entry 3992 (class 2606 OID 19612)
--- Name: retailer_shop_link retailer_shop_link_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.retailer_shop_link
-    ADD CONSTRAINT retailer_shop_link_pkey PRIMARY KEY (link_id);
-
-
---
--- TOC entry 3988 (class 2606 OID 19614)
+-- TOC entry 3880 (class 2606 OID 19614)
 -- Name: rbac_roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3092,43 +2152,7 @@ ALTER TABLE ONLY public.rbac_roles
 
 
 --
--- TOC entry 3994 (class 2606 OID 19616)
--- Name: route_shop_links route_shop_links_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.route_shop_links
-    ADD CONSTRAINT route_shop_links_pkey PRIMARY KEY (link_id);
-
-
---
--- TOC entry 3996 (class 2606 OID 19618)
--- Name: route_shop_links route_shop_links_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.route_shop_links
-    ADD CONSTRAINT route_shop_links_unique UNIQUE (route_id, shop_id);
-
-
---
--- TOC entry 3998 (class 2606 OID 19620)
--- Name: routes routes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.routes
-    ADD CONSTRAINT routes_pkey PRIMARY KEY (route_id);
-
-
---
--- TOC entry 4000 (class 2606 OID 19622)
--- Name: shops shops_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.shops
-    ADD CONSTRAINT shops_pkey PRIMARY KEY (shop_id);
-
-
---
--- TOC entry 4002 (class 2606 OID 19624)
+-- TOC entry 3884 (class 2606 OID 19624)
 -- Name: static_testimonials static_testimonials_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3137,16 +2161,7 @@ ALTER TABLE ONLY public.static_testimonials
 
 
 --
--- TOC entry 4004 (class 2606 OID 19626)
--- Name: tbl_notes tbl_notes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.tbl_notes
-    ADD CONSTRAINT tbl_notes_pkey PRIMARY KEY (note_id);
-
-
---
--- TOC entry 3947 (class 2606 OID 19628)
+-- TOC entry 3846 (class 2606 OID 19628)
 -- Name: birthdates unique_user_birthdate; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3155,7 +2170,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 4006 (class 2606 OID 19630)
+-- TOC entry 3886 (class 2606 OID 19630)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3164,71 +2179,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3968 (class 1259 OID 19631)
--- Name: idx_po_collections_po_id; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_po_collections_po_id ON public.po_collections USING btree (po_id);
-
-
---
--- TOC entry 4058 (class 2620 OID 19632)
--- Name: route_shop_links auto_assign_visit_order; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER auto_assign_visit_order BEFORE INSERT ON public.route_shop_links FOR EACH ROW EXECUTE FUNCTION public.assign_visit_order();
-
-
---
--- TOC entry 4039 (class 2620 OID 19633)
--- Name: po_item po_item_after_delete_tr; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER po_item_after_delete_tr AFTER DELETE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.po_item_after_delete_tr();
-
-
---
--- TOC entry 4040 (class 2620 OID 19634)
--- Name: po_item po_item_after_insert_tr; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER po_item_after_insert_tr AFTER INSERT ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.po_item_after_insert_tr();
-
-
---
--- TOC entry 4041 (class 2620 OID 19635)
--- Name: po_item po_item_after_update_tr; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER po_item_after_update_tr AFTER UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.po_item_after_update_tr();
-
-
---
--- TOC entry 4037 (class 2620 OID 19636)
--- Name: po_collections preserve_created_by_po_collections; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER preserve_created_by_po_collections BEFORE UPDATE ON public.po_collections FOR EACH ROW EXECUTE FUNCTION public.protect_created_by();
-
-
---
--- TOC entry 4042 (class 2620 OID 19637)
--- Name: po_item preserve_created_by_po_item; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER preserve_created_by_po_item BEFORE UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.protect_created_by();
-
-
---
--- TOC entry 4047 (class 2620 OID 19638)
--- Name: product preserve_created_by_product; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER preserve_created_by_product BEFORE UPDATE ON public.product FOR EACH ROW EXECUTE FUNCTION public.protect_created_by();
-
-
---
--- TOC entry 4049 (class 2620 OID 19639)
+-- TOC entry 3898 (class 2620 OID 19639)
 -- Name: purchase_order preserve_created_by_purchase_order; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3236,23 +2187,7 @@ CREATE TRIGGER preserve_created_by_purchase_order BEFORE UPDATE ON public.purcha
 
 
 --
--- TOC entry 4054 (class 2620 OID 19640)
--- Name: retailer_shop_link preserve_created_by_retailer_shop_link; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER preserve_created_by_retailer_shop_link BEFORE UPDATE ON public.retailer_shop_link FOR EACH ROW EXECUTE FUNCTION public.protect_created_by();
-
-
---
--- TOC entry 4059 (class 2620 OID 19641)
--- Name: route_shop_links resequence_after_delete; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER resequence_after_delete AFTER DELETE ON public.route_shop_links FOR EACH ROW EXECUTE FUNCTION public.resequence_visit_order_after_delete();
-
-
---
--- TOC entry 4034 (class 2620 OID 19642)
+-- TOC entry 3895 (class 2620 OID 19642)
 -- Name: app_remote_configs set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3260,31 +2195,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.app_remote_configs FOR EAC
 
 
 --
--- TOC entry 4038 (class 2620 OID 19643)
--- Name: po_collections set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.po_collections FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4043 (class 2620 OID 19644)
--- Name: po_item set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4048 (class 2620 OID 19645)
--- Name: product set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.product FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4050 (class 2620 OID 19646)
+-- TOC entry 3899 (class 2620 OID 19646)
 -- Name: purchase_order set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3292,7 +2203,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.purchase_order FOR EACH RO
 
 
 --
--- TOC entry 4051 (class 2620 OID 19647)
+-- TOC entry 3900 (class 2620 OID 19647)
 -- Name: rbac_modules set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3300,7 +2211,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_modules FOR EACH ROW 
 
 
 --
--- TOC entry 4052 (class 2620 OID 19648)
+-- TOC entry 3901 (class 2620 OID 19648)
 -- Name: rbac_permissions set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3308,7 +2219,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_permissions FOR EACH 
 
 
 --
--- TOC entry 4053 (class 2620 OID 19649)
+-- TOC entry 3902 (class 2620 OID 19649)
 -- Name: rbac_roles set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3316,47 +2227,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_roles FOR EACH ROW EX
 
 
 --
--- TOC entry 4055 (class 2620 OID 19650)
--- Name: retailer_shop_link set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.retailer_shop_link FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4060 (class 2620 OID 19651)
--- Name: route_shop_links set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.route_shop_links FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4061 (class 2620 OID 19652)
--- Name: routes set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.routes FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4062 (class 2620 OID 19653)
--- Name: shops set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.shops FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4063 (class 2620 OID 19654)
--- Name: tbl_notes set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.tbl_notes FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- TOC entry 4064 (class 2620 OID 19655)
+-- TOC entry 3903 (class 2620 OID 19655)
 -- Name: users set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3364,23 +2235,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE
 
 
 --
--- TOC entry 4056 (class 2620 OID 19656)
--- Name: retailer_shop_link sync_purchase_orders_after_insert; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER sync_purchase_orders_after_insert AFTER INSERT ON public.retailer_shop_link FOR EACH ROW EXECUTE FUNCTION public.sync_purchase_orders_with_shop_link();
-
-
---
--- TOC entry 4057 (class 2620 OID 19657)
--- Name: retailer_shop_link sync_purchase_orders_after_update; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER sync_purchase_orders_after_update AFTER UPDATE ON public.retailer_shop_link FOR EACH ROW EXECUTE FUNCTION public.sync_purchase_orders_with_shop_link();
-
-
---
--- TOC entry 4035 (class 2620 OID 19658)
+-- TOC entry 3896 (class 2620 OID 19658)
 -- Name: birthdates trg_birthdate_analysis; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3388,23 +2243,7 @@ CREATE TRIGGER trg_birthdate_analysis BEFORE INSERT OR UPDATE OF birthdate ON pu
 
 
 --
--- TOC entry 4044 (class 2620 OID 19659)
--- Name: po_item trg_fill_po_item_defaults; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trg_fill_po_item_defaults BEFORE INSERT OR UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.fill_po_item_defaults();
-
-
---
--- TOC entry 4045 (class 2620 OID 19660)
--- Name: po_item trg_set_profit_to_shop; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trg_set_profit_to_shop BEFORE INSERT OR UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.set_profit_to_shop();
-
-
---
--- TOC entry 4036 (class 2620 OID 19661)
+-- TOC entry 3897 (class 2620 OID 19661)
 -- Name: birthdates trg_sync_po_birthdate_ids; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3412,15 +2251,7 @@ CREATE TRIGGER trg_sync_po_birthdate_ids AFTER DELETE ON public.birthdates FOR E
 
 
 --
--- TOC entry 4046 (class 2620 OID 19662)
--- Name: po_item trg_update_purchase_order_totals; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trg_update_purchase_order_totals AFTER INSERT OR DELETE OR UPDATE ON public.po_item FOR EACH ROW EXECUTE FUNCTION public.update_purchase_order_totals();
-
-
---
--- TOC entry 4007 (class 2606 OID 19663)
+-- TOC entry 3887 (class 2606 OID 19663)
 -- Name: birthdates birthdates_po_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3429,7 +2260,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 4008 (class 2606 OID 19668)
+-- TOC entry 3888 (class 2606 OID 19668)
 -- Name: birthdates birthdates_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3438,25 +2269,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 4012 (class 2606 OID 19673)
--- Name: po_item fk_created_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_item
-    ADD CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4016 (class 2606 OID 19678)
--- Name: product fk_created_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.product
-    ADD CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4018 (class 2606 OID 19683)
+-- TOC entry 3889 (class 2606 OID 19683)
 -- Name: purchase_order fk_created_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3465,61 +2278,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 4013 (class 2606 OID 19688)
--- Name: po_item fk_po; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_item
-    ADD CONSTRAINT fk_po FOREIGN KEY (po_id) REFERENCES public.purchase_order(po_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4014 (class 2606 OID 19693)
--- Name: po_item fk_product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_item
-    ADD CONSTRAINT fk_product_id FOREIGN KEY (product_id) REFERENCES public.product(product_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4019 (class 2606 OID 19698)
--- Name: purchase_order fk_route; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.purchase_order
-    ADD CONSTRAINT fk_route FOREIGN KEY (po_route_id) REFERENCES public.routes(route_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4020 (class 2606 OID 19703)
--- Name: purchase_order fk_shop; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.purchase_order
-    ADD CONSTRAINT fk_shop FOREIGN KEY (po_shop_id) REFERENCES public.shops(shop_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4015 (class 2606 OID 19708)
--- Name: po_item fk_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_item
-    ADD CONSTRAINT fk_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4017 (class 2606 OID 19713)
--- Name: product fk_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.product
-    ADD CONSTRAINT fk_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4021 (class 2606 OID 19718)
+-- TOC entry 3890 (class 2606 OID 19718)
 -- Name: purchase_order fk_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3528,34 +2287,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 4009 (class 2606 OID 19723)
--- Name: po_collections po_collections_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_collections
-    ADD CONSTRAINT po_collections_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id);
-
-
---
--- TOC entry 4010 (class 2606 OID 19728)
--- Name: po_collections po_collections_po_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_collections
-    ADD CONSTRAINT po_collections_po_id_fkey FOREIGN KEY (po_id) REFERENCES public.purchase_order(po_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4011 (class 2606 OID 19733)
--- Name: po_collections po_collections_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.po_collections
-    ADD CONSTRAINT po_collections_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id);
-
-
---
--- TOC entry 4022 (class 2606 OID 19738)
+-- TOC entry 3891 (class 2606 OID 19738)
 -- Name: rbac_permissions rbac_permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3564,7 +2296,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 4023 (class 2606 OID 19743)
+-- TOC entry 3892 (class 2606 OID 19743)
 -- Name: rbac_permissions rbac_permissions_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3573,71 +2305,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 4024 (class 2606 OID 19748)
--- Name: retailer_shop_link retailer_shop_link_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.retailer_shop_link
-    ADD CONSTRAINT retailer_shop_link_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4025 (class 2606 OID 19753)
--- Name: retailer_shop_link retailer_shop_link_shop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.retailer_shop_link
-    ADD CONSTRAINT retailer_shop_link_shop_id_fkey FOREIGN KEY (shop_id) REFERENCES public.shops(shop_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4026 (class 2606 OID 19758)
--- Name: retailer_shop_link retailer_shop_link_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.retailer_shop_link
-    ADD CONSTRAINT retailer_shop_link_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- TOC entry 4027 (class 2606 OID 19763)
--- Name: retailer_shop_link retailer_shop_link_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.retailer_shop_link
-    ADD CONSTRAINT retailer_shop_link_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4028 (class 2606 OID 19768)
--- Name: route_shop_links route_shop_links_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.route_shop_links
-    ADD CONSTRAINT route_shop_links_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.routes(route_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4029 (class 2606 OID 19773)
--- Name: route_shop_links route_shop_links_shop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.route_shop_links
-    ADD CONSTRAINT route_shop_links_shop_id_fkey FOREIGN KEY (shop_id) REFERENCES public.shops(shop_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4030 (class 2606 OID 19778)
--- Name: shops shops_shops_primary_route_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.shops
-    ADD CONSTRAINT shops_shops_primary_route_fkey FOREIGN KEY (shops_primary_route) REFERENCES public.routes(route_id) ON DELETE SET NULL;
-
-
-
---
--- TOC entry 4032 (class 2606 OID 19788)
+-- TOC entry 3893 (class 2606 OID 19788)
 -- Name: users users_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3646,7 +2314,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4033 (class 2606 OID 19793)
+-- TOC entry 3894 (class 2606 OID 19793)
 -- Name: users users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3655,7 +2323,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4233 (class 3256 OID 19798)
+-- TOC entry 4064 (class 3256 OID 19798)
 -- Name: app_remote_configs Allow public read access to app configs; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -3663,87 +2331,87 @@ CREATE POLICY "Allow public read access to app configs" ON public.app_remote_con
 
 
 --
--- TOC entry 4223 (class 0 OID 19297)
--- Dependencies: 373
+-- TOC entry 4054 (class 0 OID 19297)
+-- Dependencies: 387
 -- Name: app_remote_configs; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.app_remote_configs ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4224 (class 0 OID 19317)
--- Dependencies: 375
+-- TOC entry 4055 (class 0 OID 19317)
+-- Dependencies: 389
 -- Name: boosting_personality_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.boosting_personality_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4225 (class 0 OID 19322)
--- Dependencies: 376
+-- TOC entry 4056 (class 0 OID 19322)
+-- Dependencies: 390
 -- Name: career_by_destiny_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.career_by_destiny_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4226 (class 0 OID 19327)
--- Dependencies: 377
+-- TOC entry 4057 (class 0 OID 19327)
+-- Dependencies: 391
 -- Name: combination_personality_lifepath; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.combination_personality_lifepath ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4227 (class 0 OID 19332)
--- Dependencies: 378
+-- TOC entry 4058 (class 0 OID 19332)
+-- Dependencies: 392
 -- Name: lifepath_number_data; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.lifepath_number_data ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4228 (class 0 OID 19337)
--- Dependencies: 379
+-- TOC entry 4059 (class 0 OID 19337)
+-- Dependencies: 393
 -- Name: loshu_grid_details; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.loshu_grid_details ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4229 (class 0 OID 19343)
--- Dependencies: 380
+-- TOC entry 4060 (class 0 OID 19343)
+-- Dependencies: 394
 -- Name: missing_number_tells; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.missing_number_tells ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4230 (class 0 OID 19348)
--- Dependencies: 381
+-- TOC entry 4061 (class 0 OID 19348)
+-- Dependencies: 395
 -- Name: occurance_ofnumbers_ingridcell; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.occurance_ofnumbers_ingridcell ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4231 (class 0 OID 19358)
--- Dependencies: 383
+-- TOC entry 4062 (class 0 OID 19358)
+-- Dependencies: 397
 -- Name: pinnaclenumbersdata; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.pinnaclenumbersdata ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4232 (class 0 OID 19451)
--- Dependencies: 392
+-- TOC entry 4063 (class 0 OID 19451)
+-- Dependencies: 403
 -- Name: remedies_for_missing_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.remedies_for_missing_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4243 (class 0 OID 0)
+-- TOC entry 4074 (class 0 OID 0)
 -- Dependencies: 32
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
 --
@@ -3755,41 +2423,8 @@ GRANT USAGE ON SCHEMA public TO service_role;
 
 
 --
--- TOC entry 4244 (class 0 OID 0)
--- Dependencies: 430
--- Name: FUNCTION _po_item_count_and_status_adjust(p_po_id uuid); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public._po_item_count_and_status_adjust(p_po_id uuid) TO anon;
-GRANT ALL ON FUNCTION public._po_item_count_and_status_adjust(p_po_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public._po_item_count_and_status_adjust(p_po_id uuid) TO service_role;
-
-
---
--- TOC entry 4245 (class 0 OID 0)
--- Dependencies: 544
--- Name: FUNCTION assign_visit_order(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.assign_visit_order() TO anon;
-GRANT ALL ON FUNCTION public.assign_visit_order() TO authenticated;
-GRANT ALL ON FUNCTION public.assign_visit_order() TO service_role;
-
-
---
--- TOC entry 4246 (class 0 OID 0)
--- Dependencies: 483
--- Name: FUNCTION fill_po_item_defaults(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.fill_po_item_defaults() TO anon;
-GRANT ALL ON FUNCTION public.fill_po_item_defaults() TO authenticated;
-GRANT ALL ON FUNCTION public.fill_po_item_defaults() TO service_role;
-
-
---
--- TOC entry 4247 (class 0 OID 0)
--- Dependencies: 448
+-- TOC entry 4075 (class 0 OID 0)
+-- Dependencies: 443
 -- Name: FUNCTION generate_lucky_unlucky_values(pers_n integer, life_p integer, missing integer[]); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3799,8 +2434,8 @@ GRANT ALL ON FUNCTION public.generate_lucky_unlucky_values(pers_n integer, life_
 
 
 --
--- TOC entry 4248 (class 0 OID 0)
--- Dependencies: 465
+-- TOC entry 4076 (class 0 OID 0)
+-- Dependencies: 460
 -- Name: FUNCTION get_boosting_personality_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3810,8 +2445,8 @@ GRANT ALL ON FUNCTION public.get_boosting_personality_data(birthdate_id uuid) TO
 
 
 --
--- TOC entry 4249 (class 0 OID 0)
--- Dependencies: 428
+-- TOC entry 4077 (class 0 OID 0)
+-- Dependencies: 426
 -- Name: FUNCTION get_career_by_destiny(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3821,8 +2456,8 @@ GRANT ALL ON FUNCTION public.get_career_by_destiny(birthdate_id uuid) TO service
 
 
 --
--- TOC entry 4250 (class 0 OID 0)
--- Dependencies: 459
+-- TOC entry 4078 (class 0 OID 0)
+-- Dependencies: 454
 -- Name: FUNCTION get_combination_personality_lifepath(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3832,8 +2467,8 @@ GRANT ALL ON FUNCTION public.get_combination_personality_lifepath(birthdate_id u
 
 
 --
--- TOC entry 4251 (class 0 OID 0)
--- Dependencies: 550
+-- TOC entry 4079 (class 0 OID 0)
+-- Dependencies: 538
 -- Name: FUNCTION get_life_path_number_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3843,8 +2478,8 @@ GRANT ALL ON FUNCTION public.get_life_path_number_data(birthdate_id uuid) TO ser
 
 
 --
--- TOC entry 4252 (class 0 OID 0)
--- Dependencies: 508
+-- TOC entry 4080 (class 0 OID 0)
+-- Dependencies: 498
 -- Name: FUNCTION get_loshu_planes(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3854,8 +2489,8 @@ GRANT ALL ON FUNCTION public.get_loshu_planes(birthdate_id uuid) TO service_role
 
 
 --
--- TOC entry 4253 (class 0 OID 0)
--- Dependencies: 527
+-- TOC entry 4081 (class 0 OID 0)
+-- Dependencies: 516
 -- Name: FUNCTION get_lucky_unlucky_values(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3865,8 +2500,8 @@ GRANT ALL ON FUNCTION public.get_lucky_unlucky_values(birthdate_id uuid) TO serv
 
 
 --
--- TOC entry 4254 (class 0 OID 0)
--- Dependencies: 445
+-- TOC entry 4082 (class 0 OID 0)
+-- Dependencies: 441
 -- Name: FUNCTION get_missing_number_tells(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3876,8 +2511,8 @@ GRANT ALL ON FUNCTION public.get_missing_number_tells(birthdate_id uuid) TO serv
 
 
 --
--- TOC entry 4255 (class 0 OID 0)
--- Dependencies: 417
+-- TOC entry 4083 (class 0 OID 0)
+-- Dependencies: 415
 -- Name: FUNCTION get_number_occurrence_descriptions(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3887,8 +2522,8 @@ GRANT ALL ON FUNCTION public.get_number_occurrence_descriptions(birthdate_id uui
 
 
 --
--- TOC entry 4256 (class 0 OID 0)
--- Dependencies: 515
+-- TOC entry 4084 (class 0 OID 0)
+-- Dependencies: 505
 -- Name: FUNCTION get_number_occurrence_details(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3898,8 +2533,8 @@ GRANT ALL ON FUNCTION public.get_number_occurrence_details(birthdate_id uuid) TO
 
 
 --
--- TOC entry 4257 (class 0 OID 0)
--- Dependencies: 431
+-- TOC entry 4085 (class 0 OID 0)
+-- Dependencies: 428
 -- Name: FUNCTION get_numbers_not_for_remedy(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3909,8 +2544,8 @@ GRANT ALL ON FUNCTION public.get_numbers_not_for_remedy(birthdate_id uuid) TO se
 
 
 --
--- TOC entry 4258 (class 0 OID 0)
--- Dependencies: 507
+-- TOC entry 4086 (class 0 OID 0)
+-- Dependencies: 497
 -- Name: FUNCTION get_personality_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3920,8 +2555,8 @@ GRANT ALL ON FUNCTION public.get_personality_data(birthdate_id uuid) TO service_
 
 
 --
--- TOC entry 4259 (class 0 OID 0)
--- Dependencies: 522
+-- TOC entry 4087 (class 0 OID 0)
+-- Dependencies: 512
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod1(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3931,8 +2566,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod1(birthdate_id uuid
 
 
 --
--- TOC entry 4260 (class 0 OID 0)
--- Dependencies: 468
+-- TOC entry 4088 (class 0 OID 0)
+-- Dependencies: 463
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod2(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3942,8 +2577,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod2(birthdate_id uuid
 
 
 --
--- TOC entry 4261 (class 0 OID 0)
--- Dependencies: 444
+-- TOC entry 4089 (class 0 OID 0)
+-- Dependencies: 440
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod3(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3953,8 +2588,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod3(birthdate_id uuid
 
 
 --
--- TOC entry 4262 (class 0 OID 0)
--- Dependencies: 509
+-- TOC entry 4090 (class 0 OID 0)
+-- Dependencies: 499
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod4(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3964,8 +2599,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod4(birthdate_id uuid
 
 
 --
--- TOC entry 4263 (class 0 OID 0)
--- Dependencies: 547
+-- TOC entry 4091 (class 0 OID 0)
+-- Dependencies: 535
 -- Name: FUNCTION get_remedies_for_birthdate(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3975,8 +2610,8 @@ GRANT ALL ON FUNCTION public.get_remedies_for_birthdate(birthdate_id uuid) TO se
 
 
 --
--- TOC entry 4264 (class 0 OID 0)
--- Dependencies: 425
+-- TOC entry 4092 (class 0 OID 0)
+-- Dependencies: 423
 -- Name: FUNCTION get_share_market_advice(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3986,8 +2621,8 @@ GRANT ALL ON FUNCTION public.get_share_market_advice(birthdate_id uuid) TO servi
 
 
 --
--- TOC entry 4265 (class 0 OID 0)
--- Dependencies: 485
+-- TOC entry 4093 (class 0 OID 0)
+-- Dependencies: 479
 -- Name: FUNCTION get_some_imp_points(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3997,8 +2632,8 @@ GRANT ALL ON FUNCTION public.get_some_imp_points(birthdate_id uuid) TO service_r
 
 
 --
--- TOC entry 4266 (class 0 OID 0)
--- Dependencies: 503
+-- TOC entry 4094 (class 0 OID 0)
+-- Dependencies: 493
 -- Name: FUNCTION get_stock_market_info(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4008,8 +2643,8 @@ GRANT ALL ON FUNCTION public.get_stock_market_info(birthdate_id uuid) TO service
 
 
 --
--- TOC entry 4267 (class 0 OID 0)
--- Dependencies: 488
+-- TOC entry 4095 (class 0 OID 0)
+-- Dependencies: 482
 -- Name: FUNCTION handle_new_auth_user(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4019,8 +2654,8 @@ GRANT ALL ON FUNCTION public.handle_new_auth_user() TO service_role;
 
 
 --
--- TOC entry 4268 (class 0 OID 0)
--- Dependencies: 478
+-- TOC entry 4096 (class 0 OID 0)
+-- Dependencies: 473
 -- Name: FUNCTION perform_numerology_analysis(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4030,41 +2665,8 @@ GRANT ALL ON FUNCTION public.perform_numerology_analysis() TO service_role;
 
 
 --
--- TOC entry 4269 (class 0 OID 0)
--- Dependencies: 554
--- Name: FUNCTION po_item_after_delete_tr(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.po_item_after_delete_tr() TO anon;
-GRANT ALL ON FUNCTION public.po_item_after_delete_tr() TO authenticated;
-GRANT ALL ON FUNCTION public.po_item_after_delete_tr() TO service_role;
-
-
---
--- TOC entry 4270 (class 0 OID 0)
--- Dependencies: 525
--- Name: FUNCTION po_item_after_insert_tr(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.po_item_after_insert_tr() TO anon;
-GRANT ALL ON FUNCTION public.po_item_after_insert_tr() TO authenticated;
-GRANT ALL ON FUNCTION public.po_item_after_insert_tr() TO service_role;
-
-
---
--- TOC entry 4271 (class 0 OID 0)
+-- TOC entry 4097 (class 0 OID 0)
 -- Dependencies: 489
--- Name: FUNCTION po_item_after_update_tr(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.po_item_after_update_tr() TO anon;
-GRANT ALL ON FUNCTION public.po_item_after_update_tr() TO authenticated;
-GRANT ALL ON FUNCTION public.po_item_after_update_tr() TO service_role;
-
-
---
--- TOC entry 4272 (class 0 OID 0)
--- Dependencies: 497
 -- Name: FUNCTION protect_created_by(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4074,8 +2676,8 @@ GRANT ALL ON FUNCTION public.protect_created_by() TO service_role;
 
 
 --
--- TOC entry 4273 (class 0 OID 0)
--- Dependencies: 516
+-- TOC entry 4098 (class 0 OID 0)
+-- Dependencies: 506
 -- Name: FUNCTION reduce_to_single_digit(val integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4085,41 +2687,8 @@ GRANT ALL ON FUNCTION public.reduce_to_single_digit(val integer) TO service_role
 
 
 --
--- TOC entry 4274 (class 0 OID 0)
--- Dependencies: 433
--- Name: FUNCTION reorder_route_shop_links(p_link_id uuid, p_new_position integer); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.reorder_route_shop_links(p_link_id uuid, p_new_position integer) TO anon;
-GRANT ALL ON FUNCTION public.reorder_route_shop_links(p_link_id uuid, p_new_position integer) TO authenticated;
-GRANT ALL ON FUNCTION public.reorder_route_shop_links(p_link_id uuid, p_new_position integer) TO service_role;
-
-
---
--- TOC entry 4275 (class 0 OID 0)
--- Dependencies: 499
--- Name: FUNCTION resequence_visit_order_after_delete(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.resequence_visit_order_after_delete() TO anon;
-GRANT ALL ON FUNCTION public.resequence_visit_order_after_delete() TO authenticated;
-GRANT ALL ON FUNCTION public.resequence_visit_order_after_delete() TO service_role;
-
-
---
--- TOC entry 4276 (class 0 OID 0)
--- Dependencies: 502
--- Name: FUNCTION set_profit_to_shop(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.set_profit_to_shop() TO anon;
-GRANT ALL ON FUNCTION public.set_profit_to_shop() TO authenticated;
-GRANT ALL ON FUNCTION public.set_profit_to_shop() TO service_role;
-
-
---
--- TOC entry 4277 (class 0 OID 0)
--- Dependencies: 560
+-- TOC entry 4099 (class 0 OID 0)
+-- Dependencies: 547
 -- Name: FUNCTION sync_po_birthdate_ids(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4129,30 +2698,8 @@ GRANT ALL ON FUNCTION public.sync_po_birthdate_ids() TO service_role;
 
 
 --
--- TOC entry 4278 (class 0 OID 0)
--- Dependencies: 491
--- Name: FUNCTION sync_purchase_orders_with_shop_link(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.sync_purchase_orders_with_shop_link() TO anon;
-GRANT ALL ON FUNCTION public.sync_purchase_orders_with_shop_link() TO authenticated;
-GRANT ALL ON FUNCTION public.sync_purchase_orders_with_shop_link() TO service_role;
-
-
---
--- TOC entry 4279 (class 0 OID 0)
--- Dependencies: 447
--- Name: FUNCTION update_purchase_order_totals(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.update_purchase_order_totals() TO anon;
-GRANT ALL ON FUNCTION public.update_purchase_order_totals() TO authenticated;
-GRANT ALL ON FUNCTION public.update_purchase_order_totals() TO service_role;
-
-
---
--- TOC entry 4280 (class 0 OID 0)
--- Dependencies: 479
+-- TOC entry 4100 (class 0 OID 0)
+-- Dependencies: 474
 -- Name: FUNCTION update_updated_at_column(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4162,8 +2709,8 @@ GRANT ALL ON FUNCTION public.update_updated_at_column() TO service_role;
 
 
 --
--- TOC entry 4281 (class 0 OID 0)
--- Dependencies: 481
+-- TOC entry 4101 (class 0 OID 0)
+-- Dependencies: 476
 -- Name: FUNCTION validate_birthdate_access(birthdate_id uuid, check_po_id boolean); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4173,8 +2720,8 @@ GRANT ALL ON FUNCTION public.validate_birthdate_access(birthdate_id uuid, check_
 
 
 --
--- TOC entry 4282 (class 0 OID 0)
--- Dependencies: 372
+-- TOC entry 4102 (class 0 OID 0)
+-- Dependencies: 386
 -- Name: TABLE app_config; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4184,8 +2731,8 @@ GRANT ALL ON TABLE public.app_config TO service_role;
 
 
 --
--- TOC entry 4283 (class 0 OID 0)
--- Dependencies: 373
+-- TOC entry 4103 (class 0 OID 0)
+-- Dependencies: 387
 -- Name: TABLE app_remote_configs; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4195,8 +2742,8 @@ GRANT ALL ON TABLE public.app_remote_configs TO service_role;
 
 
 --
--- TOC entry 4284 (class 0 OID 0)
--- Dependencies: 374
+-- TOC entry 4104 (class 0 OID 0)
+-- Dependencies: 388
 -- Name: TABLE birthdates; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4206,8 +2753,8 @@ GRANT ALL ON TABLE public.birthdates TO service_role;
 
 
 --
--- TOC entry 4285 (class 0 OID 0)
--- Dependencies: 375
+-- TOC entry 4105 (class 0 OID 0)
+-- Dependencies: 389
 -- Name: TABLE boosting_personality_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4217,8 +2764,8 @@ GRANT ALL ON TABLE public.boosting_personality_numbers TO service_role;
 
 
 --
--- TOC entry 4286 (class 0 OID 0)
--- Dependencies: 376
+-- TOC entry 4106 (class 0 OID 0)
+-- Dependencies: 390
 -- Name: TABLE career_by_destiny_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4228,8 +2775,8 @@ GRANT ALL ON TABLE public.career_by_destiny_numbers TO service_role;
 
 
 --
--- TOC entry 4287 (class 0 OID 0)
--- Dependencies: 377
+-- TOC entry 4107 (class 0 OID 0)
+-- Dependencies: 391
 -- Name: TABLE combination_personality_lifepath; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4239,8 +2786,8 @@ GRANT ALL ON TABLE public.combination_personality_lifepath TO service_role;
 
 
 --
--- TOC entry 4288 (class 0 OID 0)
--- Dependencies: 378
+-- TOC entry 4108 (class 0 OID 0)
+-- Dependencies: 392
 -- Name: TABLE lifepath_number_data; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4250,8 +2797,8 @@ GRANT ALL ON TABLE public.lifepath_number_data TO service_role;
 
 
 --
--- TOC entry 4289 (class 0 OID 0)
--- Dependencies: 379
+-- TOC entry 4109 (class 0 OID 0)
+-- Dependencies: 393
 -- Name: TABLE loshu_grid_details; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4261,8 +2808,8 @@ GRANT ALL ON TABLE public.loshu_grid_details TO service_role;
 
 
 --
--- TOC entry 4290 (class 0 OID 0)
--- Dependencies: 380
+-- TOC entry 4110 (class 0 OID 0)
+-- Dependencies: 394
 -- Name: TABLE missing_number_tells; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4272,8 +2819,8 @@ GRANT ALL ON TABLE public.missing_number_tells TO service_role;
 
 
 --
--- TOC entry 4291 (class 0 OID 0)
--- Dependencies: 381
+-- TOC entry 4111 (class 0 OID 0)
+-- Dependencies: 395
 -- Name: TABLE occurance_ofnumbers_ingridcell; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4283,8 +2830,8 @@ GRANT ALL ON TABLE public.occurance_ofnumbers_ingridcell TO service_role;
 
 
 --
--- TOC entry 4292 (class 0 OID 0)
--- Dependencies: 382
+-- TOC entry 4112 (class 0 OID 0)
+-- Dependencies: 396
 -- Name: TABLE personality_number_data; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4294,8 +2841,8 @@ GRANT ALL ON TABLE public.personality_number_data TO service_role;
 
 
 --
--- TOC entry 4293 (class 0 OID 0)
--- Dependencies: 383
+-- TOC entry 4113 (class 0 OID 0)
+-- Dependencies: 397
 -- Name: TABLE pinnaclenumbersdata; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4305,8 +2852,8 @@ GRANT ALL ON TABLE public.pinnaclenumbersdata TO service_role;
 
 
 --
--- TOC entry 4294 (class 0 OID 0)
--- Dependencies: 384
+-- TOC entry 4114 (class 0 OID 0)
+-- Dependencies: 398
 -- Name: TABLE planet_relations; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4316,41 +2863,8 @@ GRANT ALL ON TABLE public.planet_relations TO service_role;
 
 
 --
--- TOC entry 4295 (class 0 OID 0)
--- Dependencies: 385
--- Name: TABLE po_collections; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.po_collections TO anon;
-GRANT ALL ON TABLE public.po_collections TO authenticated;
-GRANT ALL ON TABLE public.po_collections TO service_role;
-
-
---
--- TOC entry 4296 (class 0 OID 0)
--- Dependencies: 386
--- Name: TABLE po_item; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.po_item TO anon;
-GRANT ALL ON TABLE public.po_item TO authenticated;
-GRANT ALL ON TABLE public.po_item TO service_role;
-
-
---
--- TOC entry 4297 (class 0 OID 0)
--- Dependencies: 387
--- Name: TABLE product; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.product TO anon;
-GRANT ALL ON TABLE public.product TO authenticated;
-GRANT ALL ON TABLE public.product TO service_role;
-
-
---
--- TOC entry 4298 (class 0 OID 0)
--- Dependencies: 388
+-- TOC entry 4115 (class 0 OID 0)
+-- Dependencies: 399
 -- Name: TABLE purchase_order; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4360,8 +2874,8 @@ GRANT ALL ON TABLE public.purchase_order TO service_role;
 
 
 --
--- TOC entry 4299 (class 0 OID 0)
--- Dependencies: 389
+-- TOC entry 4116 (class 0 OID 0)
+-- Dependencies: 400
 -- Name: TABLE rbac_modules; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4371,8 +2885,8 @@ GRANT ALL ON TABLE public.rbac_modules TO service_role;
 
 
 --
--- TOC entry 4300 (class 0 OID 0)
--- Dependencies: 390
+-- TOC entry 4117 (class 0 OID 0)
+-- Dependencies: 401
 -- Name: TABLE rbac_permissions; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4382,8 +2896,8 @@ GRANT ALL ON TABLE public.rbac_permissions TO service_role;
 
 
 --
--- TOC entry 4301 (class 0 OID 0)
--- Dependencies: 391
+-- TOC entry 4118 (class 0 OID 0)
+-- Dependencies: 402
 -- Name: TABLE rbac_roles; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4393,8 +2907,8 @@ GRANT ALL ON TABLE public.rbac_roles TO service_role;
 
 
 --
--- TOC entry 4302 (class 0 OID 0)
--- Dependencies: 392
+-- TOC entry 4119 (class 0 OID 0)
+-- Dependencies: 403
 -- Name: TABLE remedies_for_missing_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4404,52 +2918,8 @@ GRANT ALL ON TABLE public.remedies_for_missing_numbers TO service_role;
 
 
 --
--- TOC entry 4303 (class 0 OID 0)
--- Dependencies: 393
--- Name: TABLE retailer_shop_link; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.retailer_shop_link TO anon;
-GRANT ALL ON TABLE public.retailer_shop_link TO authenticated;
-GRANT ALL ON TABLE public.retailer_shop_link TO service_role;
-
-
---
--- TOC entry 4304 (class 0 OID 0)
--- Dependencies: 394
--- Name: TABLE route_shop_links; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.route_shop_links TO anon;
-GRANT ALL ON TABLE public.route_shop_links TO authenticated;
-GRANT ALL ON TABLE public.route_shop_links TO service_role;
-
-
---
--- TOC entry 4305 (class 0 OID 0)
--- Dependencies: 395
--- Name: TABLE routes; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.routes TO anon;
-GRANT ALL ON TABLE public.routes TO authenticated;
-GRANT ALL ON TABLE public.routes TO service_role;
-
-
---
--- TOC entry 4306 (class 0 OID 0)
--- Dependencies: 396
--- Name: TABLE shops; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.shops TO anon;
-GRANT ALL ON TABLE public.shops TO authenticated;
-GRANT ALL ON TABLE public.shops TO service_role;
-
-
---
--- TOC entry 4307 (class 0 OID 0)
--- Dependencies: 397
+-- TOC entry 4120 (class 0 OID 0)
+-- Dependencies: 404
 -- Name: TABLE static_testimonials; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4459,8 +2929,8 @@ GRANT ALL ON TABLE public.static_testimonials TO service_role;
 
 
 --
--- TOC entry 4309 (class 0 OID 0)
--- Dependencies: 398
+-- TOC entry 4122 (class 0 OID 0)
+-- Dependencies: 405
 -- Name: SEQUENCE static_testimonials_id_seq; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4470,19 +2940,8 @@ GRANT ALL ON SEQUENCE public.static_testimonials_id_seq TO service_role;
 
 
 --
--- TOC entry 4310 (class 0 OID 0)
--- Dependencies: 399
--- Name: TABLE tbl_notes; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.tbl_notes TO anon;
-GRANT ALL ON TABLE public.tbl_notes TO authenticated;
-GRANT ALL ON TABLE public.tbl_notes TO service_role;
-
-
---
--- TOC entry 4311 (class 0 OID 0)
--- Dependencies: 400
+-- TOC entry 4123 (class 0 OID 0)
+-- Dependencies: 406
 -- Name: TABLE users; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4492,52 +2951,8 @@ GRANT ALL ON TABLE public.users TO service_role;
 
 
 --
--- TOC entry 4312 (class 0 OID 0)
--- Dependencies: 401
--- Name: TABLE view_po_collections; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_po_collections TO anon;
-GRANT ALL ON TABLE public.view_po_collections TO authenticated;
-GRANT ALL ON TABLE public.view_po_collections TO service_role;
-
-
---
--- TOC entry 4313 (class 0 OID 0)
--- Dependencies: 402
--- Name: TABLE view_po_items; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_po_items TO anon;
-GRANT ALL ON TABLE public.view_po_items TO authenticated;
-GRANT ALL ON TABLE public.view_po_items TO service_role;
-
-
---
--- TOC entry 4314 (class 0 OID 0)
--- Dependencies: 403
--- Name: TABLE view_products; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_products TO anon;
-GRANT ALL ON TABLE public.view_products TO authenticated;
-GRANT ALL ON TABLE public.view_products TO service_role;
-
-
---
--- TOC entry 4315 (class 0 OID 0)
--- Dependencies: 404
--- Name: TABLE view_purchase_orders; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_purchase_orders TO anon;
-GRANT ALL ON TABLE public.view_purchase_orders TO authenticated;
-GRANT ALL ON TABLE public.view_purchase_orders TO service_role;
-
-
---
--- TOC entry 4316 (class 0 OID 0)
--- Dependencies: 405
+-- TOC entry 4124 (class 0 OID 0)
+-- Dependencies: 407
 -- Name: TABLE view_rbac_permissions; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4547,52 +2962,8 @@ GRANT ALL ON TABLE public.view_rbac_permissions TO service_role;
 
 
 --
--- TOC entry 4317 (class 0 OID 0)
--- Dependencies: 406
--- Name: TABLE view_retailer_shop_link; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_retailer_shop_link TO anon;
-GRANT ALL ON TABLE public.view_retailer_shop_link TO authenticated;
-GRANT ALL ON TABLE public.view_retailer_shop_link TO service_role;
-
-
---
--- TOC entry 4318 (class 0 OID 0)
--- Dependencies: 407
--- Name: TABLE view_route_shop_links; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_route_shop_links TO anon;
-GRANT ALL ON TABLE public.view_route_shop_links TO authenticated;
-GRANT ALL ON TABLE public.view_route_shop_links TO service_role;
-
-
---
--- TOC entry 4319 (class 0 OID 0)
--- Dependencies: 408
--- Name: TABLE view_shop_dropdown; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_shop_dropdown TO anon;
-GRANT ALL ON TABLE public.view_shop_dropdown TO authenticated;
-GRANT ALL ON TABLE public.view_shop_dropdown TO service_role;
-
-
---
--- TOC entry 4320 (class 0 OID 0)
--- Dependencies: 409
--- Name: TABLE view_shops; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.view_shops TO anon;
-GRANT ALL ON TABLE public.view_shops TO authenticated;
-GRANT ALL ON TABLE public.view_shops TO service_role;
-
-
---
--- TOC entry 4321 (class 0 OID 0)
--- Dependencies: 410
+-- TOC entry 4125 (class 0 OID 0)
+-- Dependencies: 414
 -- Name: TABLE view_users; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4602,7 +2973,7 @@ GRANT ALL ON TABLE public.view_users TO service_role;
 
 
 --
--- TOC entry 2630 (class 826 OID 16494)
+-- TOC entry 2569 (class 826 OID 16494)
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -4613,7 +2984,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 
 --
--- TOC entry 2607 (class 826 OID 16495)
+-- TOC entry 2546 (class 826 OID 16495)
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -4624,7 +2995,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 
 
 --
--- TOC entry 2629 (class 826 OID 16493)
+-- TOC entry 2568 (class 826 OID 16493)
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -4635,7 +3006,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIO
 
 
 --
--- TOC entry 2609 (class 826 OID 16497)
+-- TOC entry 2548 (class 826 OID 16497)
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -4646,7 +3017,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 
 
 --
--- TOC entry 2628 (class 826 OID 16492)
+-- TOC entry 2567 (class 826 OID 16492)
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -4657,7 +3028,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES 
 
 
 --
--- TOC entry 2608 (class 826 OID 16496)
+-- TOC entry 2547 (class 826 OID 16496)
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -4667,11 +3038,11 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
 
--- Completed on 2026-06-30 13:12:04
+-- Completed on 2026-07-01 08:52:30
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lG41HBwGlKA9wGd8LF6sgdYHHZMgcMs7hUDSTJj5uZuTavDv7V8hleTYCTk4Dud
+\unrestrict ncdY2YtYh87fOhj62CZm79Nb74Ud9OvcbOpufTdxGCZMhEiYciJDZiSnxhpVViS
 
