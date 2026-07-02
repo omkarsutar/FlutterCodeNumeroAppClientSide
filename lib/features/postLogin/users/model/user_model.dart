@@ -7,6 +7,7 @@ class ModelUserFields {
   static const String userId = 'user_id';
   static const String fullName = 'full_name';
   static const String roleId = 'role_id';
+  static const String email = 'email';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
   static const String userLanguage = 'user_language';
@@ -19,6 +20,7 @@ class ModelUser {
   final String userId; // required, PK
   final String? fullName; // nullable
   final String? roleId; // nullable FK
+  final String? email; // nullable, from auth.users
   final DateTime? createdAt; // nullable, DB default
   final DateTime? updatedAt; // nullable, DB default
   final String? userLanguage; // nullable
@@ -31,6 +33,7 @@ class ModelUser {
     required this.userId,
     this.fullName,
     this.roleId,
+    this.email,
     this.createdAt,
     this.updatedAt,
     this.userLanguage,
@@ -54,6 +57,7 @@ class ModelUser {
       userId: map[ModelUserFields.userId].toString(),
       fullName: map[ModelUserFields.fullName],
       roleId: map[ModelUserFields.roleId],
+      email: map[ModelUserFields.email],
       createdAt: _parseDate(map[ModelUserFields.createdAt]),
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
       userLanguage: map[ModelUserFields.userLanguage],
@@ -69,6 +73,7 @@ class ModelUser {
       if (userId.isNotEmpty && userId != 'null') ModelUserFields.userId: userId,
       if (fullName != null) ModelUserFields.fullName: fullName,
       if (roleId != null) ModelUserFields.roleId: roleId,
+      if (email != null) ModelUserFields.email: email,
       if (createdAt != null)
         ModelUserFields.createdAt: createdAt!.toIso8601String(),
       if (updatedAt != null)
@@ -85,6 +90,7 @@ class ModelUser {
       'userId': userId,
       'fullName': fullName,
       'roleId': roleId,
+      'email': email,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'userLanguage': userLanguage,
@@ -100,6 +106,7 @@ class ModelUser {
       userId: json['userId'] as String,
       fullName: json['fullName'] as String?,
       roleId: json['roleId'] as String?,
+      email: json['email'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
       userLanguage: json['userLanguage'] as String?,

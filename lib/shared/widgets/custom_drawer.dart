@@ -250,20 +250,6 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               },
             ),
             _DrawerTile(
-              icon: Icons.cake_rounded,
-              title: l10n['birthday_cards'] ?? 'Birthday Cards',
-              iconColor: drawerAccentColor,
-              textColor: drawerTextColor,
-              tileColor: drawerTileColor,
-              onTap: () {
-                ref
-                    .read(analyticsServiceProvider)
-                    .logClickEvent('drawer_birthday_cards_clicked');
-                Navigator.pop(context);
-                context.goNamed(AppRoute.birthdayCardsName);
-              },
-            ),
-            _DrawerTile(
               icon: Icons.shopping_cart,
               title: l10n['my_cart'] ?? 'My Cart',
               iconColor: drawerAccentColor,
@@ -292,6 +278,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                   context.goNamed(AppRoute.purchaseOrdersName);
                 },
               ),
+            _DrawerTile(
+              icon: Icons.cake_rounded,
+              title: l10n['birthday_cards'] ?? 'Birthday Cards',
+              iconColor: drawerAccentColor,
+              textColor: drawerTextColor,
+              tileColor: drawerTileColor,
+              onTap: () {
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent('drawer_birthday_cards_clicked');
+                Navigator.pop(context);
+                context.goNamed(AppRoute.birthdayCardsName);
+              },
+            ),
             if (isLoggedIn && rbacService.roleName?.toLowerCase() == 'admin')
               _DrawerTile(
                 icon: Icons.notification_add_rounded,

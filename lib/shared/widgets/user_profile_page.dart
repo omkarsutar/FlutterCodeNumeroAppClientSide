@@ -72,6 +72,10 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
         }
 
         final fullName = profile.fullName ?? '';
+        final email = profile.email ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+        final roleLabel = profile.resolvedLabels['role_id_label'] ??
+            profile.roleId ??
+            'Unknown Role';
         final initials = fullName.isNotEmpty
             ? fullName.trim().split(' ').take(2).map((e) => e[0]).join()
             : '?';
@@ -149,11 +153,19 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    if (email.isNotEmpty) ...[
+                      Text(
+                        email,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      profile.resolvedLabels['role_id_label'] ??
-                          profile.roleId ??
-                          'Unknown Role',
+                      'Role: $roleLabel',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
