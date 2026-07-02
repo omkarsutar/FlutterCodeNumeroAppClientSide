@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../cart/providers/cart_controller.dart';
 import '../providers/numerology_content_providers.dart';
+import '../model/numerology_models.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
@@ -17,8 +18,10 @@ import '../../../../core/providers/auth_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/utils/dialogs.dart';
+import '../../../../core/utils/platform/pdf_download.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../model/numerology_help_content.dart';
+import '../services/birthdate_pdf_report_service.dart';
 import 'widgets/birthdate_share_template.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -62,6 +65,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
   final ScreenshotController _screenshotController = ScreenshotController();
+  final BirthdateAnalysisPdfReportService _pdfReportService =
+      BirthdateAnalysisPdfReportService();
   static const String _pendingRevealBirthdateKey =
       'pending_reveal_birthdate';
   bool _isResumingPendingReveal = false;
@@ -635,12 +640,16 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     DateTime? birthdate,
     String? cartStatus,
   ) {
-    if (cartStatus != null && cartStatus.toLowerCase() != 'pending') {
+    if (birthdate == null) {
       return const SizedBox.shrink();
     }
 
     final theme = Theme.of(context);
     final isPending = cartStatus?.toLowerCase() == 'pending';
+    final isPurchased =
+        cartStatus != null &&
+        cartStatus.toLowerCase() != 'pending' &&
+        cartStatus.toLowerCase() != 'cancelled';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -652,27 +661,40 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: birthdate == null
-                ? null
-                : () {
-                    if (isPending) {
-                      ref
-                          .read(analyticsServiceProvider)
-                          .logClickEvent('read_more_clicked');
-                      _navigateToCartAndSelect(birthdate);
-                    } else {
-                      ref
-                          .read(analyticsServiceProvider)
-                          .logClickEvent('save_birthdate_clicked');
-                      _handleOrderAction(birthdate);
-                    }
-                  },
+            onPressed: () {
+              if (isPending) {
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent('read_more_clicked');
+                _navigateToCartAndSelect(birthdate);
+                return;
+              }
+
+              if (isPurchased) {
+                ref
+                    .read(analyticsServiceProvider)
+                    .logClickEvent('download_pdf_report_clicked');
+                _downloadPdfReport();
+                return;
+              }
+
+              ref
+                  .read(analyticsServiceProvider)
+                  .logClickEvent('save_birthdate_clicked');
+              _handleOrderAction(birthdate);
+            },
             icon: Icon(
-              isPending ? Icons.auto_awesome_rounded : Icons.lock_open_rounded,
+              isPurchased
+                  ? Icons.picture_as_pdf_rounded
+                  : isPending
+                  ? Icons.auto_awesome_rounded
+                  : Icons.lock_open_rounded,
               size: 20,
             ),
             label: Text(
-              isPending
+              isPurchased
+                  ? 'Download PDF Report'
+                  : isPending
                   ? (l10n['read_more'] ?? 'Unlock Full Analysis')
                   : (l10n['save_birthdate'] ?? 'Reveal My Birthdate Secrets'),
               style: const TextStyle(
@@ -682,10 +704,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isPending
+              backgroundColor: isPurchased
+                  ? const Color(0xFF1D4ED8)
+                  : isPending
                   ? const Color(0xFFF4C542)
                   : AnalysisTheme.getAccent(theme),
-              foregroundColor: isPending
+              foregroundColor: isPurchased
+                  ? Colors.white
+                  : isPending
                   ? const Color(0xFF2B1A00)
                   : Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
@@ -829,6 +855,92 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
               style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red[700],
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadPdfReport() async {
+    final birthdateData = ref.read(currentBirthdateProvider);
+    if (birthdateData == null) return;
+
+    final l10n = ref.read(birthdateL10nProvider);
+    final lang = ref.read(languageProvider);
+
+    if (!mounted) return;
+    showLoadingDialog(
+      context: context,
+      message: l10n['please_wait'] ?? 'Generating PDF report...',
+    );
+
+    try {
+      final results = await Future.wait([
+        ref.read(personalityDataProvider.future),
+        ref.read(loshuPlanesProvider.future),
+        ref.read(numberOccurrenceDetailsProvider.future),
+        ref.read(missingNumberTellsProvider.future),
+        ref.read(importantPointsProvider.future),
+        ref.read(stockMarketInfoProvider.future),
+        ref.read(remedyValuesProvider.future),
+        ref.read(missingNumberRemediesProvider.future),
+        ref.read(numbersNotForRemedyProvider.future),
+        ref.read(pinnacleData1Provider.future),
+        ref.read(pinnacleData2Provider.future),
+        ref.read(pinnacleData3Provider.future),
+        ref.read(pinnacleData4Provider.future),
+        ref.read(lifePathNumberDataProvider.future),
+        ref.read(careerDataProvider.future),
+        ref.read(boostingPersonalityDataProvider.future),
+        ref.read(combinationDataProvider.future),
+      ]);
+
+      final pdfBytes = await _pdfReportService.build(
+        BirthdateAnalysisPdfInput(
+          birthdate: birthdateData,
+          language: lang,
+          personalityData: results[0] as PersonalityData?,
+          loshuPlanes: results[1] as List<LoshuPlane>,
+          numberOccurrenceDetails: results[2] as List<NumberOccurrenceDetail>,
+          missingNumberTells: results[3] as List<MissingNumberTell>,
+          importantPoints: results[4] as List<ImportantPoint>,
+          stockMarketInfo: results[5] as List<StockMarketInfo>,
+          remedyValues: results[6] as List<RemedyValues>,
+          missingNumberRemedies: results[7] as List<MissingNumberRemedy>,
+          numbersNotForRemedy: results[8] as List<int>,
+          pinnacleData1: results[9] as List<PinnacleData>,
+          pinnacleData2: results[10] as List<PinnacleData>,
+          pinnacleData3: results[11] as List<PinnacleData>,
+          pinnacleData4: results[12] as List<PinnacleData>,
+          lifePathData: results[13] as List<LifePathData>,
+          careerData: results[14] as List<CareerData>,
+          boostingPersonalityData: results[15] as List<BoostingPersonalityData>,
+          combinationData: results[16] as List<CombinationData>,
+        ),
+      );
+
+      final safeName = DateFormat('yyyyMMdd').format(birthdateData.birthdate);
+      final fileName =
+          'birthdate_analysis_${safeName}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      await pdfDownloadHelper.savePdf(pdfBytes, fileName);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF report downloaded successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate PDF report: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
