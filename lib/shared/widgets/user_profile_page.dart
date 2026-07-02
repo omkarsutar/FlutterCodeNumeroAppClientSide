@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/exceptions/app_exceptions.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../core/providers/core_providers.dart';
@@ -20,7 +19,6 @@ class UserProfilePage extends ConsumerStatefulWidget {
 class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  bool _hasImageError = false;
 
   @override
   void initState() {
@@ -32,6 +30,61 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Widget _buildAvatar({
+    required BuildContext context,
+    required ThemeData theme,
+    required String initials,
+    required String? avatarUrl,
+    required double size,
+  }) {
+    final avatar = avatarUrl;
+    return ClipOval(
+      child: Container(
+        width: size,
+        height: size,
+        color: theme.colorScheme.primaryContainer,
+        child: avatar != null && avatar.isNotEmpty
+            ? Image.network(
+                avatar,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: Text(
+                      initials.toUpperCase(),
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Text(
+                      initials.toUpperCase(),
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : Center(
+                child: Text(
+                  initials.toUpperCase(),
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 
   Future<void> _updateProfile(ModelUser profile) async {
@@ -91,59 +144,12 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                   children: [
                     const SizedBox(height: 20),
                     // Avatar
-                    ClipOval(
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        color: theme.colorScheme.primaryContainer,
-                        child: avatarUrl != null && !_hasImageError
-                            ? CachedNetworkImage(
-                                imageUrl: avatarUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Center(
-                                  child: Text(
-                                    initials.toUpperCase(),
-                                    style: theme.textTheme.displaySmall
-                                        ?.copyWith(
-                                          color: theme
-                                              .colorScheme
-                                              .onPrimaryContainer,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) {
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted && !_hasImageError) {
-                                      setState(() => _hasImageError = true);
-                                    }
-                                  });
-                                  return Center(
-                                    child: Text(
-                                      initials.toUpperCase(),
-                                      style: theme.textTheme.displaySmall
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onPrimaryContainer,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  initials.toUpperCase(),
-                                  style: theme.textTheme.displaySmall?.copyWith(
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                      ),
+                    _buildAvatar(
+                      context: context,
+                      theme: theme,
+                      initials: initials,
+                      avatarUrl: avatarUrl,
+                      size: 100,
                     ),
                     const SizedBox(height: 16),
                     Text(

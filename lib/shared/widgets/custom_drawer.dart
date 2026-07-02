@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,8 +19,6 @@ class CustomDrawer extends ConsumerStatefulWidget {
 }
 
 class _CustomDrawerState extends ConsumerState<CustomDrawer> {
-  bool _hasImageError = false;
-
   String? _userDisplayName() {
     final userAsync = ref.watch(userProfileProvider);
     final user = userAsync.valueOrNull;
@@ -34,6 +31,60 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
     }
 
     return user.fullName ?? currentUser?.email;
+  }
+
+  Widget _buildAvatar({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required String initials,
+    required String? avatarUrl,
+  }) {
+    final avatar = avatarUrl;
+    return ClipOval(
+      child: Container(
+        width: 60,
+        height: 60,
+        color: colorScheme.primaryContainer,
+        child: avatar != null && avatar.isNotEmpty
+            ? Image.network(
+                avatar,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : Center(
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    color: colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 
   @override
@@ -128,60 +179,16 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                           boxShadow: [
                             BoxShadow(
                               color: drawerAccentColor.withValues(alpha: 0.12),
-                              blurRadius: 16,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            color: colorScheme.primaryContainer,
-                            child: avatarUrl != null && !_hasImageError
-                                ? CachedNetworkImage(
-                                    imageUrl: avatarUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Center(
-                                      child: Text(
-                                        initials,
-                                        style: TextStyle(
-                                          color: colorScheme.onPrimaryContainer,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                            if (mounted && !_hasImageError) {
-                                              setState(
-                                                () => _hasImageError = true,
-                                              );
-                                            }
-                                          });
-                                      return Center(
-                                        child: Text(
-                                          initials,
-                                          style: TextStyle(
-                                            color:
-                                                colorScheme.onPrimaryContainer,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Center(
-                                    child: Text(
-                                      initials,
-                                      style: TextStyle(
-                                        color: colorScheme.onPrimaryContainer,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
+                            blurRadius: 16,
+                            spreadRadius: 1,
                           ),
+                        ],
+                      ),
+                        child: _buildAvatar(
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          initials: initials,
+                          avatarUrl: avatarUrl,
                         ),
                       ),
                       Column(

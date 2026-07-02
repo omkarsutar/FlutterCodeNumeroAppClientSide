@@ -83,6 +83,12 @@ final enrichedUserProfileProvider = FutureProvider<ModelUser?>((ref) async {
 
 /// Provider to extract the user's avatar URL from Supabase Auth metadata
 final userAvatarUrlProvider = Provider<String?>((ref) {
+  final profile = ref.watch(enrichedUserProfileProvider).value;
+  final profileAvatar = profile?.avatarUrl;
+  if (profileAvatar != null && profileAvatar.isNotEmpty) {
+    return profileAvatar;
+  }
+
   final client = ref.watch(supabaseClientProvider);
   final user = client.auth.currentUser;
   if (user == null) return null;
@@ -90,15 +96,6 @@ final userAvatarUrlProvider = Provider<String?>((ref) {
   final metadata = user.userMetadata;
   final avatarUrl = metadata?['avatar_url'] as String?;
   if (avatarUrl == null || avatarUrl.isEmpty) return null;
-
-  final uri = Uri.tryParse(avatarUrl);
-  final host = uri?.host.toLowerCase() ?? '';
-
-  // Google-hosted avatar URLs can start returning 429s in-app.
-  // Prefer the initials fallback instead of repeatedly requesting them.
-  if (host.contains('googleusercontent.com')) {
-    return null;
-  }
 
   return avatarUrl;
 });

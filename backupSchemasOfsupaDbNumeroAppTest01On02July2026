@@ -1927,6 +1927,7 @@ CREATE VIEW public.view_users AS
     u.full_name,
     u.role_id,
     au.email,
+    au.raw_user_meta_data ->> 'avatar_url'::text AS avatar_url,
     u.user_language,
     u.created_at,
     u.updated_at,
@@ -3047,4 +3048,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 --
 
 \unrestrict N3RTx6k8ps1ebHTcblf4ZEXTNVvp5lUME4jgay8UNNoLAZvJi9FXAb0dcc4p1VA
-

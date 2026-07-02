@@ -8,6 +8,7 @@ class ModelUserFields {
   static const String fullName = 'full_name';
   static const String roleId = 'role_id';
   static const String email = 'email';
+  static const String avatarUrl = 'avatar_url';
   static const String createdAt = 'created_at';
   static const String updatedAt = 'updated_at';
   static const String userLanguage = 'user_language';
@@ -21,6 +22,7 @@ class ModelUser {
   final String? fullName; // nullable
   final String? roleId; // nullable FK
   final String? email; // nullable, from auth.users
+  final String? avatarUrl; // nullable, from auth.users metadata
   final DateTime? createdAt; // nullable, DB default
   final DateTime? updatedAt; // nullable, DB default
   final String? userLanguage; // nullable
@@ -34,6 +36,7 @@ class ModelUser {
     this.fullName,
     this.roleId,
     this.email,
+    this.avatarUrl,
     this.createdAt,
     this.updatedAt,
     this.userLanguage,
@@ -58,6 +61,7 @@ class ModelUser {
       fullName: map[ModelUserFields.fullName],
       roleId: map[ModelUserFields.roleId],
       email: map[ModelUserFields.email],
+      avatarUrl: map[ModelUserFields.avatarUrl],
       createdAt: _parseDate(map[ModelUserFields.createdAt]),
       updatedAt: _parseDate(map[ModelUserFields.updatedAt]),
       userLanguage: map[ModelUserFields.userLanguage],
@@ -74,6 +78,7 @@ class ModelUser {
       if (fullName != null) ModelUserFields.fullName: fullName,
       if (roleId != null) ModelUserFields.roleId: roleId,
       if (email != null) ModelUserFields.email: email,
+      if (avatarUrl != null) ModelUserFields.avatarUrl: avatarUrl,
       if (createdAt != null)
         ModelUserFields.createdAt: createdAt!.toIso8601String(),
       if (updatedAt != null)
@@ -91,6 +96,7 @@ class ModelUser {
       'fullName': fullName,
       'roleId': roleId,
       'email': email,
+      'avatarUrl': avatarUrl,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'userLanguage': userLanguage,
@@ -107,6 +113,7 @@ class ModelUser {
       fullName: json['fullName'] as String?,
       roleId: json['roleId'] as String?,
       email: json['email'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
       userLanguage: json['userLanguage'] as String?,
