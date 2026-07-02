@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:numero_shastra/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -11,6 +13,7 @@ import '../providers/numerology_content_providers.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/auth_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/utils/dialogs.dart';
@@ -59,6 +62,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
   final ScreenshotController _screenshotController = ScreenshotController();
+  static const String _pendingRevealBirthdateKey =
+      'pending_reveal_birthdate';
+  bool _isResumingPendingReveal = false;
 
   final Map<NarrationSection, GlobalKey> _sectionKeys = {
     NarrationSection.intro: GlobalKey(),
@@ -95,12 +101,68 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restorePendingBirthdateAndResumeIfPossible();
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _storePendingRevealRequest(DateTime birthdate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _pendingRevealBirthdateKey,
+      DateFormat('yyyy-MM-dd').format(birthdate),
+    );
+  }
+
+  Future<void> _clearPendingRevealRequest() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingRevealBirthdateKey);
+  }
+
+  Future<DateTime?> _readPendingRevealRequest() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_pendingRevealBirthdateKey);
+    if (stored == null || stored.isEmpty) return null;
+    return DateTime.parse(stored);
+  }
+
+  Future<void> _resumePendingRevealIfNeeded() async {
+    if (_isResumingPendingReveal) return;
+
+    final session = ref.read(supabaseClientProvider).auth.currentSession;
+    if (session == null) return;
+
+    final pendingBirthdate = await _readPendingRevealRequest();
+    if (pendingBirthdate == null) return;
+
+    _isResumingPendingReveal = true;
+    try {
+      if (!mounted) return;
+      ref.read(birthdateProvider.notifier).state = pendingBirthdate;
+      await _handleOrderAction(pendingBirthdate, fromAutoResume: true);
+      await _clearPendingRevealRequest();
+    } finally {
+      _isResumingPendingReveal = false;
+    }
+  }
+
+  Future<void> _restorePendingBirthdateAndResumeIfPossible() async {
+    final pendingBirthdate = await _readPendingRevealRequest();
+    if (pendingBirthdate == null || !mounted) return;
+
+    ref.read(birthdateProvider.notifier).state = pendingBirthdate;
+
+    final session = ref.read(supabaseClientProvider).auth.currentSession;
+    if (session != null) {
+      await _resumePendingRevealIfNeeded();
+    }
   }
 
   Future<void> _refreshAnalysisData() async {
@@ -146,6 +208,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         onSurfaceVariant: AnalysisTheme.getBodyText(baseTheme),
       ),
     );
+
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      final wasLoggedOut = previous?.value?.session == null;
+      final isLoggedIn = next.value?.session != null;
+      if (wasLoggedOut && isLoggedIn) {
+        _resumePendingRevealIfNeeded();
+      }
+    });
 
     // Auto-scroll listener
     ref.listen(narrationProvider, (prev, next) {
@@ -709,10 +779,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
   }
 
-  Future<void> _handleOrderAction(DateTime birthdate) async {
+  Future<void> _handleOrderAction(
+    DateTime birthdate, {
+    bool fromAutoResume = false,
+  }) async {
     final l10n = ref.read(birthdateL10nProvider);
     final session = ref.read(supabaseClientProvider).auth.currentSession;
     if (session == null) {
+      await _storePendingRevealRequest(birthdate);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -739,6 +813,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
 
       if (mounted) {
         Navigator.of(context).pop(); // Dismiss loading
+        await _clearPendingRevealRequest();
         await _showThankYouDialog();
         if (mounted) {
           _scrollToSection(NarrationSection.personality);
