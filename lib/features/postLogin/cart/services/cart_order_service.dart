@@ -32,13 +32,14 @@ class CartOrderService {
     final dateStr =
         "${birthdate.year}-${birthdate.month.toString().padLeft(2, '0')}-${birthdate.day.toString().padLeft(2, '0')}";
 
-    // Insert directly into birthdates table with status 'pending'
-    await client.from('birthdates').insert({
-      'user_id': userId,
-      'birthdate': dateStr,
-      'full_name': fullName,
-      'status': 'pending',
-    });
+    await client.rpc(
+      'upsert_birthdate_for_user',
+      params: {
+        'p_user_id': userId,
+        'p_birthdate': dateStr,
+        'p_full_name': fullName,
+      },
+    );
   }
 
   Future<void> updateBirthdateName({
@@ -91,6 +92,9 @@ class CartOrderService {
       throw NoInternetException();
     }
 
-    await client.from('birthdates').delete().eq('id', id);
+    await client.rpc(
+      'soft_delete_birthdate',
+      params: {'birthdate_id': id},
+    );
   }
 }
