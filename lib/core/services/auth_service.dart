@@ -41,9 +41,8 @@ class AuthService {
       }
 
       if (kIsWeb) {
-        final String redirectUri = kReleaseMode
-            ? AppConstants.webAppProdUrl
-            : AppConstants.webAppLocalUrl;
+        // Dynamically use the current origin and path to support different host ports/URLs (like VS Code Live Server)
+        final String redirectUri = '${Uri.base.origin}${Uri.base.path}';
 
         await _client.auth.signInWithOAuth(
           OAuthProvider.google,

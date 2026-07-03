@@ -2,9 +2,9 @@ class AppConstants {
   AppConstants._();
 
   // static const String baseUrlProd = 'https://numeroshastra.github.io/';
-  static const String appPath = 'NumeroShastraV01/';
+  // static const String appPath = 'NumeroShastraV01/';
   static const String baseUrlProd = 'https://app.numeroshastra.com/';
-  // static const String appPath = '';
+  static const String appPath = '';
   static const String baseUrlLocal = 'http://localhost:3000/';
   static const String appPackageName = 'com.numeroshastra.client';
 
