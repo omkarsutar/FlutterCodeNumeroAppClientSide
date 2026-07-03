@@ -87,6 +87,48 @@ class CartOrderService {
     }
   }
 
+  Future<String> createPaymentOrder({
+    required List<String> poIds,
+    required String userId,
+    required int amountPaise,
+    String currency = 'INR',
+    Map<String, String>? notes,
+  }) async {
+    if (!await _connectivityService.isOnline()) {
+      throw NoInternetException();
+    }
+
+    try {
+      final response = await client.functions.invoke(
+        'create-payment-order',
+        body: {
+          'amountPaise': amountPaise,
+          'currency': currency,
+          'userId': userId,
+          'poIds': poIds,
+          'receipt': 'po_${DateTime.now().millisecondsSinceEpoch}',
+          'notes': notes ?? const <String, String>{},
+        },
+      );
+
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Failed to create payment order');
+      }
+
+      final orderId = response.data['orderId'] as String?;
+      if (orderId == null || orderId.isEmpty) {
+        throw Exception('Payment order response did not include an order id');
+      }
+      return orderId;
+    } catch (e) {
+      developer.log(
+        'Error in create-payment-order Edge Function: $e',
+        name: 'CartOrderService',
+      );
+      rethrow;
+    }
+  }
+
   Future<void> deleteBirthdate(String id) async {
     if (!await _connectivityService.isOnline()) {
       throw NoInternetException();

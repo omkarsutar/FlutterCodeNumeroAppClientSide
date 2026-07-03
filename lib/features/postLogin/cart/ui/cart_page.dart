@@ -604,34 +604,6 @@ class _CartPageState extends ConsumerState<CartPage> {
     );
 
     if (confirm == true) {
-      if (kIsWeb) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              title: Text(
-                l10n['mobile_app_required_title'] ?? 'Mobile App Required',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              content: Text(
-                l10n['mobile_app_required_msg'] ??
-                    'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n['got_it'] ?? 'Got it'),
-                ),
-              ],
-            ),
-          );
-        }
-        return;
-      }
-
       if (!mounted) return;
       showLoadingDialog(
         context: context,
