@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import 'package:numero_shastra/core/providers/localization_provider.dart';
 import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/birthdate_model.dart';
@@ -62,12 +63,8 @@ class BirthdateAnalysisPdfReportService {
     final boldFont = pw.Font.ttf(
       await rootBundle.load('assets/fonts/Roboto-Bold.ttf'),
     );
-    final devanagariFont = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Mangal-Regular.ttf'),
-    );
-    final devanagariBoldFont = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Mangal-Bold.ttf'),
-    );
+    final devanagariFont = await PdfGoogleFonts.hindRegular();
+    final devanagariBoldFont = await PdfGoogleFonts.hindBold();
     final useIndicBaseFont = _usesIndicBaseFont(input.language);
     final bodyFont = useIndicBaseFont ? devanagariFont : regularFont;
     final bodyBoldFont = useIndicBaseFont ? devanagariBoldFont : boldFont;
@@ -513,7 +510,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            title,
+            _cleanText(title),
             style: _style(
               font: bodyBoldFont,
               fallbackFonts: fallbackFonts,
@@ -524,7 +521,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 4),
           pw.Text(
-            subtitle,
+            _cleanText(subtitle),
             style: _style(
               font: bodyFont,
               fallbackFonts: fallbackFonts,
@@ -583,7 +580,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 10),
           pw.Text(
-            title,
+            _cleanText(title),
             style: pw.TextStyle(
               fontSize: 16,
               fontWeight: pw.FontWeight.bold,
@@ -592,7 +589,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            subtitle,
+            _cleanText(subtitle),
             style: pw.TextStyle(fontSize: 10.3, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 12),
@@ -620,7 +617,7 @@ class BirthdateAnalysisPdfReportService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            title,
+            _cleanText(title),
             style: _style(
               font: font,
               fallbackFonts: fallbackFonts,
@@ -631,7 +628,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            description,
+            _cleanText(description),
             style: _style(
               font: font,
               fallbackFonts: fallbackFonts,
@@ -673,7 +670,7 @@ class BirthdateAnalysisPdfReportService {
               borderRadius: pw.BorderRadius.circular(999),
             ),
             child: pw.Text(
-              label,
+              _cleanText(label),
               style: _style(
                 font: font,
                 fallbackFonts: fallbackFonts,
@@ -685,7 +682,7 @@ class BirthdateAnalysisPdfReportService {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            value.isEmpty ? 'N/A' : value,
+            value.isEmpty ? 'N/A' : _cleanText(value),
             textAlign: pw.TextAlign.justify,
             style: _style(
               font: font,
@@ -706,10 +703,12 @@ class BirthdateAnalysisPdfReportService {
     required String label,
     required String value,
   }) {
+    final cleanedLabel = _cleanText(label);
+    final cleanedValue = value.isEmpty ? 'N/A' : _cleanText(value);
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 6),
       child: pw.Text(
-        '$label: ${value.isEmpty ? 'N/A' : value}',
+        '$cleanedLabel: $cleanedValue',
         style: _style(
           font: font,
           fallbackFonts: fallbackFonts,
@@ -745,11 +744,70 @@ class BirthdateAnalysisPdfReportService {
   }
 
   String _cleanText(String value) {
-    return value
+    final cleaned = value
         .replaceAll('\u2013', '-')
         .replaceAll('\u2014', '-')
         .replaceAll('\u2011', '-')
         .replaceAll('\u2022', '-');
+    return _shapeDevanagari(cleaned);
+  }
+
+  String _shapeDevanagari(String text) {
+    if (text.isEmpty) return text;
+    
+    // Check if the text contains Devanagari characters (Unicode range U+0900 to U+097F)
+    bool hasDevanagari = false;
+    for (int i = 0; i < text.length; i++) {
+      final cu = text.codeUnitAt(i);
+      if (cu >= 0x0900 && cu <= 0x097F) {
+        hasDevanagari = true;
+        break;
+      }
+    }
+    if (!hasDevanagari) return text;
+
+    final List<int> codeUnits = text.codeUnits;
+    final List<int> result = [];
+
+    bool isConsonant(int charCode) {
+      return (charCode >= 0x0915 && charCode <= 0x0939) ||
+             (charCode >= 0x0958 && charCode <= 0x095F);
+    }
+
+    bool isNukta(int charCode) {
+      return charCode == 0x093C;
+    }
+
+    for (int i = 0; i < codeUnits.length; i++) {
+      final current = codeUnits[i];
+
+      // Devanagari Vowel Sign I is 0x093F (ि)
+      if (current == 0x093F) {
+        final j = result.length - 1;
+        if (j >= 0) {
+          int clusterStart = j;
+
+          // If the character before was a Nukta, move back
+          if (isNukta(result[clusterStart])) {
+            clusterStart--;
+          }
+
+          // Just move the vowel sign 'ि' before the immediate preceding consonant.
+          // Do NOT skip halants, because the PDF renderer renders consonants in clusters separately.
+          if (clusterStart >= 0 && isConsonant(result[clusterStart])) {
+            result.insert(clusterStart, 0x093F);
+          } else {
+            result.add(current);
+          }
+        } else {
+          result.add(current);
+        }
+      } else {
+        result.add(current);
+      }
+    }
+
+    return String.fromCharCodes(result);
   }
 
   bool _usesIndicBaseFont(AppLanguage language) {
