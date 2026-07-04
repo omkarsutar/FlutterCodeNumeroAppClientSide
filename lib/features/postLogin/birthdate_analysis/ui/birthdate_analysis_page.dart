@@ -27,6 +27,8 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:convert';
 
 import 'utils/analysis_theme.dart';
 import 'widgets/mystic_widgets.dart';
@@ -67,8 +69,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final ScreenshotController _screenshotController = ScreenshotController();
   final BirthdateAnalysisPdfReportService _pdfReportService =
       BirthdateAnalysisPdfReportService();
-  static const String _pendingRevealBirthdateKey =
-      'pending_reveal_birthdate';
+  static const String _pendingRevealBirthdateKey = 'pending_reveal_birthdate';
   bool _isResumingPendingReveal = false;
 
   final Map<NarrationSection, GlobalKey> _sectionKeys = {
@@ -866,7 +867,20 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     if (birthdateData == null) return;
 
     final l10n = ref.read(birthdateL10nProvider);
-    final lang = ref.read(languageProvider);
+    final client = ref.read(supabaseClientProvider);
+
+    // Check if user is logged in
+    final session = client.auth.currentSession;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n['please_login'] ?? 'Please login to download PDF.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     if (!mounted) return;
     showLoadingDialog(
@@ -875,66 +889,67 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
 
     try {
-      final results = await Future.wait([
-        ref.read(personalityDataProvider.future),
-        ref.read(loshuPlanesProvider.future),
-        ref.read(numberOccurrenceDetailsProvider.future),
-        ref.read(missingNumberTellsProvider.future),
-        ref.read(importantPointsProvider.future),
-        ref.read(stockMarketInfoProvider.future),
-        ref.read(remedyValuesProvider.future),
-        ref.read(missingNumberRemediesProvider.future),
-        ref.read(numbersNotForRemedyProvider.future),
-        ref.read(pinnacleData1Provider.future),
-        ref.read(pinnacleData2Provider.future),
-        ref.read(pinnacleData3Provider.future),
-        ref.read(pinnacleData4Provider.future),
-        ref.read(lifePathNumberDataProvider.future),
-        ref.read(careerDataProvider.future),
-        ref.read(boostingPersonalityDataProvider.future),
-        ref.read(combinationDataProvider.future),
-      ]);
+      debugPrint('[PDF Download] Starting PDF generation for birthdate: ${birthdateData.id}');
+      debugPrint('[PDF Download] Session token exists: ${session.accessToken.isNotEmpty}');
 
-      final pdfBytes = await _pdfReportService.build(
-        BirthdateAnalysisPdfInput(
-          birthdate: birthdateData,
-          language: lang,
-          personalityData: results[0] as PersonalityData?,
-          loshuPlanes: results[1] as List<LoshuPlane>,
-          numberOccurrenceDetails: results[2] as List<NumberOccurrenceDetail>,
-          missingNumberTells: results[3] as List<MissingNumberTell>,
-          importantPoints: results[4] as List<ImportantPoint>,
-          stockMarketInfo: results[5] as List<StockMarketInfo>,
-          remedyValues: results[6] as List<RemedyValues>,
-          missingNumberRemedies: results[7] as List<MissingNumberRemedy>,
-          numbersNotForRemedy: results[8] as List<int>,
-          pinnacleData1: results[9] as List<PinnacleData>,
-          pinnacleData2: results[10] as List<PinnacleData>,
-          pinnacleData3: results[11] as List<PinnacleData>,
-          pinnacleData4: results[12] as List<PinnacleData>,
-          lifePathData: results[13] as List<LifePathData>,
-          careerData: results[14] as List<CareerData>,
-          boostingPersonalityData: results[15] as List<BoostingPersonalityData>,
-          combinationData: results[16] as List<CombinationData>,
-        ),
+      // Try to invoke edge function with explicit Authorization header
+      final response = await client.functions.invoke(
+        'generate-report',
+        method: HttpMethod.post,
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+        },
+        body: {'birthdate_id': birthdateData.id},
       );
 
-      final safeName = DateFormat('yyyyMMdd').format(birthdateData.birthdate);
-      final fileName =
-          'birthdate_analysis_${safeName}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      debugPrint('[PDF Download] Response status: ${response.status}');
+      debugPrint('[PDF Download] Response data type: ${response.data.runtimeType}');
 
-      await pdfDownloadHelper.savePdf(pdfBytes, fileName);
+      if (response.status == 200 && response.data != null) {
+        // response.data may be Uint8List, List<int>, String (base64) or the client may expose rawBytes
+        Uint8List pdfBytes;
+        final data = response.data;
 
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PDF report downloaded successfully.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (data is Uint8List) {
+          pdfBytes = data;
+        } else if (data is List<int>) {
+          pdfBytes = Uint8List.fromList(List<int>.from(data));
+        } else if (data is String) {
+          // Some runtimes return base64 encoded strings for binary payloads
+          pdfBytes = base64Decode(data as String);
+        } else if ((response as dynamic).rawBytes != null) {
+          pdfBytes = (response as dynamic).rawBytes as Uint8List;
+        } else {
+          throw Exception('Unexpected response type from generate-report edge function');
+        }
+
+        final safeName = DateFormat('yyyyMMdd').format(birthdateData.birthdate);
+        final fileName =
+            'birthdate_analysis_${safeName}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+        await pdfDownloadHelper.savePdf(pdfBytes, fileName);
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PDF report downloaded successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        String errMsg = 'Failed to generate PDF report (status: ${response.status}).';
+        try {
+          if (response.data != null && response.data is Map && response.data['error'] != null) {
+            errMsg = response.data['error'].toString();
+          }
+        } catch (_) {}
+        throw Exception(errMsg);
       }
     } catch (e) {
+      debugPrint('[PDF Download] Error: $e');
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
