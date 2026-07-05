@@ -892,14 +892,10 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       debugPrint('[PDF Download] Starting PDF generation for birthdate: ${birthdateData.id}');
       debugPrint('[PDF Download] Session token exists: ${session.accessToken.isNotEmpty}');
 
-      // Try to invoke edge function with explicit Authorization header
+      // Try to invoke edge function
       final response = await client.functions.invoke(
         'generate-report',
         method: HttpMethod.post,
-        headers: {
-          'Authorization': 'Bearer ${session.accessToken}',
-          'Content-Type': 'application/json',
-        },
         body: {'birthdate_id': birthdateData.id},
       );
 
