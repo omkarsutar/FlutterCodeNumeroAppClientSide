@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../core/providers/core_providers.dart';
+import '../../core/utils/role_aware_message_utils.dart';
 import 'package:go_router/go_router.dart';
 import '../../router/app_routes.dart';
 
@@ -176,6 +177,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                                     .read(authServiceProvider)
                                     .signInWithGoogle();
                               } catch (e, stackTrace) {
+                                final isAdmin = ref.read(isAdminUserProvider);
                                 ref
                                     .read(errorHandlerProvider)
                                     .handle(
@@ -185,7 +187,12 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                                       showToUser: true,
                                     );
                                 setState(() {
-                                  _error = 'Sign in failed: $e';
+                                  _error = RoleAwareMessageUtils.resolve(
+                                    isAdmin: isAdmin,
+                                    simpleMessage:
+                                        'Sign in failed. Please try again.',
+                                    adminMessage: 'Sign in failed: $e',
+                                  );
                                 });
                               } finally {
                                 if (mounted) {

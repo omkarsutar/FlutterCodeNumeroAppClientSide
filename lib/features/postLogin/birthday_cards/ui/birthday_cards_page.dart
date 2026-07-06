@@ -9,7 +9,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/utils/role_aware_message_utils.dart';
 import '../../../../shared/widgets/shared_widget_barrel.dart';
 import '../../birthdate_analysis/ui/utils/analysis_theme.dart';
 import '../../birthdate_analysis/ui/widgets/mystic_widgets.dart';
@@ -146,9 +148,18 @@ class _BirthdayCardsPageState extends ConsumerState<BirthdayCardsPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to share: $e')));
+        final isAdmin = ref.read(isAdminUserProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              RoleAwareMessageUtils.resolve(
+                isAdmin: isAdmin,
+                simpleMessage: 'Unable to share right now. Please try again.',
+                adminMessage: 'Failed to share: $e',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {

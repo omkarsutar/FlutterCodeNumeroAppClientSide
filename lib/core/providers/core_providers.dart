@@ -86,6 +86,13 @@ final roleNameProvider = Provider<String?>((ref) {
   return profile?.roleId;
 });
 
+/// Whether the signed-in user should see detailed admin-facing messages.
+final isAdminUserProvider = Provider<bool>((ref) {
+  final roleName = ref.watch(roleNameProvider)?.trim().toLowerCase();
+  if (roleName == null || roleName.isEmpty) return false;
+  return roleName == 'admin' || roleName.contains('admin');
+});
+
 /// Debug info for remote config resolution path on device.
 final appRemoteConfigDebugInfoProvider = StateProvider<String>((ref) {
   return 'NOT_FETCHED';
@@ -120,12 +127,12 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     final packageInfo = await PackageInfo.fromPlatform();
     final packageName = packageInfo.packageName.trim();
     final client = ref.read(supabaseClientProvider);
-    
+
     // Extract project ID for debugging
     final pId = SupabaseConfig.supabaseUrl.split('//').last.split('.').first;
-    
+
     // Log the start of the request
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
         'FETCHING pid=$pId runtime=$packageName';
 
     // Strategy: Fetch ALL rows to prevent filter/collation issues
@@ -167,7 +174,9 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
 
       // 3. Try AppConstants matching in Dart
       final constMatch = allRows.firstWhereOrNull(
-        (row) => row['package_name']?.toString().trim() == AppConstants.appPackageName,
+        (row) =>
+            row['package_name']?.toString().trim() ==
+            AppConstants.appPackageName,
       );
       if (constMatch != null) {
         await persistConfig(constMatch);
@@ -184,7 +193,7 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
         final dateB = b['updated_at'] ?? '';
         return dateB.toString().compareTo(dateA.toString());
       });
-      
+
       final latest = allRows.first;
       await persistConfig(latest);
       final config = AppRemoteConfig.fromMap(latest);
@@ -202,23 +211,24 @@ final appRemoteConfigProvider = FutureProvider<AppRemoteConfig>((ref) async {
     }
 
     // Ultimate fallback
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 table_empty pid=$pId';
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+        'FALLBACK_299 table_empty pid=$pId';
     return AppRemoteConfig.fallback();
-
   } catch (e, st) {
     debugPrint('AppRemoteConfig: Error: $e\n$st');
-    
+
     final cached = await readCachedConfig();
     if (cached != null) {
-      ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'CACHE_ERROR err=$e';
+      ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+          'CACHE_ERROR err=$e';
       return cached;
     }
-    
-    ref.read(appRemoteConfigDebugInfoProvider.notifier).state = 'FALLBACK_299 error=$e';
+
+    ref.read(appRemoteConfigDebugInfoProvider.notifier).state =
+        'FALLBACK_299 error=$e';
     return AppRemoteConfig.fallback();
   }
 });
-
 
 /// Provides the Razorpay service instance
 final razorpayServiceProvider = Provider<RazorpayService>((ref) {

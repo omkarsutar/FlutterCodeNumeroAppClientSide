@@ -28,10 +28,14 @@ class VacationModeScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.beach_access, size: 100, color: Colors.orange),
+            const Icon(
+              Icons.build_circle_outlined,
+              size: 100,
+              color: Colors.orange,
+            ),
             const SizedBox(height: 32),
             Text(
-              'Holiday Break!',
+              'Scheduled Maintenance',
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
@@ -64,7 +68,7 @@ class VacationModeScreen extends ConsumerWidget {
                   if (config.vacationUntil != null) ...[
                     const SizedBox(height: 24),
                     Text(
-                      'Resuming on ${config.vacationUntil!.day}/${config.vacationUntil!.month}/${config.vacationUntil!.year}',
+                      'Expected to resume on ${config.vacationUntil!.day}/${config.vacationUntil!.month}/${config.vacationUntil!.year}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.secondary,
@@ -82,7 +86,7 @@ class VacationModeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 48),
             Text(
-              'We appreciate your patience while we take a short break to recharge and improve our service for you.',
+              'We appreciate your patience while we perform maintenance and improve the service for you.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withAlpha(150),
               ),

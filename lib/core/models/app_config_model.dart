@@ -13,7 +13,8 @@ class AppConfig {
     return AppConfig(
       vacationMode: map['vacation_mode'] ?? false,
       vacationMessage:
-          map['vacation_message'] ?? 'We are currently on vacation.',
+          map['vacation_message'] ??
+          'We are currently performing scheduled maintenance to upgrade our systems and improve your experience.',
       vacationUntil: map['vacation_until'] != null
           ? DateTime.parse(map['vacation_until'])
           : null,
