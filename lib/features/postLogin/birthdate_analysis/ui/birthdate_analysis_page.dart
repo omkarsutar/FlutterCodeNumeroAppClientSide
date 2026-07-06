@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../cart/providers/cart_controller.dart';
 import '../providers/numerology_content_providers.dart';
-import '../model/numerology_models.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
@@ -21,13 +20,11 @@ import '../../../../core/utils/dialogs.dart';
 import '../../../../core/utils/platform/pdf_download.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../model/numerology_help_content.dart';
-import '../services/birthdate_pdf_report_service.dart';
 import 'widgets/birthdate_share_template.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
 
 import 'utils/analysis_theme.dart';
@@ -67,8 +64,6 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
   final ScreenshotController _screenshotController = ScreenshotController();
-  final BirthdateAnalysisPdfReportService _pdfReportService =
-      BirthdateAnalysisPdfReportService();
   static const String _pendingRevealBirthdateKey = 'pending_reveal_birthdate';
   bool _isResumingPendingReveal = false;
 
