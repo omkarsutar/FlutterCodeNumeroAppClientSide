@@ -862,6 +862,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     if (birthdateData == null) return;
 
     final l10n = ref.read(birthdateL10nProvider);
+    final appL10n = ref.read(appL10nProvider);
     final client = ref.read(supabaseClientProvider);
 
     // Check if user is logged in
@@ -870,12 +871,26 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n['please_login'] ?? 'Please login to download PDF.'),
+          content: Text(
+            l10n['please_login'] ?? 'Please login to download PDF.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
+
+    final confirmDownload = await showConfirmationDialog(
+      context: context,
+      title: l10n['pdf_download_warning_title'] ?? 'Important Notice',
+      content:
+          l10n['pdf_download_warning_message'] ??
+          'Please keep this PDF file safe. You can download the PDF only one time for this birthdate.',
+      confirmLabel: l10n['pdf_download_warning_confirm'] ?? 'Continue Download',
+      cancelLabel: appL10n['cancel'] ?? 'Cancel',
+    );
+
+    if (!confirmDownload || !mounted) return;
 
     if (!mounted) return;
     showLoadingDialog(
@@ -884,8 +899,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
 
     try {
-      debugPrint('[PDF Download] Starting PDF generation for birthdate: ${birthdateData.id}');
-      debugPrint('[PDF Download] Session token exists: ${session.accessToken.isNotEmpty}');
+      debugPrint(
+        '[PDF Download] Starting PDF generation for birthdate: ${birthdateData.id}',
+      );
+      debugPrint(
+        '[PDF Download] Session token exists: ${session.accessToken.isNotEmpty}',
+      );
 
       // Try to invoke edge function
       final response = await client.functions.invoke(
@@ -895,7 +914,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       );
 
       debugPrint('[PDF Download] Response status: ${response.status}');
-      debugPrint('[PDF Download] Response data type: ${response.data.runtimeType}');
+      debugPrint(
+        '[PDF Download] Response data type: ${response.data.runtimeType}',
+      );
 
       if (response.status == 200 && response.data != null) {
         // response.data may be Uint8List, List<int>, String (base64) or the client may expose rawBytes
@@ -912,7 +933,9 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         } else if ((response as dynamic).rawBytes != null) {
           pdfBytes = (response as dynamic).rawBytes as Uint8List;
         } else {
-          throw Exception('Unexpected response type from generate-report edge function');
+          throw Exception(
+            'Unexpected response type from generate-report edge function',
+          );
         }
 
         final safeName = DateFormat('yyyyMMdd').format(birthdateData.birthdate);
@@ -931,9 +954,12 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           );
         }
       } else {
-        String errMsg = 'Failed to generate PDF report (status: ${response.status}).';
+        String errMsg =
+            'Failed to generate PDF report (status: ${response.status}).';
         try {
-          if (response.data != null && response.data is Map && response.data['error'] != null) {
+          if (response.data != null &&
+              response.data is Map &&
+              response.data['error'] != null) {
             errMsg = response.data['error'].toString();
           }
         } catch (_) {}

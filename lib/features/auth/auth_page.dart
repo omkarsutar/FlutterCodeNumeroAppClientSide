@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_providers.dart';
 import '../../core/providers/core_providers.dart';
 import 'package:go_router/go_router.dart';
@@ -13,12 +15,38 @@ class AuthPage extends ConsumerStatefulWidget {
 }
 
 class _AuthPageState extends ConsumerState<AuthPage> {
+  static final Uri _termsUri = Uri.parse(
+    'https://sites.google.com/view/steintechnologies/privacy-policy',
+  );
   bool _loading = false;
   String? _error;
+
+  Future<void> _openTermsOfUse() async {
+    try {
+      final launched = await launchUrl(
+        _termsUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open Terms of Use link.')),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open Terms of Use link.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final matchedLocation = GoRouterState.of(context).matchedLocation;
+    final showTermsNotice =
+        matchedLocation == AppRoute.signup || matchedLocation == AppRoute.login;
+    final termsBodyColor = theme.colorScheme.onSurface.withValues(alpha: 0.72);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -47,10 +75,15 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Minimalist Branding
-                const Icon(
-                  Icons.vpn_key_rounded,
-                  size: 64,
-                  color: Color(0xFFFFC107),
+                Image.asset(
+                  'assets/images/app_logo.png',
+                  height: 72,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.vpn_key_rounded,
+                    size: 64,
+                    color: Color(0xFFFFC107),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -163,6 +196,36 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                               }
                             },
                           ),
+                        if (showTermsNotice) ...[
+                          const SizedBox(height: 20),
+                          Text.rich(
+                            TextSpan(
+                              text: 'By signing in, you agree to our ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: termsBodyColor,
+                                height: 1.5,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: 'Terms of Use',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = _openTermsOfUse,
+                                ),
+                                const TextSpan(
+                                  text:
+                                      ' and acknowledge our privacy practices.',
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ],
                     ),
                   ),
