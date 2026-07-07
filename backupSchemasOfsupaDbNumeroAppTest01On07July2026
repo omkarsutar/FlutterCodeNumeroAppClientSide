@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict UAJMulqiEwGgvWVVnMXmhTGO73RUot7lAMR2WnV41BGUBcUZdVKZxlWyVc6jHOg
+\restrict GXv4QqMXne2ocm4Brstq1f7A8XOFIzbYKazUuya5AoDJrUwMJXflrQKBQqFDVLt
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.3
 
--- Started on 2026-07-05 10:01:10
+-- Started on 2026-07-07 10:54:24
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,7 +32,7 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 4090 (class 0 OID 0)
+-- TOC entry 4099 (class 0 OID 0)
 -- Dependencies: 32
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -41,7 +41,7 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- TOC entry 440 (class 1255 OID 20371)
+-- TOC entry 442 (class 1255 OID 20371)
 -- Name: append_user_feedback(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -75,72 +75,80 @@ $$;
 ALTER FUNCTION public.append_user_feedback() OWNER TO postgres;
 
 --
--- TOC entry 447 (class 1255 OID 19255)
+-- TOC entry 449 (class 1255 OID 19255)
 -- Name: generate_lucky_unlucky_values(integer, integer, integer[]); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.generate_lucky_unlucky_values(pers_n integer, life_p integer, missing integer[]) RETURNS TABLE(unlucky_numbers integer[], unlucky_colors text[], unlucky_colors_hindi text[], unlucky_colors_marathi text[], lucky_numbers integer[], lucky_colors text[], lucky_colors_hindi text[], lucky_colors_marathi text[], lucky_days text[], lucky_days_hindi text[], lucky_days_marathi text[], numbers_for_remedy integer[], numbers_not_for_remedy integer[])
     LANGUAGE plpgsql
-    AS $$DECLARE
-    pers_rel RECORD;
-    life_rel RECORD;
+    AS $$
+DECLARE
+pers_rel RECORD;
+life_rel RECORD;
 BEGIN
-    -- Fetch planet relation data
-    SELECT * INTO pers_rel FROM public.planet_relations WHERE planet_number = pers_n;
-    SELECT * INTO life_rel FROM public.planet_relations WHERE planet_number = life_p;
+-- Fetch planet relation data
+SELECT * INTO pers_rel FROM public.planet_relations WHERE planet_number = pers_n;
+SELECT * INTO life_rel FROM public.planet_relations WHERE planet_number = life_p;
 
-    -- Unlucky numbers/colors
-    unlucky_numbers := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_numbers || life_rel.enemy_numbers));
-    unlucky_colors  := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors || life_rel.enemy_colors));
-    unlucky_colors_hindi := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors_hindi || life_rel.enemy_colors_hindi));
-    unlucky_colors_marathi := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors_marathi || life_rel.enemy_colors_marathi));
+-- Unlucky numbers/colors
+unlucky_numbers := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_numbers || life_rel.enemy_numbers));
+unlucky_colors := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors || life_rel.enemy_colors));
+unlucky_colors_hindi := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors_hindi || life_rel.enemy_colors_hindi));
+unlucky_colors_marathi := ARRAY(SELECT DISTINCT unnest(pers_rel.enemy_colors_marathi || life_rel.enemy_colors_marathi));
 
-    -- Lucky numbers/colors/days
-    lucky_numbers := ARRAY(
-        SELECT DISTINCT n FROM unnest(pers_rel.friend_numbers || life_rel.friend_numbers) n
-        WHERE n <> ALL(unlucky_numbers)
-    );
-    lucky_colors := ARRAY(
-        SELECT DISTINCT c FROM unnest(pers_rel.friend_colors || life_rel.friend_colors) c
-        WHERE c <> ALL(unlucky_colors)
-    );
-    lucky_colors_hindi := ARRAY(
-        SELECT DISTINCT c FROM unnest(pers_rel.friend_colors_hindi || life_rel.friend_colors_hindi) c
-        WHERE c <> ALL(unlucky_colors_hindi)
-    );
-    lucky_colors_marathi := ARRAY(
-        SELECT DISTINCT c FROM unnest(pers_rel.friend_colors_marathi || life_rel.friend_colors_marathi) c
-        WHERE c <> ALL(unlucky_colors_marathi)
-    );
-    lucky_days := ARRAY(
-        SELECT DISTINCT d FROM unnest(pers_rel.friend_day || life_rel.friend_day) d
-    );
-    lucky_days_hindi := ARRAY(
-        SELECT DISTINCT d FROM unnest(pers_rel.friend_day_hindi || life_rel.friend_day_hindi) d
-    );
-    lucky_days_marathi := ARRAY(
-        SELECT DISTINCT d FROM unnest(pers_rel.friend_day_marathi || life_rel.friend_day_marathi) d
-    );
+-- Lucky numbers/colors/days
+lucky_numbers := ARRAY(
+    SELECT DISTINCT n FROM unnest(pers_rel.friend_numbers || life_rel.friend_numbers) n
+    WHERE n <> ALL (unlucky_numbers)
+);
 
-    -- Remedy numbers
-    numbers_for_remedy := ARRAY(
-        SELECT DISTINCT n FROM unnest(missing) n
-        WHERE n <> ALL(unlucky_numbers)
-    );
+lucky_colors := ARRAY(
+    SELECT DISTINCT c FROM unnest(pers_rel.friend_colors || life_rel.friend_colors) c
+    WHERE c <> ALL (unlucky_colors)
+);
 
-    numbers_not_for_remedy := ARRAY(
-        SELECT DISTINCT n FROM unnest(missing) n
-        WHERE n <> ALL(numbers_for_remedy)
-    );
+lucky_colors_hindi := ARRAY(
+    SELECT DISTINCT c FROM unnest(pers_rel.friend_colors_hindi || life_rel.friend_colors_hindi) c
+    WHERE c <> ALL (unlucky_colors_hindi)
+);
 
-    RETURN NEXT;
-END;$$;
+lucky_colors_marathi := ARRAY(
+    SELECT DISTINCT c FROM unnest(pers_rel.friend_colors_marathi || life_rel.friend_colors_marathi) c
+    WHERE c <> ALL (unlucky_colors_marathi)
+);
+
+lucky_days := ARRAY(
+    SELECT DISTINCT d FROM unnest(pers_rel.friend_day || life_rel.friend_day) d
+);
+
+lucky_days_hindi := ARRAY(
+    SELECT DISTINCT d FROM unnest(pers_rel.friend_day_hindi || life_rel.friend_day_hindi) d
+);
+
+lucky_days_marathi := ARRAY(
+    SELECT DISTINCT d FROM unnest(pers_rel.friend_day_marathi || life_rel.friend_day_marathi) d
+);
+
+-- Remedy numbers
+numbers_for_remedy := ARRAY(
+    SELECT DISTINCT n FROM unnest(missing) n
+    WHERE n <> ALL(unlucky_numbers)
+);
+
+numbers_not_for_remedy := ARRAY(
+    SELECT DISTINCT n FROM unnest(missing) n
+    WHERE n <> ALL(numbers_for_remedy)
+);
+
+RETURN NEXT;
+END;
+$$;
 
 
 ALTER FUNCTION public.generate_lucky_unlucky_values(pers_n integer, life_p integer, missing integer[]) OWNER TO postgres;
 
 --
--- TOC entry 464 (class 1255 OID 19256)
+-- TOC entry 466 (class 1255 OID 19256)
 -- Name: get_boosting_personality_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -184,7 +192,7 @@ $$;
 ALTER FUNCTION public.get_boosting_personality_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 428 (class 1255 OID 19257)
+-- TOC entry 430 (class 1255 OID 19257)
 -- Name: get_career_by_destiny(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -228,7 +236,7 @@ $$;
 ALTER FUNCTION public.get_career_by_destiny(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 458 (class 1255 OID 19258)
+-- TOC entry 460 (class 1255 OID 19258)
 -- Name: get_combination_personality_lifepath(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -278,7 +286,7 @@ $$;
 ALTER FUNCTION public.get_combination_personality_lifepath(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 544 (class 1255 OID 19259)
+-- TOC entry 546 (class 1255 OID 19259)
 -- Name: get_life_path_number_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -322,7 +330,7 @@ $$;
 ALTER FUNCTION public.get_life_path_number_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 503 (class 1255 OID 19260)
+-- TOC entry 505 (class 1255 OID 19260)
 -- Name: get_loshu_planes(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -438,7 +446,7 @@ $$;
 ALTER FUNCTION public.get_loshu_planes(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 522 (class 1255 OID 19261)
+-- TOC entry 524 (class 1255 OID 19261)
 -- Name: get_lucky_unlucky_values(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -478,7 +486,7 @@ END;$$;
 ALTER FUNCTION public.get_lucky_unlucky_values(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 444 (class 1255 OID 19262)
+-- TOC entry 446 (class 1255 OID 19262)
 -- Name: get_missing_number_tells(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -517,7 +525,7 @@ $$;
 ALTER FUNCTION public.get_missing_number_tells(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 417 (class 1255 OID 19263)
+-- TOC entry 419 (class 1255 OID 19263)
 -- Name: get_number_occurrence_descriptions(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -567,7 +575,7 @@ $$;
 ALTER FUNCTION public.get_number_occurrence_descriptions(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 510 (class 1255 OID 19264)
+-- TOC entry 512 (class 1255 OID 19264)
 -- Name: get_number_occurrence_details(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -621,7 +629,7 @@ $$;
 ALTER FUNCTION public.get_number_occurrence_details(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 430 (class 1255 OID 19265)
+-- TOC entry 432 (class 1255 OID 19265)
 -- Name: get_numbers_not_for_remedy(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -658,7 +666,7 @@ $$;
 ALTER FUNCTION public.get_numbers_not_for_remedy(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 502 (class 1255 OID 19266)
+-- TOC entry 504 (class 1255 OID 19266)
 -- Name: get_personality_data(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -711,7 +719,7 @@ $$;
 ALTER FUNCTION public.get_personality_data(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 517 (class 1255 OID 19267)
+-- TOC entry 519 (class 1255 OID 19267)
 -- Name: get_pinnacle_data_for_lifeperiod1(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -759,7 +767,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod1(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 467 (class 1255 OID 19268)
+-- TOC entry 469 (class 1255 OID 19268)
 -- Name: get_pinnacle_data_for_lifeperiod2(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -807,7 +815,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod2(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 443 (class 1255 OID 19269)
+-- TOC entry 445 (class 1255 OID 19269)
 -- Name: get_pinnacle_data_for_lifeperiod3(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -855,7 +863,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod3(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 504 (class 1255 OID 19270)
+-- TOC entry 506 (class 1255 OID 19270)
 -- Name: get_pinnacle_data_for_lifeperiod4(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -903,7 +911,7 @@ $$;
 ALTER FUNCTION public.get_pinnacle_data_for_lifeperiod4(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 541 (class 1255 OID 19271)
+-- TOC entry 543 (class 1255 OID 19271)
 -- Name: get_remedies_for_birthdate(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -942,7 +950,7 @@ $$;
 ALTER FUNCTION public.get_remedies_for_birthdate(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 425 (class 1255 OID 19272)
+-- TOC entry 427 (class 1255 OID 19272)
 -- Name: get_share_market_advice(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -950,103 +958,87 @@ CREATE FUNCTION public.get_share_market_advice(birthdate_id uuid) RETURNS TABLE(
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    pN integer;
-    lN integer;
-    arr1 integer[] := ARRAY[3,4,5,6,7,8];
-    v_valid boolean;
+pN integer;
+v_life_path integer;
+arr1 integer[] := ARRAY[3,4,5,6,7,8]; -- Fixed array assignment
+v_valid boolean;
 BEGIN
-    -- Step 1: Validate access
-    SELECT public.validate_birthdate_access(
-        birthdate_id => birthdate_id,
-        check_po_id  => true
-    )
-    INTO v_valid;
+SELECT public.validate_birthdate_access(birthdate_id => birthdate_id, check_po_id => true) INTO v_valid;
+IF NOT v_valid THEN RETURN; END IF;
 
-    -- Step 2: Exit quietly if validation failed
-    IF NOT v_valid THEN
-        RETURN;
-    END IF;
+SELECT personality_number, life_path_number INTO pN, v_life_path FROM public.birthdates WHERE id = birthdate_id;
 
-    -- Step 3: Fetch personality_number and life_path_number
-    SELECT personality_number, life_path_number
-    INTO pN, lN
-    FROM public.birthdates
-    WHERE id = birthdate_id;
+IF NOT (pN = ANY(arr1)) AND NOT (v_life_path = ANY(arr1)) THEN
+    included_numbers := ARRAY[pN::text, v_life_path::text];
+    description_en := 'Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.';
+    description_hi := 'आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।';
+    description_mr := 'तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता.';
+    RETURN NEXT;
+END IF;
 
-    -- Case 1: Neither in arr1
-    IF NOT (pN = ANY(arr1)) AND NOT (lN = ANY(arr1)) THEN
-        included_numbers := ARRAY[pN::text, lN::text];
+IF (pN = ANY(arr1) AND NOT (v_life_path = ANY(arr1))) OR (v_life_path = ANY(arr1) AND NOT (pN = ANY(arr1))) THEN
+    IF ((pN = ANY(ARRAY[4,8]) AND v_life_path = ANY(ARRAY[1,2,9])) OR (v_life_path = ANY(ARRAY[4,8]) AND pN = ANY(ARRAY[1,2,9]))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You must first study the stock market by taking courses, and then start investing. Do not trade based on guesses.';
+        description_hi := 'आपको पहले पाठ्यक्रम करके शेयर बाजार का अध्ययन करना चाहिए और फिर निवेश शुरू करना चाहिए। अनुमान के आधार पर व्यापार न करें।';
+        description_mr := 'तुम्ही प्रथम कोर्स करून शेअर बाजाराचा अभ्यास केला पाहिजे आणि नंतर गुंतवणूक सुरू केली पाहिजे. अंदाजावर आधारित व्यापार करू नका.';
+        RETURN NEXT;
+    ELSIF ((pN = ANY(ARRAY[5,6]) AND v_life_path = ANY(ARRAY[1,2,9])) OR (v_life_path = ANY(ARRAY[5,6]) AND pN = ANY(ARRAY[1,2,9]))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
         description_en := 'Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.';
         description_hi := 'आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।';
         description_mr := 'तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता.';
         RETURN NEXT;
+    ELSIF ((pN = ANY(ARRAY[3,7]) AND v_life_path = ANY(ARRAY[1,2,9])) OR (v_life_path = ANY(ARRAY[3,7]) AND pN = ANY(ARRAY[1,2,9]))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You are skilled at analyzing stocks. You can start your own advisory or consultancy.';
+        description_hi := 'आप शेयरों का विश्लेषण करने में कुशल हैं। आप अपनी खुद की सलाहकार या परामर्श सेवा शुरू कर सकते हैं।';
+        description_mr := 'तुम्ही शेअर्सचे विश्लेषण करण्यात कुशल आहात. तुम्ही स्वतःची सल्लागार किंवा कन्सल्टन्सी सुरू करू शकता.';
+        RETURN NEXT;
     END IF;
+END IF;
 
-    -- Case 2: One in arr1, other not
-    IF (pN = ANY(arr1) AND NOT (lN = ANY(arr1))) OR (lN = ANY(arr1) AND NOT (pN = ANY(arr1))) THEN
-        IF ((pN = ANY(ARRAY[4,8]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[4,8]) AND pN = ANY(ARRAY[1,2,9]))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You must first study the stock market by taking courses, and then start investing. Do not trade based on guesses.';
-            description_hi := 'आपको पहले पाठ्यक्रम करके शेयर बाजार का अध्ययन करना चाहिए और फिर निवेश शुरू करना चाहिए। अनुमान के आधार पर व्यापार न करें।';
-            description_mr := 'तुम्ही प्रथम कोर्स करून शेअर बाजाराचा अभ्यास केला पाहिजे आणि नंतर गुंतवणूक सुरू केली पाहिजे. अंदाजावर आधारित व्यापार करू नका.';
-            RETURN NEXT;
-        ELSIF ((pN = ANY(ARRAY[5,6]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[5,6]) AND pN = ANY(ARRAY[1,2,9]))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.';
-            description_hi := 'आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।';
-            description_mr := 'तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता.';
-            RETURN NEXT;
-        ELSIF ((pN = ANY(ARRAY[3,7]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[3,7]) AND pN = ANY(ARRAY[1,2,9]))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You are skilled at analyzing stocks. You can start your own advisory or consultancy.';
-            description_hi := 'आप शेयरों का विश्लेषण करने में कुशल हैं। आप अपनी खुद की सलाहकार या परामर्श सेवा शुरू कर सकते हैं।';
-            description_mr := 'तुम्ही शेअर्सचे विश्लेषण करण्यात कुशल आहात. तुम्ही स्वतःची सल्लागार किंवा कन्सल्टन्सी सुरू करू शकता.';
-            RETURN NEXT;
-        END IF;
+IF pN = ANY(arr1) AND v_life_path = ANY(arr1) THEN
+    IF (pN = ANY(ARRAY[4,8]) AND v_life_path = ANY(ARRAY[4,8])) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You must first study the stock market by taking courses, and then start investing. Do not trade based on guesses.';
+        description_hi := 'आपको पहले पाठ्यक्रम करके शेयर बाजार का अध्ययन करना चाहिए और फिर निवेश शुरू करना चाहिए। अनुमान के आधार पर व्यापार न करें।';
+        description_mr := 'तुम्ही प्रथम कोर्स करून शेअर बाजाराचा अभ्यास केला पाहिजे आणि नंतर गुंतवणूक सुरू केली पाहिजे. अंदाजावर आधारित व्यापार करू नका.';
+        RETURN NEXT;
+    ELSIF (pN = ANY(ARRAY[5,6]) AND v_life_path = ANY(ARRAY[5,6])) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.';
+        description_hi := 'आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।';
+        description_mr := 'तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता.';
+        RETURN NEXT;
+    ELSIF (pN = ANY(ARRAY[3,7]) AND v_life_path = ANY(ARRAY[3,7])) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You are skilled at analyzing stocks. You can start your own advisory or consultancy.';
+        description_hi := 'आप शेयरों का विश्लेषण करने में कुशल हैं। आप अपनी खुद की सलाहकार या परामर्श सेवा शुरू कर सकते हैं।';
+        description_mr := 'तुम्ही शेअर्सचे विश्लेषण करण्यात कुशल आहात. तुम्ही स्वतःची सल्लागार किंवा कन्सल्टन्सी सुरू करू शकता.';
+        RETURN NEXT;
+    ELSIF ((pN, v_life_path) IN ((4,5), (5,4), (4,6), (6,4), (8,5), (5,8), (8,6), (6,8))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You may experience both large profits and large losses in the stock market. Set profit targets during trading and use analyzed stop-loss strategies.';
+        description_hi := 'आप शेयर बाजार में बड़े लाभ और बड़े नुकसान दोनों का अनुभव कर सकते हैं। व्यापार के दौरान लाभ लक्ष्य निर्धारित करें और विश्लेषित स्टॉप-लॉस रणनीतियों का उपयोग करें।';
+        description_mr := 'तुम्हाला शेअर बाजारात मोठा नफा आणि मोठे नुकसान दोन्ही अनुभवता येऊ शकते. व्यापार करताना नफा लक्ष्य ठरवा आणि विश्लेषित स्टॉप-लॉस धोरणे वापरा.';
+        RETURN NEXT;
+    ELSIF ((pN, v_life_path) IN ((4,3), (3,4), (4,7), (7,4), (8,3), (3,8), (8,7), (7,8))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You analyze stocks correctly and book profits during paper trading, but face losses with real money. In such cases, start a trading account under another person''s name whose personality or life-path number is 5 or 6.';
+        description_hi := 'आप शेयरों का सही तरीके से विश्लेषण करते हैं और पेपर ट्रेडिंग के दौरान लाभ कमाते हैं, लेकिन वास्तविक पैसे से नुकसान होता है। ऐसी स्थिति में, किसी अन्य व्यक्ति के नाम से ट्रेडिंग खाता शुरू करें जिसका व्यक्तित्व या जीवन-पथ अंक 5 या 6 हो।';
+        description_mr := 'तुम्ही शेअर्सचे योग्य प्रकारे विश्लेषण करता आणि पेपर ट्रेडिंग दरम्यान नफा कमावता, पण खऱ्या पैशात नुकसान होते. अशा परिस्थितीत, दुसऱ्या व्यक्तीच्या नावाने ट्रेडिंग खाते सुरू करा ज्याचा व्यक्तिमत्व किंवा जीवनमार्ग अंक ५ किंवा ६ आहे.';
+        RETURN NEXT;
+    ELSIF ((pN, v_life_path) IN ((5,3), (3,5), (5,7), (7,5), (6,3), (3,6), (6,7), (7,6))) THEN
+        included_numbers := ARRAY[pN::text, v_life_path::text];
+        description_en := 'You have excellent numbers for both analyzing stocks and trading in the stock market.';
+        description_hi := 'आपके पास शेयरों का विश्लेषण करने और शेयर बाजार में व्यापार करने के लिए उत्कृष्ट अंक हैं।';
+        description_mr := 'तुमच्याकडे शेअर्सचे विश्लेषण आणि शेअर बाजारात व्यापार करण्यासाठी उत्कृष्ट अंक आहेत.';
+        RETURN NEXT;
     END IF;
+END IF;
 
-    -- Case 3: Both in arr1
-    IF pN = ANY(arr1) AND lN = ANY(arr1) THEN
-        IF (pN = ANY(ARRAY[4,8]) AND lN = ANY(ARRAY[4,8])) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You must first study the stock market by taking courses, and then start investing. Do not trade based on guesses.';
-            description_hi := 'आपको पहले पाठ्यक्रम करके शेयर बाजार का अध्ययन करना चाहिए और फिर निवेश शुरू करना चाहिए। अनुमान के आधार पर व्यापार न करें।';
-            description_mr := 'तुम्ही प्रथम कोर्स करून शेअर बाजाराचा अभ्यास केला पाहिजे आणि नंतर गुंतवणूक सुरू केली पाहिजे. अंदाजावर आधारित व्यापार करू नका.';
-            RETURN NEXT;
-        ELSIF (pN = ANY(ARRAY[5,6]) AND lN = ANY(ARRAY[5,6])) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'Your numbers are favorable for the stock market. You can trade as an intraday trader or invest as an investor.';
-            description_hi := 'आपके अंक शेयर बाजार के लिए अनुकूल हैं। आप इंट्राडे ट्रेडर के रूप में व्यापार कर सकते हैं या निवेशक के रूप में निवेश कर सकते हैं।';
-            description_mr := 'तुमचे अंक शेअर बाजारासाठी अनुकूल आहेत. तुम्ही इंट्राडे ट्रेडर म्हणून व्यापार करू शकता किंवा गुंतवणूकदार म्हणून गुंतवणूक करू शकता.';
-            RETURN NEXT;
-        ELSIF (pN = ANY(ARRAY[3,7]) AND lN = ANY(ARRAY[3,7])) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You are skilled at analyzing stocks. You can start your own advisory or consultancy.';
-            description_hi := 'आप शेयरों का विश्लेषण करने में कुशल हैं। आप अपनी खुद की सलाहकार या परामर्श सेवा शुरू कर सकते हैं।';
-            description_mr := 'तुम्ही शेअर्सचे विश्लेषण करण्यात कुशल आहात. तुम्ही स्वतःची सल्लागार किंवा कन्सल्टन्सी सुरू करू शकता.';
-            RETURN NEXT;
-        ELSIF ((pN,lN) IN ((4,5),(5,4),(4,6),(6,4),(8,5),(5,8),(8,6),(6,8))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You may experience both large profits and large losses in the stock market. Set profit targets during trading and use analyzed stop-loss strategies.';
-            description_hi := 'आप शेयर बाजार में बड़े लाभ और बड़े नुकसान दोनों का अनुभव कर सकते हैं। व्यापार के दौरान लाभ लक्ष्य निर्धारित करें और विश्लेषित स्टॉप-लॉस रणनीतियों का उपयोग करें।';
-            description_mr := 'तुम्हाला शेअर बाजारात मोठा नफा आणि मोठे नुकसान दोन्ही अनुभवता येऊ शकते. व्यापार करताना नफा लक्ष्य ठरवा आणि विश्लेषित स्टॉप-लॉस धोरणे वापरा.';
-            RETURN NEXT;
-        ELSIF ((pN,lN) IN ((4,3),(3,4),(4,7),(7,4),(8,3),(3,8),(8,7),(7,8))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You analyze stocks correctly and book profits during paper trading, but face losses with real money. In such cases, start a trading account under another person’s name whose personality or life-path number is 5 or 6.';
-            description_hi := 'आप शेयरों का सही तरीके से विश्लेषण करते हैं और पेपर ट्रेडिंग के दौरान लाभ कमाते हैं, लेकिन वास्तविक पैसे से नुकसान होता है। ऐसी स्थिति में, किसी अन्य व्यक्ति के नाम से ट्रेडिंग खाता शुरू करें जिसका व्यक्तित्व या जीवन-पथ अंक 5 या 6 हो।';
-            description_mr := 'तुम्ही शेअर्सचे योग्य प्रकारे विश्लेषण करता आणि पेपर ट्रेडिंग दरम्यान नफा कमावता, पण खऱ्या पैशात नुकसान होते. अशा परिस्थितीत, दुसऱ्या व्यक्तीच्या नावाने ट्रेडिंग खाते सुरू करा ज्याचा व्यक्तिमत्व किंवा जीवनमार्ग अंक 5 किंवा 6 आहे.';
-            RETURN NEXT;
-			        ELSIF ((pN,lN) IN ((5,3),(3,5),(5,7),(7,5),(6,3),(3,6),(6,7),(7,6))) THEN
-            included_numbers := ARRAY[pN::text, lN::text];
-            description_en := 'You have excellent numbers for both analyzing stocks and trading in the stock market.';
-            description_hi := 'आपके पास शेयरों का विश्लेषण करने और शेयर बाजार में व्यापार करने के लिए उत्कृष्ट अंक हैं।';
-            description_mr := 'तुमच्याकडे शेअर्सचे विश्लेषण आणि शेअर बाजारात व्यापार करण्यासाठी उत्कृष्ट अंक आहेत.';
-            RETURN NEXT;
-        END IF;
-    END IF;
-
-    RETURN;
+RETURN;
 END;
 $$;
 
@@ -1054,7 +1046,7 @@ $$;
 ALTER FUNCTION public.get_share_market_advice(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 484 (class 1255 OID 19274)
+-- TOC entry 486 (class 1255 OID 19274)
 -- Name: get_some_imp_points(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1135,7 +1127,7 @@ $$;
 ALTER FUNCTION public.get_some_imp_points(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 498 (class 1255 OID 19275)
+-- TOC entry 500 (class 1255 OID 19275)
 -- Name: get_stock_market_info(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1144,59 +1136,56 @@ CREATE FUNCTION public.get_stock_market_info(birthdate_id uuid) RETURNS text
     AS $$
 DECLARE
     pN integer;
-    lN integer;
+    v_life_path integer;
     valToReturn text;
-    arr1 integer[] := ARRAY[3,4,5,6,7,8];
+    arr1 integer[] := ARRAY[3, 4, 5, 6, 7, 8];
     v_valid boolean;
 BEGIN
-    -- Step 1: Validate access
+    -- Step 1: Validate access permissions
     SELECT public.validate_birthdate_access(
-        birthdate_id => birthdate_id,
-        check_po_id  => true
-    )
-    INTO v_valid;
-
-    -- Step 2: Exit quietly if validation failed
-    IF NOT v_valid THEN
-        RETURN NULL;
+        birthdate_id => birthdate_id, 
+        check_po_id => true
+    ) INTO v_valid;
+    
+    IF NOT v_valid THEN 
+        RETURN NULL; 
     END IF;
 
-    -- Step 3: Fetch personality_number and life_path_number
-    SELECT personality_number, life_path_number
-    INTO pN, lN
-    FROM public.birthdates
+    -- Step 2: Fetch calculations for the target birthdate record
+    SELECT personality_number, life_path_number 
+    INTO pN, v_life_path 
+    FROM public.birthdates 
     WHERE id = birthdate_id;
 
-    -- Step 4: Apply your case logic
-    -- Case 1: Neither in arr1
-    IF NOT (pN = ANY(arr1)) AND NOT (lN = ANY(arr1)) THEN
+    -- Case 1: Neither number is present in arr1
+    IF NOT (pN = ANY(arr1)) AND NOT (v_life_path = ANY(arr1)) THEN
         valToReturn := 'Your numbers are good for share market, you can trade as intraday trader or investor';
     END IF;
 
-    -- Case 2: One in arr1, other not
-    IF (pN = ANY(arr1) AND NOT (lN = ANY(arr1))) OR (lN = ANY(arr1) AND NOT (pN = ANY(arr1))) THEN
-        IF ((pN = ANY(ARRAY[4,8]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[4,8]) AND pN = ANY(ARRAY[1,2,9]))) THEN
-            valToReturn := 'You must study share market at first by doing courses and then start investing, don’t trade on guesses';
-        ELSIF ((pN = ANY(ARRAY[5,6]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[5,6]) AND pN = ANY(ARRAY[1,2,9]))) THEN
+    -- Case 2: Exactly one of the numbers is present in arr1
+    IF (pN = ANY(arr1) AND NOT (v_life_path = ANY(arr1))) OR (v_life_path = ANY(arr1) AND NOT (pN = ANY(arr1))) THEN
+        IF ((pN = ANY(ARRAY[4, 8]) AND v_life_path = ANY(ARRAY[3, 7])) OR (v_life_path = ANY(ARRAY[4, 8]) AND pN = ANY(ARRAY[3, 7]))) THEN
+            valToReturn := 'You must study share market at first by doing courses and then start investing, don''t trade on guesses';
+        ELSIF ((pN = ANY(ARRAY[5, 6]) AND v_life_path = ANY(ARRAY[3, 7])) OR (v_life_path = ANY(ARRAY[5, 6]) AND pN = ANY(ARRAY[3, 7]))) THEN
             valToReturn := 'Your numbers are good for share market, you can trade as intraday trader or investor';
-        ELSIF ((pN = ANY(ARRAY[3,7]) AND lN = ANY(ARRAY[1,2,9])) OR (lN = ANY(ARRAY[3,7]) AND pN = ANY(ARRAY[1,2,9]))) THEN
+        ELSIF ((pN = ANY(ARRAY[4, 5, 6, 8]) AND v_life_path = ANY(ARRAY[5, 6])) OR (v_life_path = ANY(ARRAY[4, 5, 6, 8]) AND pN = ANY(ARRAY[5, 6]))) THEN
             valToReturn := 'You are good at analysing the stock, you can start your own advisory or consultancy';
         END IF;
     END IF;
 
-    -- Case 3: Both in arr1
-    IF pN = ANY(arr1) AND lN = ANY(arr1) THEN
-        IF (pN = ANY(ARRAY[4,8]) AND lN = ANY(ARRAY[4,8])) THEN
-            valToReturn := 'You must study share market at first by doing courses and then start investing, don’t trade on guesses';
-        ELSIF (pN = ANY(ARRAY[5,6]) AND lN = ANY(ARRAY[5,6])) THEN
+    -- Case 3: Both numbers are present in arr1
+    IF pN = ANY(arr1) AND v_life_path = ANY(arr1) THEN
+        IF ((pN = ANY(ARRAY[4, 8]) AND v_life_path = ANY(ARRAY[3, 7])) OR (v_life_path = ANY(ARRAY[4, 8]) AND pN = ANY(ARRAY[3, 7]))) THEN
+            valToReturn := 'You must study share market at first by doing courses and then start investing, don''t trade on guesses';
+        ELSIF ((pN = ANY(ARRAY[5, 6]) AND v_life_path = ANY(ARRAY[3, 7])) OR (v_life_path = ANY(ARRAY[5, 6]) AND pN = ANY(ARRAY[3, 7]))) THEN
             valToReturn := 'Your numbers are good for share market, you can trade as intraday trader or investor';
-        ELSIF (pN = ANY(ARRAY[3,7]) AND lN = ANY(ARRAY[3,7])) THEN
+        ELSIF ((pN = ANY(ARRAY[4, 5, 6, 8]) AND v_life_path = ANY(ARRAY[5, 6])) OR (v_life_path = ANY(ARRAY[4, 5, 6, 8]) AND pN = ANY(ARRAY[5, 6]))) THEN
             valToReturn := 'You are good at analysing the stock, you can start your own advisory or consultancy';
-        ELSIF ((pN,lN) IN ((4,5),(5,4),(4,6),(6,4),(8,5),(5,8),(8,6),(6,8))) THEN
+        ELSIF ((pN, v_life_path) IN ((4,5), (5,4), (4,6), (6,4), (8,5), (5,8), (8,6), (6,8))) THEN
             valToReturn := 'You face both big profits and big losses in stock market, so set your profit target during trading and trade with analysed stop loss';
-        ELSIF ((pN,lN) IN ((4,3),(3,4),(4,7),(7,4),(8,3),(3,8),(8,7),(7,8))) THEN
-            valToReturn := 'You analyse the stocks in correct manner, you also book profit during paper trading or demo account but when you play with real money you face losses, in such state you must start trading account with another person name having personality or life – path number as 5 or 6 respectively';
-        ELSIF ((pN,lN) IN ((5,3),(3,5),(5,7),(7,5),(6,3),(3,6),(6,7),(7,6))) THEN
+        ELSIF ((pN, v_life_path) IN ((4,3), (3,4), (4,7), (7,4), (8,3), (3,8), (8,7), (7,8))) THEN
+            valToReturn := 'You analyse the stocks in correct manner, you also book profit during paper trading or demo account but when you play with real money you face losses, in such state you must start trading account with another person name having personality or life - path number as 5 or 6 respectively';
+        ELSIF ((pN, v_life_path) IN ((5,3), (3,5), (5,7), (7,5), (6,3), (3,6), (6,7), (7,6))) THEN
             valToReturn := 'You are having great numbers for both analysing stocks and trading in stock market';
         END IF;
     END IF;
@@ -1209,7 +1198,7 @@ $$;
 ALTER FUNCTION public.get_stock_market_info(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 487 (class 1255 OID 19808)
+-- TOC entry 489 (class 1255 OID 19808)
 -- Name: handle_new_auth_user(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1240,7 +1229,7 @@ $$;
 ALTER FUNCTION public.handle_new_auth_user() OWNER TO postgres;
 
 --
--- TOC entry 477 (class 1255 OID 19276)
+-- TOC entry 479 (class 1255 OID 19276)
 -- Name: perform_numerology_analysis(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1368,7 +1357,7 @@ end;$$;
 ALTER FUNCTION public.perform_numerology_analysis() OWNER TO postgres;
 
 --
--- TOC entry 494 (class 1255 OID 19280)
+-- TOC entry 496 (class 1255 OID 19280)
 -- Name: protect_created_by(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1390,7 +1379,7 @@ $$;
 ALTER FUNCTION public.protect_created_by() OWNER TO postgres;
 
 --
--- TOC entry 511 (class 1255 OID 19281)
+-- TOC entry 513 (class 1255 OID 19281)
 -- Name: reduce_to_single_digit(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1407,7 +1396,7 @@ $$;
 ALTER FUNCTION public.reduce_to_single_digit(val integer) OWNER TO postgres;
 
 --
--- TOC entry 446 (class 1255 OID 20409)
+-- TOC entry 448 (class 1255 OID 20409)
 -- Name: soft_delete_birthdate(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1432,7 +1421,7 @@ $$;
 ALTER FUNCTION public.soft_delete_birthdate(birthdate_id uuid) OWNER TO postgres;
 
 --
--- TOC entry 553 (class 1255 OID 19285)
+-- TOC entry 555 (class 1255 OID 19285)
 -- Name: sync_po_birthdate_ids(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1455,7 +1444,7 @@ $$;
 ALTER FUNCTION public.sync_po_birthdate_ids() OWNER TO postgres;
 
 --
--- TOC entry 479 (class 1255 OID 19288)
+-- TOC entry 481 (class 1255 OID 19288)
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1481,7 +1470,7 @@ $$;
 ALTER FUNCTION public.update_updated_at_column() OWNER TO postgres;
 
 --
--- TOC entry 519 (class 1255 OID 20412)
+-- TOC entry 521 (class 1255 OID 20412)
 -- Name: upsert_birthdate_for_user(uuid, date, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1532,7 +1521,7 @@ $$;
 ALTER FUNCTION public.upsert_birthdate_for_user(p_user_id uuid, p_birthdate date, p_full_name text) OWNER TO postgres;
 
 --
--- TOC entry 481 (class 1255 OID 19289)
+-- TOC entry 483 (class 1255 OID 19289)
 -- Name: validate_birthdate_access(uuid, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1575,7 +1564,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 386 (class 1259 OID 19290)
+-- TOC entry 388 (class 1259 OID 19290)
 -- Name: app_config; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1593,7 +1582,7 @@ CREATE TABLE public.app_config (
 ALTER TABLE public.app_config OWNER TO postgres;
 
 --
--- TOC entry 387 (class 1259 OID 19297)
+-- TOC entry 389 (class 1259 OID 19297)
 -- Name: app_remote_configs; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1612,7 +1601,7 @@ CREATE TABLE public.app_remote_configs (
 ALTER TABLE public.app_remote_configs OWNER TO postgres;
 
 --
--- TOC entry 388 (class 1259 OID 19307)
+-- TOC entry 390 (class 1259 OID 19307)
 -- Name: birthdates; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1654,6 +1643,7 @@ CREATE TABLE public.birthdates (
     lucky_days_hindi text[],
     lucky_days_marathi text[],
     active boolean DEFAULT true NOT NULL,
+    pdf_download_count integer DEFAULT 0,
     CONSTRAINT birthdates_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'delivered'::text, 'cancelled'::text])))
 );
 
@@ -1661,7 +1651,7 @@ CREATE TABLE public.birthdates (
 ALTER TABLE public.birthdates OWNER TO postgres;
 
 --
--- TOC entry 389 (class 1259 OID 19317)
+-- TOC entry 391 (class 1259 OID 19317)
 -- Name: boosting_personality_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1676,7 +1666,7 @@ CREATE TABLE public.boosting_personality_numbers (
 ALTER TABLE public.boosting_personality_numbers OWNER TO postgres;
 
 --
--- TOC entry 390 (class 1259 OID 19322)
+-- TOC entry 392 (class 1259 OID 19322)
 -- Name: career_by_destiny_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1691,7 +1681,7 @@ CREATE TABLE public.career_by_destiny_numbers (
 ALTER TABLE public.career_by_destiny_numbers OWNER TO postgres;
 
 --
--- TOC entry 391 (class 1259 OID 19327)
+-- TOC entry 393 (class 1259 OID 19327)
 -- Name: combination_personality_lifepath; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1710,7 +1700,7 @@ CREATE TABLE public.combination_personality_lifepath (
 ALTER TABLE public.combination_personality_lifepath OWNER TO postgres;
 
 --
--- TOC entry 392 (class 1259 OID 19332)
+-- TOC entry 394 (class 1259 OID 19332)
 -- Name: lifepath_number_data; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1725,7 +1715,7 @@ CREATE TABLE public.lifepath_number_data (
 ALTER TABLE public.lifepath_number_data OWNER TO postgres;
 
 --
--- TOC entry 393 (class 1259 OID 19337)
+-- TOC entry 395 (class 1259 OID 19337)
 -- Name: loshu_grid_details; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1744,7 +1734,7 @@ CREATE TABLE public.loshu_grid_details (
 ALTER TABLE public.loshu_grid_details OWNER TO postgres;
 
 --
--- TOC entry 394 (class 1259 OID 19343)
+-- TOC entry 396 (class 1259 OID 19343)
 -- Name: missing_number_tells; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1759,7 +1749,7 @@ CREATE TABLE public.missing_number_tells (
 ALTER TABLE public.missing_number_tells OWNER TO postgres;
 
 --
--- TOC entry 395 (class 1259 OID 19348)
+-- TOC entry 397 (class 1259 OID 19348)
 -- Name: occurance_ofnumbers_ingridcell; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1775,7 +1765,7 @@ CREATE TABLE public.occurance_ofnumbers_ingridcell (
 ALTER TABLE public.occurance_ofnumbers_ingridcell OWNER TO postgres;
 
 --
--- TOC entry 396 (class 1259 OID 19353)
+-- TOC entry 398 (class 1259 OID 19353)
 -- Name: personality_number_data; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1803,7 +1793,7 @@ CREATE TABLE public.personality_number_data (
 ALTER TABLE public.personality_number_data OWNER TO postgres;
 
 --
--- TOC entry 397 (class 1259 OID 19358)
+-- TOC entry 399 (class 1259 OID 19358)
 -- Name: pinnaclenumbersdata; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1819,7 +1809,7 @@ CREATE TABLE public.pinnaclenumbersdata (
 ALTER TABLE public.pinnaclenumbersdata OWNER TO postgres;
 
 --
--- TOC entry 398 (class 1259 OID 19363)
+-- TOC entry 400 (class 1259 OID 19363)
 -- Name: planet_relations; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1843,7 +1833,7 @@ CREATE TABLE public.planet_relations (
 ALTER TABLE public.planet_relations OWNER TO postgres;
 
 --
--- TOC entry 399 (class 1259 OID 19412)
+-- TOC entry 401 (class 1259 OID 19412)
 -- Name: purchase_order; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1872,7 +1862,7 @@ CREATE TABLE public.purchase_order (
 ALTER TABLE public.purchase_order OWNER TO postgres;
 
 --
--- TOC entry 400 (class 1259 OID 19423)
+-- TOC entry 402 (class 1259 OID 19423)
 -- Name: rbac_modules; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1889,7 +1879,7 @@ CREATE TABLE public.rbac_modules (
 ALTER TABLE public.rbac_modules OWNER TO postgres;
 
 --
--- TOC entry 401 (class 1259 OID 19432)
+-- TOC entry 403 (class 1259 OID 19432)
 -- Name: rbac_permissions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1909,7 +1899,7 @@ CREATE TABLE public.rbac_permissions (
 ALTER TABLE public.rbac_permissions OWNER TO postgres;
 
 --
--- TOC entry 402 (class 1259 OID 19442)
+-- TOC entry 404 (class 1259 OID 19442)
 -- Name: rbac_roles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1926,7 +1916,7 @@ CREATE TABLE public.rbac_roles (
 ALTER TABLE public.rbac_roles OWNER TO postgres;
 
 --
--- TOC entry 403 (class 1259 OID 19451)
+-- TOC entry 405 (class 1259 OID 19451)
 -- Name: remedies_for_missing_numbers; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1941,7 +1931,7 @@ CREATE TABLE public.remedies_for_missing_numbers (
 ALTER TABLE public.remedies_for_missing_numbers OWNER TO postgres;
 
 --
--- TOC entry 404 (class 1259 OID 19486)
+-- TOC entry 406 (class 1259 OID 19486)
 -- Name: static_testimonials; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1959,7 +1949,7 @@ CREATE TABLE public.static_testimonials (
 ALTER TABLE public.static_testimonials OWNER TO postgres;
 
 --
--- TOC entry 405 (class 1259 OID 19492)
+-- TOC entry 407 (class 1259 OID 19492)
 -- Name: static_testimonials_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1975,8 +1965,8 @@ CREATE SEQUENCE public.static_testimonials_id_seq
 ALTER SEQUENCE public.static_testimonials_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4141 (class 0 OID 0)
--- Dependencies: 405
+-- TOC entry 4150 (class 0 OID 0)
+-- Dependencies: 407
 -- Name: static_testimonials_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1984,7 +1974,7 @@ ALTER SEQUENCE public.static_testimonials_id_seq OWNED BY public.static_testimon
 
 
 --
--- TOC entry 406 (class 1259 OID 19501)
+-- TOC entry 408 (class 1259 OID 19501)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2005,7 +1995,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 407 (class 1259 OID 19531)
+-- TOC entry 409 (class 1259 OID 19531)
 -- Name: view_rbac_permissions; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -2051,7 +2041,7 @@ CREATE VIEW public.view_users AS
 ALTER VIEW public.view_users OWNER TO postgres;
 
 --
--- TOC entry 3835 (class 2604 OID 19560)
+-- TOC entry 3838 (class 2604 OID 19560)
 -- Name: static_testimonials id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -2059,7 +2049,7 @@ ALTER TABLE ONLY public.static_testimonials ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
--- TOC entry 3847 (class 2606 OID 19562)
+-- TOC entry 3850 (class 2606 OID 19562)
 -- Name: app_config app_config_config_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2068,7 +2058,7 @@ ALTER TABLE ONLY public.app_config
 
 
 --
--- TOC entry 3849 (class 2606 OID 19564)
+-- TOC entry 3852 (class 2606 OID 19564)
 -- Name: app_config app_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2077,7 +2067,7 @@ ALTER TABLE ONLY public.app_config
 
 
 --
--- TOC entry 3851 (class 2606 OID 19566)
+-- TOC entry 3854 (class 2606 OID 19566)
 -- Name: app_remote_configs app_remote_configs_package_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2086,7 +2076,7 @@ ALTER TABLE ONLY public.app_remote_configs
 
 
 --
--- TOC entry 3853 (class 2606 OID 19568)
+-- TOC entry 3856 (class 2606 OID 19568)
 -- Name: app_remote_configs app_remote_configs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2095,7 +2085,7 @@ ALTER TABLE ONLY public.app_remote_configs
 
 
 --
--- TOC entry 3855 (class 2606 OID 19570)
+-- TOC entry 3858 (class 2606 OID 19570)
 -- Name: birthdates birthdates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2104,7 +2094,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 3860 (class 2606 OID 19572)
+-- TOC entry 3863 (class 2606 OID 19572)
 -- Name: boosting_personality_numbers boosting_personality_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2113,7 +2103,7 @@ ALTER TABLE ONLY public.boosting_personality_numbers
 
 
 --
--- TOC entry 3862 (class 2606 OID 19574)
+-- TOC entry 3865 (class 2606 OID 19574)
 -- Name: career_by_destiny_numbers carrier_by_destiny_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2122,7 +2112,7 @@ ALTER TABLE ONLY public.career_by_destiny_numbers
 
 
 --
--- TOC entry 3868 (class 2606 OID 19576)
+-- TOC entry 3871 (class 2606 OID 19576)
 -- Name: loshu_grid_details loshu_grid_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2131,7 +2121,7 @@ ALTER TABLE ONLY public.loshu_grid_details
 
 
 --
--- TOC entry 3870 (class 2606 OID 19578)
+-- TOC entry 3873 (class 2606 OID 19578)
 -- Name: missing_number_tells missing_number_tells_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2140,7 +2130,7 @@ ALTER TABLE ONLY public.missing_number_tells
 
 
 --
--- TOC entry 3874 (class 2606 OID 19580)
+-- TOC entry 3877 (class 2606 OID 19580)
 -- Name: personality_number_data personality_number_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2149,7 +2139,7 @@ ALTER TABLE ONLY public.personality_number_data
 
 
 --
--- TOC entry 3864 (class 2606 OID 19582)
+-- TOC entry 3867 (class 2606 OID 19582)
 -- Name: combination_personality_lifepath pk_combination; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2158,7 +2148,7 @@ ALTER TABLE ONLY public.combination_personality_lifepath
 
 
 --
--- TOC entry 3866 (class 2606 OID 19584)
+-- TOC entry 3869 (class 2606 OID 19584)
 -- Name: lifepath_number_data pk_lifepath; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2167,7 +2157,7 @@ ALTER TABLE ONLY public.lifepath_number_data
 
 
 --
--- TOC entry 3872 (class 2606 OID 19586)
+-- TOC entry 3875 (class 2606 OID 19586)
 -- Name: occurance_ofnumbers_ingridcell pk_occurance; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2176,7 +2166,7 @@ ALTER TABLE ONLY public.occurance_ofnumbers_ingridcell
 
 
 --
--- TOC entry 3876 (class 2606 OID 19588)
+-- TOC entry 3879 (class 2606 OID 19588)
 -- Name: pinnaclenumbersdata pk_pinnacle; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2185,7 +2175,7 @@ ALTER TABLE ONLY public.pinnaclenumbersdata
 
 
 --
--- TOC entry 3878 (class 2606 OID 19590)
+-- TOC entry 3881 (class 2606 OID 19590)
 -- Name: planet_relations planet_relations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2194,7 +2184,7 @@ ALTER TABLE ONLY public.planet_relations
 
 
 --
--- TOC entry 3880 (class 2606 OID 19598)
+-- TOC entry 3883 (class 2606 OID 19598)
 -- Name: purchase_order purchase_order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2203,7 +2193,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 3882 (class 2606 OID 19600)
+-- TOC entry 3885 (class 2606 OID 19600)
 -- Name: rbac_modules rbac_modules_module_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2212,7 +2202,7 @@ ALTER TABLE ONLY public.rbac_modules
 
 
 --
--- TOC entry 3884 (class 2606 OID 19602)
+-- TOC entry 3887 (class 2606 OID 19602)
 -- Name: rbac_modules rbac_modules_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2221,7 +2211,7 @@ ALTER TABLE ONLY public.rbac_modules
 
 
 --
--- TOC entry 3886 (class 2606 OID 19604)
+-- TOC entry 3889 (class 2606 OID 19604)
 -- Name: rbac_permissions rbac_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2230,7 +2220,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3888 (class 2606 OID 19606)
+-- TOC entry 3891 (class 2606 OID 19606)
 -- Name: rbac_permissions rbac_permissions_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2239,7 +2229,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3890 (class 2606 OID 19608)
+-- TOC entry 3893 (class 2606 OID 19608)
 -- Name: rbac_roles rbac_roles_role_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2248,7 +2238,7 @@ ALTER TABLE ONLY public.rbac_roles
 
 
 --
--- TOC entry 3894 (class 2606 OID 19610)
+-- TOC entry 3897 (class 2606 OID 19610)
 -- Name: remedies_for_missing_numbers remedies_of_missing_numbers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2257,7 +2247,7 @@ ALTER TABLE ONLY public.remedies_for_missing_numbers
 
 
 --
--- TOC entry 3892 (class 2606 OID 19614)
+-- TOC entry 3895 (class 2606 OID 19614)
 -- Name: rbac_roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2266,7 +2256,7 @@ ALTER TABLE ONLY public.rbac_roles
 
 
 --
--- TOC entry 3896 (class 2606 OID 19624)
+-- TOC entry 3899 (class 2606 OID 19624)
 -- Name: static_testimonials static_testimonials_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2275,7 +2265,7 @@ ALTER TABLE ONLY public.static_testimonials
 
 
 --
--- TOC entry 3858 (class 2606 OID 19628)
+-- TOC entry 3861 (class 2606 OID 19628)
 -- Name: birthdates unique_user_birthdate; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2284,7 +2274,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 3898 (class 2606 OID 19630)
+-- TOC entry 3901 (class 2606 OID 19630)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2293,7 +2283,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3856 (class 1259 OID 20401)
+-- TOC entry 3859 (class 1259 OID 20401)
 -- Name: idx_birthdates_user_active; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2301,7 +2291,7 @@ CREATE INDEX idx_birthdates_user_active ON public.birthdates USING btree (user_i
 
 
 --
--- TOC entry 3910 (class 2620 OID 19639)
+-- TOC entry 3913 (class 2620 OID 19639)
 -- Name: purchase_order preserve_created_by_purchase_order; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2309,7 +2299,7 @@ CREATE TRIGGER preserve_created_by_purchase_order BEFORE UPDATE ON public.purcha
 
 
 --
--- TOC entry 3907 (class 2620 OID 19642)
+-- TOC entry 3910 (class 2620 OID 19642)
 -- Name: app_remote_configs set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2317,7 +2307,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.app_remote_configs FOR EAC
 
 
 --
--- TOC entry 3911 (class 2620 OID 19646)
+-- TOC entry 3914 (class 2620 OID 19646)
 -- Name: purchase_order set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2325,7 +2315,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.purchase_order FOR EACH RO
 
 
 --
--- TOC entry 3912 (class 2620 OID 19647)
+-- TOC entry 3915 (class 2620 OID 19647)
 -- Name: rbac_modules set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2333,7 +2323,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_modules FOR EACH ROW 
 
 
 --
--- TOC entry 3913 (class 2620 OID 19648)
+-- TOC entry 3916 (class 2620 OID 19648)
 -- Name: rbac_permissions set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2341,7 +2331,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_permissions FOR EACH 
 
 
 --
--- TOC entry 3914 (class 2620 OID 19649)
+-- TOC entry 3917 (class 2620 OID 19649)
 -- Name: rbac_roles set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2349,7 +2339,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.rbac_roles FOR EACH ROW EX
 
 
 --
--- TOC entry 3915 (class 2620 OID 19655)
+-- TOC entry 3918 (class 2620 OID 19655)
 -- Name: users set_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2357,7 +2347,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE
 
 
 --
--- TOC entry 3916 (class 2620 OID 20372)
+-- TOC entry 3919 (class 2620 OID 20372)
 -- Name: users trg_append_user_feedback; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2365,7 +2355,7 @@ CREATE TRIGGER trg_append_user_feedback BEFORE UPDATE OF user_feedback ON public
 
 
 --
--- TOC entry 3908 (class 2620 OID 19658)
+-- TOC entry 3911 (class 2620 OID 19658)
 -- Name: birthdates trg_birthdate_analysis; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2373,7 +2363,7 @@ CREATE TRIGGER trg_birthdate_analysis BEFORE INSERT OR UPDATE OF birthdate ON pu
 
 
 --
--- TOC entry 3909 (class 2620 OID 19661)
+-- TOC entry 3912 (class 2620 OID 19661)
 -- Name: birthdates trg_sync_po_birthdate_ids; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2381,7 +2371,7 @@ CREATE TRIGGER trg_sync_po_birthdate_ids AFTER DELETE ON public.birthdates FOR E
 
 
 --
--- TOC entry 3899 (class 2606 OID 19663)
+-- TOC entry 3902 (class 2606 OID 19663)
 -- Name: birthdates birthdates_po_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2390,7 +2380,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 3900 (class 2606 OID 19668)
+-- TOC entry 3903 (class 2606 OID 19668)
 -- Name: birthdates birthdates_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2399,7 +2389,7 @@ ALTER TABLE ONLY public.birthdates
 
 
 --
--- TOC entry 3901 (class 2606 OID 19683)
+-- TOC entry 3904 (class 2606 OID 19683)
 -- Name: purchase_order fk_created_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2408,7 +2398,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 3902 (class 2606 OID 19718)
+-- TOC entry 3905 (class 2606 OID 19718)
 -- Name: purchase_order fk_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2417,7 +2407,7 @@ ALTER TABLE ONLY public.purchase_order
 
 
 --
--- TOC entry 3903 (class 2606 OID 19738)
+-- TOC entry 3906 (class 2606 OID 19738)
 -- Name: rbac_permissions rbac_permissions_module_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2426,7 +2416,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3904 (class 2606 OID 19743)
+-- TOC entry 3907 (class 2606 OID 19743)
 -- Name: rbac_permissions rbac_permissions_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2435,7 +2425,7 @@ ALTER TABLE ONLY public.rbac_permissions
 
 
 --
--- TOC entry 3905 (class 2606 OID 19788)
+-- TOC entry 3908 (class 2606 OID 19788)
 -- Name: users users_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2444,7 +2434,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3906 (class 2606 OID 19793)
+-- TOC entry 3909 (class 2606 OID 19793)
 -- Name: users users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2453,31 +2443,63 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4078 (class 3256 OID 19798)
--- Name: app_remote_configs Allow public read access to app configs; Type: POLICY; Schema: public; Owner: postgres
+-- TOC entry 4088 (class 3256 OID 20585)
+-- Name: app_remote_configs Allow authenticated read access to app configs; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow public read access to app configs" ON public.app_remote_configs FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Allow authenticated read access to app configs" ON public.app_remote_configs FOR SELECT TO authenticated USING (true);
 
 
 --
--- TOC entry 4067 (class 0 OID 19297)
--- Dependencies: 387
+-- TOC entry 4090 (class 3256 OID 20588)
+-- Name: purchase_order Users can insert their own orders; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can insert their own orders" ON public.purchase_order FOR INSERT TO authenticated WITH CHECK ((auth.uid() = created_by));
+
+
+--
+-- TOC entry 4089 (class 3256 OID 20587)
+-- Name: purchase_order Users can select their own orders; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can select their own orders" ON public.purchase_order FOR SELECT TO authenticated USING ((auth.uid() = created_by));
+
+
+--
+-- TOC entry 4086 (class 3256 OID 20583)
+-- Name: users Users can select their own row; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can select their own row" ON public.users FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+
+
+--
+-- TOC entry 4087 (class 3256 OID 20584)
+-- Name: users Users can update their own row; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can update their own row" ON public.users FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+
+
+--
+-- TOC entry 4070 (class 0 OID 19297)
+-- Dependencies: 389
 -- Name: app_remote_configs; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.app_remote_configs ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4068 (class 0 OID 19307)
--- Dependencies: 388
+-- TOC entry 4071 (class 0 OID 19307)
+-- Dependencies: 390
 -- Name: birthdates; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.birthdates ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4080 (class 3256 OID 20403)
+-- TOC entry 4084 (class 3256 OID 20403)
 -- Name: birthdates birthdates_insert_own; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -2485,7 +2507,7 @@ CREATE POLICY birthdates_insert_own ON public.birthdates FOR INSERT TO authentic
 
 
 --
--- TOC entry 4079 (class 3256 OID 20402)
+-- TOC entry 4083 (class 3256 OID 20402)
 -- Name: birthdates birthdates_select_active_own; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -2493,7 +2515,7 @@ CREATE POLICY birthdates_select_active_own ON public.birthdates FOR SELECT TO au
 
 
 --
--- TOC entry 4081 (class 3256 OID 20404)
+-- TOC entry 4085 (class 3256 OID 20404)
 -- Name: birthdates birthdates_update_own; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -2501,79 +2523,95 @@ CREATE POLICY birthdates_update_own ON public.birthdates FOR UPDATE TO authentic
 
 
 --
--- TOC entry 4069 (class 0 OID 19317)
--- Dependencies: 389
+-- TOC entry 4072 (class 0 OID 19317)
+-- Dependencies: 391
 -- Name: boosting_personality_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.boosting_personality_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4070 (class 0 OID 19322)
--- Dependencies: 390
+-- TOC entry 4073 (class 0 OID 19322)
+-- Dependencies: 392
 -- Name: career_by_destiny_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.career_by_destiny_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4071 (class 0 OID 19327)
--- Dependencies: 391
+-- TOC entry 4074 (class 0 OID 19327)
+-- Dependencies: 393
 -- Name: combination_personality_lifepath; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.combination_personality_lifepath ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4072 (class 0 OID 19332)
--- Dependencies: 392
+-- TOC entry 4075 (class 0 OID 19332)
+-- Dependencies: 394
 -- Name: lifepath_number_data; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.lifepath_number_data ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4073 (class 0 OID 19337)
--- Dependencies: 393
+-- TOC entry 4076 (class 0 OID 19337)
+-- Dependencies: 395
 -- Name: loshu_grid_details; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.loshu_grid_details ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4074 (class 0 OID 19343)
--- Dependencies: 394
+-- TOC entry 4077 (class 0 OID 19343)
+-- Dependencies: 396
 -- Name: missing_number_tells; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.missing_number_tells ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4075 (class 0 OID 19348)
--- Dependencies: 395
+-- TOC entry 4078 (class 0 OID 19348)
+-- Dependencies: 397
 -- Name: occurance_ofnumbers_ingridcell; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.occurance_ofnumbers_ingridcell ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4076 (class 0 OID 19358)
--- Dependencies: 397
+-- TOC entry 4079 (class 0 OID 19358)
+-- Dependencies: 399
 -- Name: pinnaclenumbersdata; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.pinnaclenumbersdata ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4077 (class 0 OID 19451)
--- Dependencies: 403
+-- TOC entry 4080 (class 0 OID 19412)
+-- Dependencies: 401
+-- Name: purchase_order; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.purchase_order ENABLE ROW LEVEL SECURITY;
+
+--
+-- TOC entry 4081 (class 0 OID 19451)
+-- Dependencies: 405
 -- Name: remedies_for_missing_numbers; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.remedies_for_missing_numbers ENABLE ROW LEVEL SECURITY;
 
 --
--- TOC entry 4091 (class 0 OID 0)
+-- TOC entry 4082 (class 0 OID 19501)
+-- Dependencies: 408
+-- Name: users; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+--
+-- TOC entry 4100 (class 0 OID 0)
 -- Dependencies: 32
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
 --
@@ -2585,8 +2623,8 @@ GRANT USAGE ON SCHEMA public TO service_role;
 
 
 --
--- TOC entry 4092 (class 0 OID 0)
--- Dependencies: 440
+-- TOC entry 4101 (class 0 OID 0)
+-- Dependencies: 442
 -- Name: FUNCTION append_user_feedback(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2596,8 +2634,8 @@ GRANT ALL ON FUNCTION public.append_user_feedback() TO service_role;
 
 
 --
--- TOC entry 4093 (class 0 OID 0)
--- Dependencies: 447
+-- TOC entry 4102 (class 0 OID 0)
+-- Dependencies: 449
 -- Name: FUNCTION generate_lucky_unlucky_values(pers_n integer, life_p integer, missing integer[]); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2607,8 +2645,8 @@ GRANT ALL ON FUNCTION public.generate_lucky_unlucky_values(pers_n integer, life_
 
 
 --
--- TOC entry 4094 (class 0 OID 0)
--- Dependencies: 464
+-- TOC entry 4103 (class 0 OID 0)
+-- Dependencies: 466
 -- Name: FUNCTION get_boosting_personality_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2618,8 +2656,8 @@ GRANT ALL ON FUNCTION public.get_boosting_personality_data(birthdate_id uuid) TO
 
 
 --
--- TOC entry 4095 (class 0 OID 0)
--- Dependencies: 428
+-- TOC entry 4104 (class 0 OID 0)
+-- Dependencies: 430
 -- Name: FUNCTION get_career_by_destiny(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2629,8 +2667,8 @@ GRANT ALL ON FUNCTION public.get_career_by_destiny(birthdate_id uuid) TO service
 
 
 --
--- TOC entry 4096 (class 0 OID 0)
--- Dependencies: 458
+-- TOC entry 4105 (class 0 OID 0)
+-- Dependencies: 460
 -- Name: FUNCTION get_combination_personality_lifepath(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2640,8 +2678,8 @@ GRANT ALL ON FUNCTION public.get_combination_personality_lifepath(birthdate_id u
 
 
 --
--- TOC entry 4097 (class 0 OID 0)
--- Dependencies: 544
+-- TOC entry 4106 (class 0 OID 0)
+-- Dependencies: 546
 -- Name: FUNCTION get_life_path_number_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2651,8 +2689,8 @@ GRANT ALL ON FUNCTION public.get_life_path_number_data(birthdate_id uuid) TO ser
 
 
 --
--- TOC entry 4098 (class 0 OID 0)
--- Dependencies: 503
+-- TOC entry 4107 (class 0 OID 0)
+-- Dependencies: 505
 -- Name: FUNCTION get_loshu_planes(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2662,8 +2700,8 @@ GRANT ALL ON FUNCTION public.get_loshu_planes(birthdate_id uuid) TO service_role
 
 
 --
--- TOC entry 4099 (class 0 OID 0)
--- Dependencies: 522
+-- TOC entry 4108 (class 0 OID 0)
+-- Dependencies: 524
 -- Name: FUNCTION get_lucky_unlucky_values(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2673,8 +2711,8 @@ GRANT ALL ON FUNCTION public.get_lucky_unlucky_values(birthdate_id uuid) TO serv
 
 
 --
--- TOC entry 4100 (class 0 OID 0)
--- Dependencies: 444
+-- TOC entry 4109 (class 0 OID 0)
+-- Dependencies: 446
 -- Name: FUNCTION get_missing_number_tells(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2684,8 +2722,8 @@ GRANT ALL ON FUNCTION public.get_missing_number_tells(birthdate_id uuid) TO serv
 
 
 --
--- TOC entry 4101 (class 0 OID 0)
--- Dependencies: 417
+-- TOC entry 4110 (class 0 OID 0)
+-- Dependencies: 419
 -- Name: FUNCTION get_number_occurrence_descriptions(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2695,8 +2733,8 @@ GRANT ALL ON FUNCTION public.get_number_occurrence_descriptions(birthdate_id uui
 
 
 --
--- TOC entry 4102 (class 0 OID 0)
--- Dependencies: 510
+-- TOC entry 4111 (class 0 OID 0)
+-- Dependencies: 512
 -- Name: FUNCTION get_number_occurrence_details(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2706,8 +2744,8 @@ GRANT ALL ON FUNCTION public.get_number_occurrence_details(birthdate_id uuid) TO
 
 
 --
--- TOC entry 4103 (class 0 OID 0)
--- Dependencies: 430
+-- TOC entry 4112 (class 0 OID 0)
+-- Dependencies: 432
 -- Name: FUNCTION get_numbers_not_for_remedy(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2717,8 +2755,8 @@ GRANT ALL ON FUNCTION public.get_numbers_not_for_remedy(birthdate_id uuid) TO se
 
 
 --
--- TOC entry 4104 (class 0 OID 0)
--- Dependencies: 502
+-- TOC entry 4113 (class 0 OID 0)
+-- Dependencies: 504
 -- Name: FUNCTION get_personality_data(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2728,8 +2766,8 @@ GRANT ALL ON FUNCTION public.get_personality_data(birthdate_id uuid) TO service_
 
 
 --
--- TOC entry 4105 (class 0 OID 0)
--- Dependencies: 517
+-- TOC entry 4114 (class 0 OID 0)
+-- Dependencies: 519
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod1(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2739,8 +2777,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod1(birthdate_id uuid
 
 
 --
--- TOC entry 4106 (class 0 OID 0)
--- Dependencies: 467
+-- TOC entry 4115 (class 0 OID 0)
+-- Dependencies: 469
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod2(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2750,8 +2788,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod2(birthdate_id uuid
 
 
 --
--- TOC entry 4107 (class 0 OID 0)
--- Dependencies: 443
+-- TOC entry 4116 (class 0 OID 0)
+-- Dependencies: 445
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod3(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2761,8 +2799,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod3(birthdate_id uuid
 
 
 --
--- TOC entry 4108 (class 0 OID 0)
--- Dependencies: 504
+-- TOC entry 4117 (class 0 OID 0)
+-- Dependencies: 506
 -- Name: FUNCTION get_pinnacle_data_for_lifeperiod4(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2772,8 +2810,8 @@ GRANT ALL ON FUNCTION public.get_pinnacle_data_for_lifeperiod4(birthdate_id uuid
 
 
 --
--- TOC entry 4109 (class 0 OID 0)
--- Dependencies: 541
+-- TOC entry 4118 (class 0 OID 0)
+-- Dependencies: 543
 -- Name: FUNCTION get_remedies_for_birthdate(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2783,8 +2821,8 @@ GRANT ALL ON FUNCTION public.get_remedies_for_birthdate(birthdate_id uuid) TO se
 
 
 --
--- TOC entry 4110 (class 0 OID 0)
--- Dependencies: 425
+-- TOC entry 4119 (class 0 OID 0)
+-- Dependencies: 427
 -- Name: FUNCTION get_share_market_advice(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2794,8 +2832,8 @@ GRANT ALL ON FUNCTION public.get_share_market_advice(birthdate_id uuid) TO servi
 
 
 --
--- TOC entry 4111 (class 0 OID 0)
--- Dependencies: 484
+-- TOC entry 4120 (class 0 OID 0)
+-- Dependencies: 486
 -- Name: FUNCTION get_some_imp_points(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2805,8 +2843,8 @@ GRANT ALL ON FUNCTION public.get_some_imp_points(birthdate_id uuid) TO service_r
 
 
 --
--- TOC entry 4112 (class 0 OID 0)
--- Dependencies: 498
+-- TOC entry 4121 (class 0 OID 0)
+-- Dependencies: 500
 -- Name: FUNCTION get_stock_market_info(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2816,8 +2854,8 @@ GRANT ALL ON FUNCTION public.get_stock_market_info(birthdate_id uuid) TO service
 
 
 --
--- TOC entry 4113 (class 0 OID 0)
--- Dependencies: 487
+-- TOC entry 4122 (class 0 OID 0)
+-- Dependencies: 489
 -- Name: FUNCTION handle_new_auth_user(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2827,8 +2865,8 @@ GRANT ALL ON FUNCTION public.handle_new_auth_user() TO service_role;
 
 
 --
--- TOC entry 4114 (class 0 OID 0)
--- Dependencies: 477
+-- TOC entry 4123 (class 0 OID 0)
+-- Dependencies: 479
 -- Name: FUNCTION perform_numerology_analysis(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2838,8 +2876,8 @@ GRANT ALL ON FUNCTION public.perform_numerology_analysis() TO service_role;
 
 
 --
--- TOC entry 4115 (class 0 OID 0)
--- Dependencies: 494
+-- TOC entry 4124 (class 0 OID 0)
+-- Dependencies: 496
 -- Name: FUNCTION protect_created_by(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2849,8 +2887,8 @@ GRANT ALL ON FUNCTION public.protect_created_by() TO service_role;
 
 
 --
--- TOC entry 4116 (class 0 OID 0)
--- Dependencies: 511
+-- TOC entry 4125 (class 0 OID 0)
+-- Dependencies: 513
 -- Name: FUNCTION reduce_to_single_digit(val integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2860,8 +2898,8 @@ GRANT ALL ON FUNCTION public.reduce_to_single_digit(val integer) TO service_role
 
 
 --
--- TOC entry 4117 (class 0 OID 0)
--- Dependencies: 446
+-- TOC entry 4126 (class 0 OID 0)
+-- Dependencies: 448
 -- Name: FUNCTION soft_delete_birthdate(birthdate_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2872,8 +2910,8 @@ GRANT ALL ON FUNCTION public.soft_delete_birthdate(birthdate_id uuid) TO service
 
 
 --
--- TOC entry 4118 (class 0 OID 0)
--- Dependencies: 553
+-- TOC entry 4127 (class 0 OID 0)
+-- Dependencies: 555
 -- Name: FUNCTION sync_po_birthdate_ids(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2883,8 +2921,8 @@ GRANT ALL ON FUNCTION public.sync_po_birthdate_ids() TO service_role;
 
 
 --
--- TOC entry 4119 (class 0 OID 0)
--- Dependencies: 479
+-- TOC entry 4128 (class 0 OID 0)
+-- Dependencies: 481
 -- Name: FUNCTION update_updated_at_column(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2894,8 +2932,8 @@ GRANT ALL ON FUNCTION public.update_updated_at_column() TO service_role;
 
 
 --
--- TOC entry 4120 (class 0 OID 0)
--- Dependencies: 519
+-- TOC entry 4129 (class 0 OID 0)
+-- Dependencies: 521
 -- Name: FUNCTION upsert_birthdate_for_user(p_user_id uuid, p_birthdate date, p_full_name text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2906,8 +2944,8 @@ GRANT ALL ON FUNCTION public.upsert_birthdate_for_user(p_user_id uuid, p_birthda
 
 
 --
--- TOC entry 4121 (class 0 OID 0)
--- Dependencies: 481
+-- TOC entry 4130 (class 0 OID 0)
+-- Dependencies: 483
 -- Name: FUNCTION validate_birthdate_access(birthdate_id uuid, check_po_id boolean); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2917,8 +2955,8 @@ GRANT ALL ON FUNCTION public.validate_birthdate_access(birthdate_id uuid, check_
 
 
 --
--- TOC entry 4122 (class 0 OID 0)
--- Dependencies: 386
+-- TOC entry 4131 (class 0 OID 0)
+-- Dependencies: 388
 -- Name: TABLE app_config; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2928,8 +2966,8 @@ GRANT ALL ON TABLE public.app_config TO service_role;
 
 
 --
--- TOC entry 4123 (class 0 OID 0)
--- Dependencies: 387
+-- TOC entry 4132 (class 0 OID 0)
+-- Dependencies: 389
 -- Name: TABLE app_remote_configs; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2939,8 +2977,8 @@ GRANT ALL ON TABLE public.app_remote_configs TO service_role;
 
 
 --
--- TOC entry 4124 (class 0 OID 0)
--- Dependencies: 388
+-- TOC entry 4133 (class 0 OID 0)
+-- Dependencies: 390
 -- Name: TABLE birthdates; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2950,8 +2988,8 @@ GRANT ALL ON TABLE public.birthdates TO service_role;
 
 
 --
--- TOC entry 4125 (class 0 OID 0)
--- Dependencies: 389
+-- TOC entry 4134 (class 0 OID 0)
+-- Dependencies: 391
 -- Name: TABLE boosting_personality_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2961,8 +2999,8 @@ GRANT ALL ON TABLE public.boosting_personality_numbers TO service_role;
 
 
 --
--- TOC entry 4126 (class 0 OID 0)
--- Dependencies: 390
+-- TOC entry 4135 (class 0 OID 0)
+-- Dependencies: 392
 -- Name: TABLE career_by_destiny_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2972,8 +3010,8 @@ GRANT ALL ON TABLE public.career_by_destiny_numbers TO service_role;
 
 
 --
--- TOC entry 4127 (class 0 OID 0)
--- Dependencies: 391
+-- TOC entry 4136 (class 0 OID 0)
+-- Dependencies: 393
 -- Name: TABLE combination_personality_lifepath; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2983,8 +3021,8 @@ GRANT ALL ON TABLE public.combination_personality_lifepath TO service_role;
 
 
 --
--- TOC entry 4128 (class 0 OID 0)
--- Dependencies: 392
+-- TOC entry 4137 (class 0 OID 0)
+-- Dependencies: 394
 -- Name: TABLE lifepath_number_data; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -2994,8 +3032,8 @@ GRANT ALL ON TABLE public.lifepath_number_data TO service_role;
 
 
 --
--- TOC entry 4129 (class 0 OID 0)
--- Dependencies: 393
+-- TOC entry 4138 (class 0 OID 0)
+-- Dependencies: 395
 -- Name: TABLE loshu_grid_details; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3005,8 +3043,8 @@ GRANT ALL ON TABLE public.loshu_grid_details TO service_role;
 
 
 --
--- TOC entry 4130 (class 0 OID 0)
--- Dependencies: 394
+-- TOC entry 4139 (class 0 OID 0)
+-- Dependencies: 396
 -- Name: TABLE missing_number_tells; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3016,8 +3054,8 @@ GRANT ALL ON TABLE public.missing_number_tells TO service_role;
 
 
 --
--- TOC entry 4131 (class 0 OID 0)
--- Dependencies: 395
+-- TOC entry 4140 (class 0 OID 0)
+-- Dependencies: 397
 -- Name: TABLE occurance_ofnumbers_ingridcell; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3027,8 +3065,8 @@ GRANT ALL ON TABLE public.occurance_ofnumbers_ingridcell TO service_role;
 
 
 --
--- TOC entry 4132 (class 0 OID 0)
--- Dependencies: 396
+-- TOC entry 4141 (class 0 OID 0)
+-- Dependencies: 398
 -- Name: TABLE personality_number_data; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3038,8 +3076,8 @@ GRANT ALL ON TABLE public.personality_number_data TO service_role;
 
 
 --
--- TOC entry 4133 (class 0 OID 0)
--- Dependencies: 397
+-- TOC entry 4142 (class 0 OID 0)
+-- Dependencies: 399
 -- Name: TABLE pinnaclenumbersdata; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3049,8 +3087,8 @@ GRANT ALL ON TABLE public.pinnaclenumbersdata TO service_role;
 
 
 --
--- TOC entry 4134 (class 0 OID 0)
--- Dependencies: 398
+-- TOC entry 4143 (class 0 OID 0)
+-- Dependencies: 400
 -- Name: TABLE planet_relations; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3060,8 +3098,8 @@ GRANT ALL ON TABLE public.planet_relations TO service_role;
 
 
 --
--- TOC entry 4135 (class 0 OID 0)
--- Dependencies: 399
+-- TOC entry 4144 (class 0 OID 0)
+-- Dependencies: 401
 -- Name: TABLE purchase_order; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3071,8 +3109,8 @@ GRANT ALL ON TABLE public.purchase_order TO service_role;
 
 
 --
--- TOC entry 4136 (class 0 OID 0)
--- Dependencies: 400
+-- TOC entry 4145 (class 0 OID 0)
+-- Dependencies: 402
 -- Name: TABLE rbac_modules; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3082,8 +3120,8 @@ GRANT ALL ON TABLE public.rbac_modules TO service_role;
 
 
 --
--- TOC entry 4137 (class 0 OID 0)
--- Dependencies: 401
+-- TOC entry 4146 (class 0 OID 0)
+-- Dependencies: 403
 -- Name: TABLE rbac_permissions; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3093,8 +3131,8 @@ GRANT ALL ON TABLE public.rbac_permissions TO service_role;
 
 
 --
--- TOC entry 4138 (class 0 OID 0)
--- Dependencies: 402
+-- TOC entry 4147 (class 0 OID 0)
+-- Dependencies: 404
 -- Name: TABLE rbac_roles; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3104,8 +3142,8 @@ GRANT ALL ON TABLE public.rbac_roles TO service_role;
 
 
 --
--- TOC entry 4139 (class 0 OID 0)
--- Dependencies: 403
+-- TOC entry 4148 (class 0 OID 0)
+-- Dependencies: 405
 -- Name: TABLE remedies_for_missing_numbers; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3115,8 +3153,8 @@ GRANT ALL ON TABLE public.remedies_for_missing_numbers TO service_role;
 
 
 --
--- TOC entry 4140 (class 0 OID 0)
--- Dependencies: 404
+-- TOC entry 4149 (class 0 OID 0)
+-- Dependencies: 406
 -- Name: TABLE static_testimonials; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3126,8 +3164,8 @@ GRANT ALL ON TABLE public.static_testimonials TO service_role;
 
 
 --
--- TOC entry 4142 (class 0 OID 0)
--- Dependencies: 405
+-- TOC entry 4151 (class 0 OID 0)
+-- Dependencies: 407
 -- Name: SEQUENCE static_testimonials_id_seq; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3137,8 +3175,8 @@ GRANT ALL ON SEQUENCE public.static_testimonials_id_seq TO service_role;
 
 
 --
--- TOC entry 4143 (class 0 OID 0)
--- Dependencies: 406
+-- TOC entry 4152 (class 0 OID 0)
+-- Dependencies: 408
 -- Name: TABLE users; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3148,8 +3186,8 @@ GRANT ALL ON TABLE public.users TO service_role;
 
 
 --
--- TOC entry 4144 (class 0 OID 0)
--- Dependencies: 407
+-- TOC entry 4153 (class 0 OID 0)
+-- Dependencies: 409
 -- Name: TABLE view_rbac_permissions; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -3159,7 +3197,7 @@ GRANT ALL ON TABLE public.view_rbac_permissions TO service_role;
 
 
 --
--- TOC entry 4145 (class 0 OID 0)
+-- TOC entry 4154 (class 0 OID 0)
 -- Dependencies: 413
 -- Name: TABLE view_users; Type: ACL; Schema: public; Owner: postgres
 --
@@ -3170,7 +3208,7 @@ GRANT ALL ON TABLE public.view_users TO service_role;
 
 
 --
--- TOC entry 2579 (class 826 OID 16494)
+-- TOC entry 2581 (class 826 OID 16494)
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -3181,7 +3219,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENC
 
 
 --
--- TOC entry 2556 (class 826 OID 16495)
+-- TOC entry 2558 (class 826 OID 16495)
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -3192,7 +3230,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 
 
 --
--- TOC entry 2578 (class 826 OID 16493)
+-- TOC entry 2580 (class 826 OID 16493)
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -3203,7 +3241,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIO
 
 
 --
--- TOC entry 2558 (class 826 OID 16497)
+-- TOC entry 2560 (class 826 OID 16497)
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -3214,7 +3252,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 
 
 --
--- TOC entry 2577 (class 826 OID 16492)
+-- TOC entry 2579 (class 826 OID 16492)
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -3225,7 +3263,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES 
 
 
 --
--- TOC entry 2557 (class 826 OID 16496)
+-- TOC entry 2559 (class 826 OID 16496)
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
 --
 
@@ -3235,11 +3273,11 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
 
--- Completed on 2026-07-05 10:01:22
+-- Completed on 2026-07-07 10:54:37
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UAJMulqiEwGgvWVVnMXmhTGO73RUot7lAMR2WnV41BGUBcUZdVKZxlWyVc6jHOg
+\unrestrict GXv4QqMXne2ocm4Brstq1f7A8XOFIzbYKazUuya5AoDJrUwMJXflrQKBQqFDVLt
 
