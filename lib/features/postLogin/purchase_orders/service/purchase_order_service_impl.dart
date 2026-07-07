@@ -1,7 +1,4 @@
 import 'dart:async';
-// import 'package:numero_shastra/features/postLogin/routes/route_barrel.dart';
-// import 'package:numero_shastra/features/postLogin/shops/shop_barrel.dart';
-import 'package:numero_shastra/features/postLogin/users/user_barrel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/field_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,35 +44,13 @@ class PurchaseOrderServiceImpl
   String get createdAt => ModelPurchaseOrderFields.createdAt;
 
   @override
-  Map<String, ForeignKeyConfig> get foreignKeys => {
-    /* ModelPurchaseOrderFields.poRouteId: ForeignKeyConfig(
-      table: ModelRouteFields.table,
-      idColumn: ModelRouteFields.routeId,
-      labelColumn: ModelRouteFields.routeName,
-    ),
-    ModelPurchaseOrderFields.poShopId: ForeignKeyConfig(
-      table: ModelShopFields.table,
-      idColumn: ModelShopFields.shopId,
-      labelColumn: ModelShopFields.shopName,
-    ), */
-    ModelPurchaseOrderFields.createdBy: ForeignKeyConfig(
-      table: ModelUserFields.table,
-      idColumn: ModelUserFields.userId,
-      labelColumn: ModelUserFields.fullName,
-    ),
-    ModelPurchaseOrderFields.updatedBy: ForeignKeyConfig(
-      table: ModelUserFields.table,
-      idColumn: ModelUserFields.userId,
-      labelColumn: ModelUserFields.fullName,
-    ),
-  };
+  Map<String, ForeignKeyConfig> get foreignKeys => const {};
 
   // --- Custom helpers ---
 
-  /// Create an empty purchase order for a given route and shop
+  /// Create an empty purchase order for the current user.
   Future<Map<String, dynamic>> createEmptyPurchaseOrder({
-    required String poRouteId,
-    required String poShopId,
+    required List<String> birthdateIds,
   }) async {
     final userId = _ref.read(userProfileStateProvider).profile?.userId;
     if (userId == null) throw Exception('No signed-in user found');
@@ -83,8 +58,6 @@ class PurchaseOrderServiceImpl
     final entity = ModelPurchaseOrder(
       poTotalAmount: 0.0,
       poLineItemCount: 0,
-      poRouteId: poRouteId,
-      poShopId: poShopId,
       userComment: null,
       profitToShop: null,
       poLat: null,
@@ -92,6 +65,7 @@ class PurchaseOrderServiceImpl
       status: null,
       createdBy: userId,
       updatedBy: userId,
+      birthdateIds: birthdateIds,
     );
 
     final enriched = mapper.toMap(entity);
@@ -104,22 +78,7 @@ class PurchaseOrderServiceImpl
   }
 
   /// Fetch all purchase orders for a given shop
-  Future<List<Map<String, dynamic>>> fetchPurchaseOrdersForShop(
-    String? selectedShopId,
-  ) async {
-    if (selectedShopId == null || selectedShopId.isEmpty) {
-      throw Exception('Shop ID not provided');
-    }
-
-    final purchaseOrders = await client
-        .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-        .select('*')
-        .eq(ModelPurchaseOrderFields.poShopId, selectedShopId);
-
-    return List<Map<String, dynamic>>.from(purchaseOrders);
-  }
-
-  /// Convenience method to get raw maps instead of typed entities
+  /// Convenience method to get raw maps instead of typed entities.
   Future<List<Map<String, dynamic>>> getAllEntities() async {
     final response = await client
         .from(tableName)
@@ -127,74 +86,6 @@ class PurchaseOrderServiceImpl
         .order(sortField ?? createdAt, ascending: sortAscending);
     return List<Map<String, dynamic>>.from(response);
   }
-
-  /// Stream purchase orders filtered by route
-  Stream<List<ModelPurchaseOrder>> streamEntitiesByRoute(String routeId) {
-    final controller = StreamController<List<ModelPurchaseOrder>>();
-    RealtimeChannel? channel;
-
-    Future<void> fetch() async {
-      try {
-        final List<dynamic> data = await client
-            .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-            .select()
-            .eq(ModelPurchaseOrderFields.poRouteId, routeId)
-            .order(sortField ?? createdAt, ascending: sortAscending);
-
-        if (!controller.isClosed) {
-          controller.add(data.map((e) => mapper.fromMap(e)).toList());
-        }
-      } catch (e) {
-        if (!controller.isClosed) controller.addError(e);
-      }
-    }
-
-    void startSubscription() {
-      fetch();
-      channel = client.channel('public:$tableName:$routeId')
-        ..onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: tableName,
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: ModelPurchaseOrderFields.poRouteId,
-            value: routeId,
-          ),
-          callback: (_) => fetch(),
-        )
-        ..subscribe((status, [error]) {
-          if (status == RealtimeSubscribeStatus.timedOut ||
-              status == RealtimeSubscribeStatus.channelError) {
-            logger.error(
-              'Realtime subscription error for purchase_orders in route $routeId: $status ${error ?? ""}',
-              null,
-            );
-            if (!controller.isClosed) {
-              controller.addError('no_internet');
-            }
-          }
-        });
-    }
-
-    controller.onListen = startSubscription;
-    controller.onCancel = () => channel?.unsubscribe();
-
-    return controller.stream;
-  }
-
-  /// Fetch purchase orders for a given shop with foreign labels resolved
-  Future<List<Map<String, dynamic>>> fetchEntitiesByShop(String shopId) async {
-    final List<dynamic> result = await client
-        .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-        .select()
-        .eq(ModelPurchaseOrderFields.poShopId, shopId)
-        .order(sortField ?? createdAt, ascending: sortAscending);
-
-    return List<Map<String, dynamic>>.from(result);
-  }
-
-  // --- Override generic methods to use view ---
 
   @override
   Stream<List<ModelPurchaseOrder>> streamEntities() {
@@ -204,9 +95,7 @@ class PurchaseOrderServiceImpl
     Future<void> fetch() async {
       try {
         final userId = _ref.read(userProfileStateProvider).profile?.userId;
-        var query = client
-            .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-            .select();
+        var query = client.from(tableName).select();
 
         if (userId != null) {
           query = query.eq(ModelPurchaseOrderFields.createdBy, userId);
@@ -257,9 +146,7 @@ class PurchaseOrderServiceImpl
   @override
   Future<List<ModelPurchaseOrder>> fetchAll() async {
     final userId = _ref.read(userProfileStateProvider).profile?.userId;
-    var query = client
-        .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
-        .select();
+    var query = client.from(tableName).select();
 
     if (userId != null) {
       query = query.eq(ModelPurchaseOrderFields.createdBy, userId);
@@ -275,7 +162,7 @@ class PurchaseOrderServiceImpl
   @override
   Future<ModelPurchaseOrder> fetchById(String id) async {
     final response = await client
-        .from(ModelPurchaseOrderFields.tableViewWithForeignKeyLabels)
+        .from(tableName)
         .select()
         .eq(idColumn, id)
         .single();

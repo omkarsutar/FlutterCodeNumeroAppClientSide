@@ -6,6 +6,7 @@ import '../../../core/config/field_config.dart';
 import '../../../core/services/entity_service.dart';
 import '../../../core/models/entity_meta.dart';
 import '../../../core/providers/core_providers.dart';
+import '../../../core/utils/role_aware_message_utils.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import 'providers/entity_view_logic.dart';
 import 'providers/generic_view_controller.dart';
@@ -53,11 +54,17 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text((l10n['delete_entity_title'] ?? 'Delete {entity}')
-            .replaceAll('{entity}', entityMeta.entityName)),
-        content: Text((l10n['delete_entity_msg'] ??
-                'Are you sure you want to delete this {entity}?')
-            .replaceAll('{entity}', entityMeta.entityNameLower)),
+        title: Text(
+          (l10n['delete_entity_title'] ?? 'Delete {entity}').replaceAll(
+            '{entity}',
+            entityMeta.entityName,
+          ),
+        ),
+        content: Text(
+          (l10n['delete_entity_msg'] ??
+                  'Are you sure you want to delete this {entity}?')
+              .replaceAll('{entity}', entityMeta.entityNameLower),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -340,6 +347,7 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
       previous,
       next,
     ) {
+      final isAdmin = ref.read(isAdminUserProvider);
       if (next.isDeleted && !next.isLoading) {
         SnackbarUtils.showSuccess(
           '${entityMeta.entityName} ${l10n['delete_success_msg'] ?? 'deleted successfully!'}',
@@ -349,15 +357,25 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
         }
       } else if (next.error != null && !next.isLoading) {
         SnackbarUtils.showError(
-            '${l10n['delete_failed_msg'] ?? 'Failed to delete'}: ${next.error}');
+          RoleAwareMessageUtils.resolve(
+            isAdmin: isAdmin,
+            simpleMessage:
+                l10n['delete_failed_msg'] ??
+                'Unable to delete the record. Please try again.',
+            adminMessage:
+                '${l10n['delete_failed_msg'] ?? 'Failed to delete'}: ${next.error}',
+          ),
+        );
       }
     });
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: CustomAppBar(
-        title: (l10n['view_entity_title'] ?? 'View {entity}')
-            .replaceAll('{entity}', entityMeta.entityName),
+        title: (l10n['view_entity_title'] ?? 'View {entity}').replaceAll(
+          '{entity}',
+          entityMeta.entityName,
+        ),
         showBack: true,
         actions: [
           // Edit button - only show if user has update permission
@@ -387,8 +405,10 @@ class EntityViewPageRiverpod<T> extends ConsumerWidget {
             data: (entity) {
               if (entity == null) {
                 return Center(
-                  child: Text((l10n['entity_not_found_msg'] ?? '{entity} not found')
-                      .replaceAll('{entity}', entityMeta.entityName)),
+                  child: Text(
+                    (l10n['entity_not_found_msg'] ?? '{entity} not found')
+                        .replaceAll('{entity}', entityMeta.entityName),
+                  ),
                 );
               }
 

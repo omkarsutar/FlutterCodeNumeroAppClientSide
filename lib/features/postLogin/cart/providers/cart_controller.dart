@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 
@@ -126,6 +127,7 @@ class CartController {
 
     final packageInfo = await PackageInfo.fromPlatform();
     final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+    final amountPaise = (totalAmount * 100).round();
 
     final selectedBirthdates = ref
         .read(effectiveBirthdateRecordsProvider)
@@ -138,12 +140,29 @@ class CartController {
       'birthdates': selectedBirthdates,
     });
 
+    String? orderId;
+    if (kIsWeb) {
+      orderId = await _orderService.createPaymentOrder(
+        poIds: poIds,
+        userId: userId ?? '',
+        amountPaise: amountPaise,
+        notes: {
+          'extra_info': extraInfo,
+          'package_name': packageInfo.packageName,
+          'promo_code_applied': appliedPromoCode ?? 'none',
+          'first_touch_referrer_raw': firstReferrerRaw,
+          'last_touch_referrer_raw': lastReferrerRaw,
+        },
+      );
+    }
+
     _razorpayService.openCheckout(
       description: "Payment for ${poIds.length} Birthdate Analysis",
       amount: totalAmount,
       contact: contact,
       email: email,
       apiKey: apiKey,
+      orderId: orderId,
       notes: {
         'extra_info': extraInfo,
         'package_name': packageInfo.packageName,

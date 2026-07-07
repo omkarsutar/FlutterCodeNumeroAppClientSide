@@ -22,12 +22,17 @@ final birthdatesStreamProvider = StreamProvider<List<ModelBirthdate>>((ref) {
   return client
       .from('birthdates')
       .stream(primaryKey: ['id'])
-      .eq('user_id', user.id)
       .map((data) {
+        final filteredData = data.where((map) {
+          return map['user_id']?.toString() == user.id &&
+              map['active'] == true;
+        }).toList();
+
         debugPrint(
-          '[BirthdateRecords] Raw birthdates data count: ${data.length}',
+          '[BirthdateRecords] Active birthdates data count: ${filteredData.length}',
         );
-        final records = data.map((map) {
+
+        final records = filteredData.map((map) {
           try {
             return ModelBirthdate.fromMap(map);
           } catch (e, stack) {

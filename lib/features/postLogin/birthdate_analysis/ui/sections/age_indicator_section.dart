@@ -9,10 +9,7 @@ import '../widgets/mystic_widgets.dart';
 class AgeIndicatorSection extends ConsumerWidget {
   final VoidCallback onEditName;
 
-  const AgeIndicatorSection({
-    super.key,
-    required this.onEditName,
-  });
+  const AgeIndicatorSection({super.key, required this.onEditName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,8 +76,8 @@ class AgeIndicatorSection extends ConsumerWidget {
                       currentLang == AppLanguage.hindi
                           ? 'आज आपकी आयु है'
                           : currentLang == AppLanguage.marathi
-                              ? 'आज तुमचे वय आहे'
-                              : 'Your age today is',
+                          ? 'आज तुमचे वय आहे'
+                          : 'Your age today is',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -91,7 +88,7 @@ class AgeIndicatorSection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          /* const SizedBox(height: 20),
           MysticContentCard(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Text(
@@ -102,7 +99,7 @@ class AgeIndicatorSection extends ConsumerWidget {
                 height: 1.4,
               ),
             ),
-          ),
+          ), */
           const SizedBox(height: 16),
           Row(
             children: [

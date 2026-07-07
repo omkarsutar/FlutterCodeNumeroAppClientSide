@@ -15,7 +15,7 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="/NumeroShastraV01/">
+  <base href="/">
 
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -27,17 +27,17 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://numeroshastra.github.io/NumeroShastraV01/">
+  <meta property="og:url" content="https://app.numeroshastra.com/">
   <meta property="og:title" content="Numero Shastra">
   <meta property="og:description" content="Browse products, manage your cart, and place orders seamlessly.">
-  <meta property="og:image" content="https://numeroshastra.github.io/NumeroShastraV01/app_logo.png">
+  <meta property="og:image" content="https://app.numeroshastra.com/app_logo.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://numeroshastra.github.io/NumeroShastraV01/">
+  <meta property="twitter:url" content="https://app.numeroshastra.com/">
   <meta property="twitter:title" content="Numero Shastra">
   <meta property="twitter:description" content="Browse products, manage your cart, and place orders seamlessly.">
-  <meta property="twitter:image" content="https://numeroshastra.github.io/NumeroShastraV01/app_logo.png">
+  <meta property="twitter:image" content="https://app.numeroshastra.com/app_logo.png">
 
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="apple-touch-icon" href="app_logo.png">
@@ -52,6 +52,42 @@
 
     gtag('config', 'G-GDY7TP00R2');
   </script>
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return;
+      n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n;
+      n.push = n;
+      n.loaded = !0;
+      n.version = '2.0';
+      n.queue = [];
+      t = b.createElement(e);
+      t.async = !0;
+      t.src = v;
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+
+    fbq('init', '1944589032861359');
+    fbq('track', 'PageView');
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaign = urlParams.get('utm_campaign') || 'untracked';
+      fbq('track', 'ViewContent', {
+        brand_name: 'Numero Shastra',
+        device_detected: 'ios',
+        campaign: campaign
+      });
+    } catch (e) {
+      console.error('Failed to parse campaign parameters for Meta:', e);
+    }
+  </script>
+  <!-- End Meta Pixel Code -->
 </head>
 
 <body>

@@ -6,6 +6,7 @@ class ModelBirthdate {
   final String? poId;
   final String? fullName;
   final DateTime birthdate;
+  final bool active;
   final int? personalityNumber;
   final int? lifePathNumber;
   final int? pinnacle1;
@@ -26,6 +27,7 @@ class ModelBirthdate {
     this.poId,
     this.fullName,
     required this.birthdate,
+    this.active = true,
     this.personalityNumber,
     this.lifePathNumber,
     this.pinnacle1,
@@ -48,6 +50,7 @@ class ModelBirthdate {
       poId: map['po_id'] as String?,
       fullName: map['full_name'] as String?,
       birthdate: DateTime.parse(map['birthdate'].toString()),
+      active: map['active'] as bool? ?? true,
       personalityNumber: map['personality_number'] as int?,
       lifePathNumber: map['life_path_number'] as int?,
       pinnacle1: map['pinnacle1'] as int?,
@@ -79,6 +82,7 @@ class ModelBirthdate {
       if (poId != null) 'po_id': poId,
       if (fullName != null) 'full_name': fullName,
       'birthdate': DateFormat('yyyy-MM-dd').format(birthdate),
+      'active': active,
       if (personalityNumber != null) 'personality_number': personalityNumber,
       if (lifePathNumber != null) 'life_path_number': lifePathNumber,
       if (pinnacle1 != null) 'pinnacle1': pinnacle1,
@@ -99,6 +103,7 @@ class ModelBirthdate {
     String? poId,
     String? fullName,
     DateTime? birthdate,
+    bool? active,
     int? personalityNumber,
     int? lifePathNumber,
     int? pinnacle1,
@@ -119,6 +124,7 @@ class ModelBirthdate {
       poId: poId ?? this.poId,
       fullName: fullName ?? this.fullName,
       birthdate: birthdate ?? this.birthdate,
+      active: active ?? this.active,
       personalityNumber: personalityNumber ?? this.personalityNumber,
       lifePathNumber: lifePathNumber ?? this.lifePathNumber,
       pinnacle1: pinnacle1 ?? this.pinnacle1,

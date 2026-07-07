@@ -14,6 +14,7 @@ import '../../../../core/providers/app_localization_provider.dart';
 import '../providers/cart_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
+import '../../../../core/utils/role_aware_message_utils.dart';
 import '../../../../core/services/analytics_service.dart';
 
 class CartPage extends ConsumerStatefulWidget {
@@ -26,6 +27,8 @@ class CartPage extends ConsumerStatefulWidget {
 class _CartPageState extends ConsumerState<CartPage> {
   late final CartController _cartController;
   final TextEditingController _promoController = TextEditingController();
+  late final PageController _premiumFeaturesController;
+  int _premiumFeaturePage = 0;
   bool _remoteConfigDebugShown = false;
 
   String _appliedPromoCode = 'none';
@@ -37,6 +40,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   void initState() {
     super.initState();
     _cartController = ref.read(cartControllerProvider);
+    _premiumFeaturesController = PageController(viewportFraction: 0.88);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cartController.initRazorpay(
         onPaymentSuccess: _onPaymentSuccess,
@@ -49,6 +53,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   void dispose() {
     _cartController.disposeRazorpay();
     _promoController.dispose();
+    _premiumFeaturesController.dispose();
     super.dispose();
   }
 
@@ -68,6 +73,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   Future<void> _validateAndApplyPromo() async {
+    final isAdmin = ref.read(isAdminUserProvider);
     final code = _promoController.text.trim().toUpperCase();
     if (code.isEmpty || _isValidatingPromo) return;
 
@@ -107,7 +113,12 @@ class _CartPageState extends ConsumerState<CartPage> {
           SnackBar(
             backgroundColor: const Color(0xFFB91C1C),
             content: Text(
-              'Promo validation failed: $e',
+              RoleAwareMessageUtils.resolve(
+                isAdmin: isAdmin,
+                simpleMessage:
+                    'Unable to validate the promo code right now. Please try again.',
+                adminMessage: 'Promo validation failed: $e',
+              ),
               style: const TextStyle(color: Colors.white),
             ),
           ),
@@ -216,6 +227,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   void _onPaymentError(String error) {
+    final isAdmin = ref.read(isAdminUserProvider);
     if (mounted) {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -226,7 +238,14 @@ class _CartPageState extends ConsumerState<CartPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${ref.read(appL10nProvider)['payment_failed'] ?? 'Payment Failed'}: $error',
+            RoleAwareMessageUtils.resolve(
+              isAdmin: isAdmin,
+              simpleMessage:
+                  ref.read(appL10nProvider)['payment_failed'] ??
+                  'Payment failed. Please try again.',
+              adminMessage:
+                  '${ref.read(appL10nProvider)['payment_failed'] ?? 'Payment Failed'}: $error',
+            ),
             style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red[700],
@@ -263,8 +282,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     // access is available on test devices. Show only for admin users.
     if (!kIsWeb && !_remoteConfigDebugShown) {
       if (loadedConfig != null) {
-        final roleName = ref.read(roleNameProvider);
-        final isAdmin = roleName?.toLowerCase() == 'admin';
+        final isAdmin = ref.read(isAdminUserProvider);
         if (isAdmin) {
           _remoteConfigDebugShown = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -290,8 +308,7 @@ class _CartPageState extends ConsumerState<CartPage> {
           });
         }
       } else if (remoteConfigAsync.hasError) {
-        final roleName = ref.read(roleNameProvider);
-        final isAdmin = roleName?.toLowerCase() == 'admin';
+        final isAdmin = ref.read(isAdminUserProvider);
         if (isAdmin) {
           _remoteConfigDebugShown = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -519,6 +536,7 @@ class _CartPageState extends ConsumerState<CartPage> {
   }
 
   Future<void> _deleteBirthdate(String id) async {
+    final isAdmin = ref.read(isAdminUserProvider);
     final l10n = ref.read(appL10nProvider);
     final confirm = await showConfirmationDialog(
       context: context,
@@ -559,7 +577,14 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${l10n['delete_failed_msg'] ?? 'Failed to delete record'}: $e',
+                RoleAwareMessageUtils.resolve(
+                  isAdmin: isAdmin,
+                  simpleMessage:
+                      l10n['delete_failed_msg'] ??
+                      'Unable to delete the record. Please try again.',
+                  adminMessage:
+                      '${l10n['delete_failed_msg'] ?? 'Failed to delete record'}: $e',
+                ),
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red[700],
@@ -576,6 +601,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     required String razorpayKey,
   }) async {
     final l10n = ref.read(appL10nProvider);
+    final isAdmin = ref.read(isAdminUserProvider);
     final user = ref.read(supabaseClientProvider).auth.currentUser;
 
     if (user == null) {
@@ -600,34 +626,6 @@ class _CartPageState extends ConsumerState<CartPage> {
     );
 
     if (confirm == true) {
-      if (kIsWeb) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              title: Text(
-                l10n['mobile_app_required_title'] ?? 'Mobile App Required',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              content: Text(
-                l10n['mobile_app_required_msg'] ??
-                    'Payments are currently optimized for our mobile app to ensure the best security. Please use the Android or iOS app to complete your purchase.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n['got_it'] ?? 'Got it'),
-                ),
-              ],
-            ),
-          );
-        }
-        return;
-      }
-
       if (!mounted) return;
       showLoadingDialog(
         context: context,
@@ -663,7 +661,14 @@ class _CartPageState extends ConsumerState<CartPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${l10n['payment_failed'] ?? 'Failed to initiate payment'}: $e',
+                RoleAwareMessageUtils.resolve(
+                  isAdmin: isAdmin,
+                  simpleMessage:
+                      l10n['payment_failed'] ??
+                      'Unable to start payment right now. Please try again.',
+                  adminMessage:
+                      '${l10n['payment_failed'] ?? 'Failed to initiate payment'}: $e',
+                ),
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red[700],
@@ -1396,6 +1401,7 @@ class _CartPageState extends ConsumerState<CartPage> {
           'Personality & Life Path Synergy (Combinations)',
       l10n['premium_feature_12'] ?? 'Practical Tips to Boost Your Energy',
     ];
+    final activePage = _premiumFeaturePage.clamp(0, features.length - 1);
 
     return MysticSection(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -1430,6 +1436,8 @@ class _CartPageState extends ConsumerState<CartPage> {
             ],
           ),
           const SizedBox(height: 20),
+          /*
+          Existing vertical list version kept for future rollback:
           ...features.map(
             (feature) => Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
@@ -1457,7 +1465,96 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          */
+          SizedBox(
+            height: 146,
+            child: PageView.builder(
+              controller: _premiumFeaturesController,
+              itemCount: features.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _premiumFeaturePage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final feature = features[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AnalysisTheme.getAccent(
+                          theme,
+                        ).withValues(alpha: 0.1),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AnalysisTheme.getAccent(
+                              theme,
+                            ).withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 20,
+                            color: AnalysisTheme.getAccent(
+                              theme,
+                            ).withValues(alpha: 0.85),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            feature,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSurfaceVariant,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(features.length, (index) {
+              final isActive = index == activePage;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: isActive ? 22 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? AnalysisTheme.getAccent(theme)
+                      : AnalysisTheme.getAccent(theme).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(

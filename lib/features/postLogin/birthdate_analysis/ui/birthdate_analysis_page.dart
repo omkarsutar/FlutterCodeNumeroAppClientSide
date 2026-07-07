@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:numero_shastra/shared/widgets/shared_widget_barrel.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -11,9 +13,12 @@ import '../providers/numerology_content_providers.dart';
 import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/providers/birthdate_localization_provider.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/auth_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../../../../core/providers/app_localization_provider.dart';
 import '../../../../core/utils/dialogs.dart';
+import '../../../../core/utils/platform/pdf_download.dart';
+import '../../../../core/utils/role_aware_message_utils.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../model/numerology_help_content.dart';
 import 'widgets/birthdate_share_template.dart';
@@ -21,6 +26,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:convert';
 
 import 'utils/analysis_theme.dart';
 import 'widgets/mystic_widgets.dart';
@@ -59,6 +65,8 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _pulseController;
   final ScreenshotController _screenshotController = ScreenshotController();
+  static const String _pendingRevealBirthdateKey = 'pending_reveal_birthdate';
+  bool _isResumingPendingReveal = false;
 
   final Map<NarrationSection, GlobalKey> _sectionKeys = {
     NarrationSection.intro: GlobalKey(),
@@ -95,12 +103,68 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restorePendingBirthdateAndResumeIfPossible();
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _storePendingRevealRequest(DateTime birthdate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _pendingRevealBirthdateKey,
+      DateFormat('yyyy-MM-dd').format(birthdate),
+    );
+  }
+
+  Future<void> _clearPendingRevealRequest() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingRevealBirthdateKey);
+  }
+
+  Future<DateTime?> _readPendingRevealRequest() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_pendingRevealBirthdateKey);
+    if (stored == null || stored.isEmpty) return null;
+    return DateTime.parse(stored);
+  }
+
+  Future<void> _resumePendingRevealIfNeeded() async {
+    if (_isResumingPendingReveal) return;
+
+    final session = ref.read(supabaseClientProvider).auth.currentSession;
+    if (session == null) return;
+
+    final pendingBirthdate = await _readPendingRevealRequest();
+    if (pendingBirthdate == null) return;
+
+    _isResumingPendingReveal = true;
+    try {
+      if (!mounted) return;
+      ref.read(birthdateProvider.notifier).state = pendingBirthdate;
+      await _handleOrderAction(pendingBirthdate, fromAutoResume: true);
+      await _clearPendingRevealRequest();
+    } finally {
+      _isResumingPendingReveal = false;
+    }
+  }
+
+  Future<void> _restorePendingBirthdateAndResumeIfPossible() async {
+    final pendingBirthdate = await _readPendingRevealRequest();
+    if (pendingBirthdate == null || !mounted) return;
+
+    ref.read(birthdateProvider.notifier).state = pendingBirthdate;
+
+    final session = ref.read(supabaseClientProvider).auth.currentSession;
+    if (session != null) {
+      await _resumePendingRevealIfNeeded();
+    }
   }
 
   Future<void> _refreshAnalysisData() async {
@@ -146,6 +210,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         onSurfaceVariant: AnalysisTheme.getBodyText(baseTheme),
       ),
     );
+
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      final wasLoggedOut = previous?.value?.session == null;
+      final isLoggedIn = next.value?.session != null;
+      if (wasLoggedOut && isLoggedIn) {
+        _resumePendingRevealIfNeeded();
+      }
+    });
 
     // Auto-scroll listener
     ref.listen(narrationProvider, (prev, next) {
@@ -565,12 +637,18 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     DateTime? birthdate,
     String? cartStatus,
   ) {
-    if (cartStatus != null && cartStatus.toLowerCase() != 'pending') {
+    if (birthdate == null) {
       return const SizedBox.shrink();
     }
 
     final theme = Theme.of(context);
+    final isAdmin = ref.watch(isAdminUserProvider);
     final isPending = cartStatus?.toLowerCase() == 'pending';
+    final isPurchased =
+        cartStatus != null &&
+        cartStatus.toLowerCase() != 'pending' &&
+        cartStatus.toLowerCase() != 'cancelled';
+    final showAdminDownloadButton = isAdmin && isPending;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -579,53 +657,133 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           .surface, // Keep background to prevent overlap issues
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: birthdate == null
-                ? null
-                : () {
+        child: showAdminDownloadButton
+            ? Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(analyticsServiceProvider)
+                            .logClickEvent('download_pdf_report_clicked');
+                        _downloadPdfReport();
+                      },
+                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 20),
+                      label: const Text(
+                        'Download PDF Report',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1D4ED8),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(analyticsServiceProvider)
+                            .logClickEvent('read_more_clicked');
+                        _navigateToCartAndSelect(birthdate);
+                      },
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                      label: Text(
+                        l10n['read_more'] ?? 'Unlock Full Analysis',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF4C542),
+                        foregroundColor: const Color(0xFF2B1A00),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
                     if (isPending) {
                       ref
                           .read(analyticsServiceProvider)
                           .logClickEvent('read_more_clicked');
                       _navigateToCartAndSelect(birthdate);
-                    } else {
+                      return;
+                    }
+
+                    if (isPurchased) {
                       ref
                           .read(analyticsServiceProvider)
-                          .logClickEvent('save_birthdate_clicked');
-                      _handleOrderAction(birthdate);
+                          .logClickEvent('download_pdf_report_clicked');
+                      _downloadPdfReport();
+                      return;
                     }
+
+                    ref
+                        .read(analyticsServiceProvider)
+                        .logClickEvent('save_birthdate_clicked');
+                    _handleOrderAction(birthdate);
                   },
-            icon: Icon(
-              isPending ? Icons.auto_awesome_rounded : Icons.lock_open_rounded,
-              size: 20,
-            ),
-            label: Text(
-              isPending
-                  ? (l10n['read_more'] ?? 'Unlock Full Analysis')
-                  : (l10n['save_birthdate'] ?? 'Reveal My Birthdate Secrets'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                letterSpacing: 1.2,
+                  icon: Icon(
+                    isPurchased
+                        ? Icons.picture_as_pdf_rounded
+                        : isPending
+                        ? Icons.auto_awesome_rounded
+                        : Icons.lock_open_rounded,
+                    size: 20,
+                  ),
+                  label: Text(
+                    isPurchased
+                        ? 'Download PDF Report'
+                        : isPending
+                        ? (l10n['read_more'] ?? 'Unlock Full Analysis')
+                        : (l10n['save_birthdate'] ??
+                              'Reveal My Birthdate Secrets'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isPurchased
+                        ? const Color(0xFF1D4ED8)
+                        : isPending
+                        ? const Color(0xFFF4C542)
+                        : AnalysisTheme.getAccent(theme),
+                    foregroundColor: isPurchased
+                        ? Colors.white
+                        : isPending
+                        ? const Color(0xFF2B1A00)
+                        : Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isPending
-                  ? const Color(0xFFF4C542)
-                  : AnalysisTheme.getAccent(theme),
-              foregroundColor: isPending
-                  ? const Color(0xFF2B1A00)
-                  : Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -709,10 +867,15 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     );
   }
 
-  Future<void> _handleOrderAction(DateTime birthdate) async {
+  Future<void> _handleOrderAction(
+    DateTime birthdate, {
+    bool fromAutoResume = false,
+  }) async {
     final l10n = ref.read(birthdateL10nProvider);
+    final isAdmin = ref.read(isAdminUserProvider);
     final session = ref.read(supabaseClientProvider).auth.currentSession;
     if (session == null) {
+      await _storePendingRevealRequest(birthdate);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -739,6 +902,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
 
       if (mounted) {
         Navigator.of(context).pop(); // Dismiss loading
+        await _clearPendingRevealRequest();
         await _showThankYouDialog();
         if (mounted) {
           _scrollToSection(NarrationSection.personality);
@@ -750,10 +914,146 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${l10n['order_failed_msg'] ?? 'Failed to place order'}: $e',
+              RoleAwareMessageUtils.resolve(
+                isAdmin: isAdmin,
+                simpleMessage:
+                    l10n['order_failed_msg'] ?? 'Failed to place order.',
+                adminMessage:
+                    '${l10n['order_failed_msg'] ?? 'Failed to place order'}: $e',
+              ),
               style: const TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red[700],
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadPdfReport() async {
+    final birthdateData = ref.read(currentBirthdateProvider);
+    if (birthdateData == null) return;
+
+    final l10n = ref.read(birthdateL10nProvider);
+    final appL10n = ref.read(appL10nProvider);
+    final client = ref.read(supabaseClientProvider);
+    final isAdmin = ref.read(isAdminUserProvider);
+
+    // Check if user is logged in
+    final session = client.auth.currentSession;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n['please_login'] ?? 'Please login to download PDF.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmDownload = await showConfirmationDialog(
+      context: context,
+      title: l10n['pdf_download_warning_title'] ?? 'Important Notice',
+      content:
+          l10n['pdf_download_warning_message'] ??
+          'Please keep this PDF file safe. You can download the PDF only one time for this birthdate.',
+      confirmLabel: l10n['pdf_download_warning_confirm'] ?? 'Continue Download',
+      cancelLabel: appL10n['cancel'] ?? 'Cancel',
+    );
+
+    if (!confirmDownload || !mounted) return;
+
+    if (!mounted) return;
+    showLoadingDialog(
+      context: context,
+      message: l10n['please_wait'] ?? 'Generating PDF report...',
+    );
+
+    try {
+      debugPrint(
+        '[PDF Download] Starting PDF generation for birthdate: ${birthdateData.id}',
+      );
+      debugPrint(
+        '[PDF Download] Session token exists: ${session.accessToken.isNotEmpty}',
+      );
+
+      // Try to invoke edge function
+      final response = await client.functions.invoke(
+        'generate-report',
+        method: HttpMethod.post,
+        body: {'birthdate_id': birthdateData.id},
+      );
+
+      debugPrint('[PDF Download] Response status: ${response.status}');
+      debugPrint(
+        '[PDF Download] Response data type: ${response.data.runtimeType}',
+      );
+
+      if (response.status == 200 && response.data != null) {
+        // response.data may be Uint8List, List<int>, String (base64) or the client may expose rawBytes
+        Uint8List pdfBytes;
+        final data = response.data;
+
+        if (data is Uint8List) {
+          pdfBytes = data;
+        } else if (data is List<int>) {
+          pdfBytes = Uint8List.fromList(List<int>.from(data));
+        } else if (data is String) {
+          // Some runtimes return base64 encoded strings for binary payloads
+          pdfBytes = base64Decode(data as String);
+        } else if ((response as dynamic).rawBytes != null) {
+          pdfBytes = (response as dynamic).rawBytes as Uint8List;
+        } else {
+          throw Exception(
+            'Unexpected response type from generate-report edge function',
+          );
+        }
+
+        final safeName = DateFormat('yyyyMMdd').format(birthdateData.birthdate);
+        final fileName =
+            'birthdate_analysis_${safeName}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+        await pdfDownloadHelper.savePdf(pdfBytes, fileName);
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PDF report downloaded successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        String errMsg =
+            'Failed to generate PDF report (status: ${response.status}).';
+        try {
+          if (response.data != null &&
+              response.data is Map &&
+              response.data['error'] != null) {
+            errMsg = response.data['error'].toString();
+          }
+        } catch (_) {}
+        throw Exception(errMsg);
+      }
+    } catch (e) {
+      debugPrint('[PDF Download] Error: $e');
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              RoleAwareMessageUtils.resolve(
+                isAdmin: isAdmin,
+                simpleMessage:
+                    'Unable to download the PDF report right now. Please try again.',
+                adminMessage: 'Failed to generate PDF report: $e',
+              ),
+            ),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -766,6 +1066,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     ); // Using global appL10n for general actions
     final theme = Theme.of(context);
     final controller = TextEditingController(text: currentName);
+    final isAdmin = ref.read(isAdminUserProvider);
 
     final newName = await showDialog<String>(
       context: context,
@@ -833,7 +1134,11 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to update name: $e',
+                RoleAwareMessageUtils.resolve(
+                  isAdmin: isAdmin,
+                  simpleMessage: 'Unable to update the name. Please try again.',
+                  adminMessage: 'Failed to update name: $e',
+                ),
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red[700],
@@ -1019,6 +1324,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
     }
 
     final l10n = ref.read(birthdateL10nProvider);
+    final isAdmin = ref.read(isAdminUserProvider);
 
     showLoadingDialog(
       context: context,
@@ -1105,7 +1411,14 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${l10n['share_error_msg'] ?? 'Failed to share'}: $e',
+              RoleAwareMessageUtils.resolve(
+                isAdmin: isAdmin,
+                simpleMessage:
+                    l10n['share_error_msg'] ??
+                    'Unable to share right now. Please try again.',
+                adminMessage:
+                    '${l10n['share_error_msg'] ?? 'Failed to share'}: $e',
+              ),
             ),
           ),
         );

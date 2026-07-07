@@ -32,13 +32,14 @@ class CartOrderService {
     final dateStr =
         "${birthdate.year}-${birthdate.month.toString().padLeft(2, '0')}-${birthdate.day.toString().padLeft(2, '0')}";
 
-    // Insert directly into birthdates table with status 'pending'
-    await client.from('birthdates').insert({
-      'user_id': userId,
-      'birthdate': dateStr,
-      'full_name': fullName,
-      'status': 'pending',
-    });
+    await client.rpc(
+      'upsert_birthdate_for_user',
+      params: {
+        'p_user_id': userId,
+        'p_birthdate': dateStr,
+        'p_full_name': fullName,
+      },
+    );
   }
 
   Future<void> updateBirthdateName({
@@ -86,11 +87,56 @@ class CartOrderService {
     }
   }
 
+  Future<String> createPaymentOrder({
+    required List<String> poIds,
+    required String userId,
+    required int amountPaise,
+    String currency = 'INR',
+    Map<String, String>? notes,
+  }) async {
+    if (!await _connectivityService.isOnline()) {
+      throw NoInternetException();
+    }
+
+    try {
+      final response = await client.functions.invoke(
+        'create-payment-order',
+        body: {
+          'amountPaise': amountPaise,
+          'currency': currency,
+          'userId': userId,
+          'poIds': poIds,
+          'receipt': 'po_${DateTime.now().millisecondsSinceEpoch}',
+          'notes': notes ?? const <String, String>{},
+        },
+      );
+
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Failed to create payment order');
+      }
+
+      final orderId = response.data['orderId'] as String?;
+      if (orderId == null || orderId.isEmpty) {
+        throw Exception('Payment order response did not include an order id');
+      }
+      return orderId;
+    } catch (e) {
+      developer.log(
+        'Error in create-payment-order Edge Function: $e',
+        name: 'CartOrderService',
+      );
+      rethrow;
+    }
+  }
+
   Future<void> deleteBirthdate(String id) async {
     if (!await _connectivityService.isOnline()) {
       throw NoInternetException();
     }
 
-    await client.from('birthdates').delete().eq('id', id);
+    await client.rpc(
+      'soft_delete_birthdate',
+      params: {'birthdate_id': id},
+    );
   }
 }

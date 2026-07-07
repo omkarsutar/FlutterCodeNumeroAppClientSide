@@ -17,8 +17,10 @@ class AppConstants {
       '846330251035-cmmm0sqq9elonjh3tl1h4rnfreet1h57.apps.googleusercontent.com';
 
   static const String trackingPackageName = appPackageName;
+  static const String trackingSupabaseUrl =
+      'https://toogplqvzycbngfzsutb.supabase.co/';
   static const String trackInstallEdgeFunctionUrl =
-      'https://toogplqvzycbngfzsutb.supabase.co/functions/v1/track-install-android-app';
+      '$trackingSupabaseUrl/functions/v1/track-install-android-app';
   static const String validatePromoCodeEdgeFunctionUrl =
-      'https://toogplqvzycbngfzsutb.supabase.co/functions/v1/validate-promocode';
+      '$trackingSupabaseUrl/functions/v1/validate-promocode';
 }

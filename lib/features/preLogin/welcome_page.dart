@@ -99,7 +99,7 @@ class WelcomePage extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    'RETAILER SIDE',
+                    'Stein Technologies',
                     style: TextStyle(
                       fontSize: subtitleFontSize,
                       fontWeight: FontWeight.w300,
@@ -112,7 +112,7 @@ class WelcomePage extends ConsumerWidget {
 
                   // Slogan
                   const Text(
-                    'Streamline your business orders with ease and precision.',
+                    'Discover your true purpose, hidden strengths, and future path with the power of ancient Numerology and the Lo Shu Grid.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,

@@ -42,7 +42,7 @@ final purchaseOrderAdapterProvider = Provider<PurchaseOrderAdapter>((ref) {
 
 /// Real-time stream of all purchase orders
 /// Uses StreamProvider.autoDispose for automatic cleanup when page is unmounted
-/// Strategy: Listen to purchase_order table, read from view_purchase_orders
+/// Strategy: Listen to purchase_order table and hydrate from the current row data
 /// The stream automatically updates when any purchase order is created, updated, or deleted
 final purchaseOrdersStreamProvider =
     StreamProvider.autoDispose<List<ModelPurchaseOrder>>((ref) {
@@ -86,8 +86,6 @@ final purchaseOrderStatusFilterProvider = StateProvider.family
 
 /// Form state for purchase order
 class PurchaseOrderFormState {
-  final String poRouteId;
-  final String poShopId;
   final double? poTotalAmount;
   final int? poLineItemCount;
   final String? userComment;
@@ -99,8 +97,6 @@ class PurchaseOrderFormState {
   final String? error;
 
   PurchaseOrderFormState({
-    this.poRouteId = '',
-    this.poShopId = '',
     this.poTotalAmount,
     this.poLineItemCount,
     this.userComment,
@@ -113,8 +109,6 @@ class PurchaseOrderFormState {
   });
 
   PurchaseOrderFormState copyWith({
-    String? poRouteId,
-    String? poShopId,
     double? poTotalAmount,
     int? poLineItemCount,
     String? userComment,
@@ -126,8 +120,6 @@ class PurchaseOrderFormState {
     String? error,
   }) {
     return PurchaseOrderFormState(
-      poRouteId: poRouteId ?? this.poRouteId,
-      poShopId: poShopId ?? this.poShopId,
       poTotalAmount: poTotalAmount ?? this.poTotalAmount,
       poLineItemCount: poLineItemCount ?? this.poLineItemCount,
       userComment: userComment ?? this.userComment,
@@ -158,12 +150,6 @@ class PurchaseOrderFormNotifier extends StateNotifier<PurchaseOrderFormState> {
     if (!_mounted) return;
 
     switch (fieldName) {
-      case ModelPurchaseOrderFields.poRouteId:
-        state = state.copyWith(poRouteId: value as String, error: null);
-        break;
-      case ModelPurchaseOrderFields.poShopId:
-        state = state.copyWith(poShopId: value as String, error: null);
-        break;
       case ModelPurchaseOrderFields.poTotalAmount:
         state = state.copyWith(
           poTotalAmount: value != null
@@ -212,24 +198,12 @@ class PurchaseOrderFormNotifier extends StateNotifier<PurchaseOrderFormState> {
   Future<bool> saveEntity({String? entityId}) async {
     if (!_mounted) return false;
 
-    // Validation
-    if (state.poRouteId.trim().isEmpty) {
-      state = state.copyWith(error: 'Route is required');
-      return false;
-    }
-    if (state.poShopId.trim().isEmpty) {
-      state = state.copyWith(error: 'Shop is required');
-      return false;
-    }
-
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       final service = ref.read(purchaseOrderServiceProvider);
       final entity = ModelPurchaseOrder(
         poId: entityId,
-        poRouteId: state.poRouteId.trim(),
-        poShopId: state.poShopId.trim(),
         poTotalAmount: state.poTotalAmount,
         poLineItemCount: state.poLineItemCount,
         userComment: state.userComment,
@@ -283,8 +257,6 @@ class PurchaseOrderFormNotifier extends StateNotifier<PurchaseOrderFormState> {
   void loadEntity(ModelPurchaseOrder entity) {
     if (!_mounted) return;
     state = PurchaseOrderFormState(
-      poRouteId: entity.poRouteId ?? '',
-      poShopId: entity.poShopId ?? '',
       poTotalAmount: entity.poTotalAmount,
       poLineItemCount: entity.poLineItemCount,
       userComment: entity.userComment,
