@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:numero_shastra/core/providers/core_providers.dart';
+import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/birthdate_feature_model.dart';
 import 'package:numero_shastra/features/postLogin/birthdate_analysis/model/numerology_models.dart';
 import 'package:numero_shastra/features/postLogin/birthdate_analysis/services/numerology_rpc_service.dart';
 import 'package:numero_shastra/features/postLogin/cart/providers/birthdate_record_providers.dart';
@@ -234,4 +235,21 @@ final combinationDataProvider = FutureProvider<List<CombinationData>>((
   return response.map(CombinationData.fromMap).toList();
 });
 
+/// Fetches all feature rows from the [birthdate_features] table.
+/// Used by the cart page's "You will get" section.
+final birthdateFeaturesProvider = FutureProvider<List<BirthdateFeature>>(
+  (ref) async {
+    final client = ref.watch(supabaseClientProvider);
+    final response = await client
+        .from('birthdate_features')
+        .select()
+        .order('id');
 
+    return (response as List)
+        .map(
+          (item) =>
+              BirthdateFeature.fromMap(item as Map<String, dynamic>),
+        )
+        .toList();
+  },
+);

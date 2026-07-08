@@ -16,6 +16,8 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/utils/role_aware_message_utils.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../birthdate_analysis/providers/numerology_content_providers.dart';
+import '../../../../core/providers/localization_provider.dart';
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -1380,202 +1382,276 @@ class _CartPageState extends ConsumerState<CartPage> {
     );
   }
 
+  /// Builds the "You will get ✨" section at the bottom of the cart list.
+  ///
+  /// Data is fetched from the [birthdate_features] Supabase table and rendered
+  /// as an image-first horizontally-scrollable PageView.
+  /// Title is shown above the image; description is shown below.
   Widget _buildPremiumFeaturesTile(
     BuildContext context,
     Map<String, String> l10n,
   ) {
     final theme = Theme.of(context);
-    final features = [
-      l10n['premium_feature_1'] ?? 'Detailed Lo Shu Grid Analysis',
-      l10n['premium_feature_2'] ?? 'Career Insights',
-      l10n['premium_feature_3'] ?? 'Personalized Remedies for Missing Numbers',
-      l10n['premium_feature_4'] ?? 'Advanced Personality & Strength Mapping',
-      l10n['premium_feature_5'] ?? 'Life Path & Pinnacle Phase Guidance',
-      l10n['premium_feature_6'] ?? 'Oracle Voice Guide for Deeper Insights',
-      l10n['premium_feature_7'] ?? 'Stock Market & Financial Nature Analysis',
-      l10n['premium_feature_8'] ?? 'Detailed Number Occurrence Insights',
-      l10n['premium_feature_9'] ??
-          'Horizontal, Vertical & Diagonal Planes Analysis',
-      l10n['premium_feature_10'] ?? 'Personalized Lucky Colors, Days & Numbers',
-      l10n['premium_feature_11'] ??
-          'Personality & Life Path Synergy (Combinations)',
-      l10n['premium_feature_12'] ?? 'Practical Tips to Boost Your Energy',
-    ];
-    final activePage = _premiumFeaturePage.clamp(0, features.length - 1);
+    final accent = AnalysisTheme.getAccent(theme);
+    final lang = ref.watch(languageProvider);
+    final featuresAsync = ref.watch(birthdateFeaturesProvider);
 
-    return MysticSection(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.stars_rounded,
-                  color: Colors.amber,
-                  size: 28,
+    return featuresAsync.when(
+      loading: () => MysticSection(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: MysticHeader(
+                title: 'You will get ✨',
+                icon: Icons.stars_rounded,
+                iconColor: Colors.amber,
+                iconBgColor: Colors.amber.withValues(alpha: 0.1),
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 340,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: accent,
+                  strokeWidth: 2,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  l10n['premium_title'] ?? 'What you get in Detailed Analysis',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AnalysisTheme.getAccent(theme),
-                  ),
+            ),
+          ],
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (features) {
+        if (features.isEmpty) return const SizedBox.shrink();
+
+        final activePage =
+            _premiumFeaturePage.clamp(0, features.length - 1);
+
+        return MysticSection(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Section header ──────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: MysticHeader(
+                  title: 'You will get ✨',
+                  icon: Icons.stars_rounded,
+                  iconColor: Colors.amber,
+                  iconBgColor: Colors.amber.withValues(alpha: 0.1),
                 ),
+              ),
+              const SizedBox(height: 18),
+
+              // ── Feature cards PageView ───────────────────────────────
+              SizedBox(
+                height: 340,
+                child: PageView.builder(
+                  controller: _premiumFeaturesController,
+                  itemCount: features.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _premiumFeaturePage = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final feature = features[index];
+                    final title = feature.getTitle(lang);
+                    final description = feature.getDescription(lang);
+                    final hasImage = feature.imageUrl != null &&
+                        feature.imageUrl!.isNotEmpty;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: accent.withValues(alpha: 0.12),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 18,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ── Title above image ────────────────────
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    accent.withValues(alpha: 0.08),
+                                    theme.colorScheme.surface,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Text(
+                                title,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: accent,
+                                  letterSpacing: 0.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+
+                            // ── Full-width image ─────────────────────
+                            Expanded(
+                              child: hasImage
+                                  ? Image.network(
+                                      feature.imageUrl!,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) =>
+                                          _buildFeaturePlaceholder(
+                                            context,
+                                            accent,
+                                          ),
+                                      loadingBuilder: (
+                                        context,
+                                        child,
+                                        progress,
+                                      ) {
+                                        if (progress == null) return child;
+                                        return Container(
+                                          color: accent
+                                              .withValues(alpha: 0.05),
+                                          child: Center(
+                                            child:
+                                                CircularProgressIndicator(
+                                              value: progress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? progress
+                                                          .cumulativeBytesLoaded /
+                                                      progress
+                                                          .expectedTotalBytes!
+                                                  : null,
+                                              color: accent,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : _buildFeaturePlaceholder(
+                                      context,
+                                      accent,
+                                    ),
+                            ),
+
+                            // ── Description below image ──────────────
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                10,
+                                16,
+                                14,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    theme.colorScheme.surface,
+                                    accent.withValues(alpha: 0.05),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                              child: Text(
+                                description,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme
+                                      .colorScheme.onSurfaceVariant,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ── Page indicator dots ──────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(features.length, (index) {
+                  final isActive = index == activePage;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 22 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? accent
+                          : accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          /*
-          Existing vertical list version kept for future rollback:
-          ...features.map(
-            (feature) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 20,
-                    color: AnalysisTheme.getAccent(
-                      theme,
-                    ).withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feature,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          */
-          SizedBox(
-            height: 146,
-            child: PageView.builder(
-              controller: _premiumFeaturesController,
-              itemCount: features.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _premiumFeaturePage = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                final feature = features[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AnalysisTheme.getAccent(
-                          theme,
-                        ).withValues(alpha: 0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AnalysisTheme.getAccent(
-                              theme,
-                            ).withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.check_circle_outline_rounded,
-                            size: 20,
-                            color: AnalysisTheme.getAccent(
-                              theme,
-                            ).withValues(alpha: 0.85),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurfaceVariant,
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(features.length, (index) {
-              final isActive = index == activePage;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: isActive ? 22 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AnalysisTheme.getAccent(theme)
-                      : AnalysisTheme.getAccent(theme).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AnalysisTheme.getAccent(theme).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AnalysisTheme.getAccent(theme).withValues(alpha: 0.1),
-              ),
-            ),
-            child: Text(
-              l10n['premium_footer'] ??
-                  'Unlock the full potential of your birthdate today!',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w700,
-                color: AnalysisTheme.getAccent(theme),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+        );
+      },
+    );
+  }
+
+  /// Branded gradient placeholder shown when [imageUrl] is absent or fails.
+  Widget _buildFeaturePlaceholder(BuildContext context, Color accent) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.08),
+            accent.withValues(alpha: 0.18),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.auto_awesome_rounded,
+          size: 48,
+          color: accent.withValues(alpha: 0.35),
+        ),
       ),
     );
   }
