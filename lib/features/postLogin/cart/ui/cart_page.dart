@@ -16,8 +16,7 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/dialogs.dart';
 import '../../../../core/utils/role_aware_message_utils.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../birthdate_analysis/providers/numerology_content_providers.dart';
-import '../../../../core/providers/localization_provider.dart';
+import '../../birthdate_analysis/ui/sections/you_will_get_section.dart';
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -29,8 +28,6 @@ class CartPage extends ConsumerStatefulWidget {
 class _CartPageState extends ConsumerState<CartPage> {
   late final CartController _cartController;
   final TextEditingController _promoController = TextEditingController();
-  late final PageController _premiumFeaturesController;
-  int _premiumFeaturePage = 0;
   bool _remoteConfigDebugShown = false;
 
   String _appliedPromoCode = 'none';
@@ -42,7 +39,6 @@ class _CartPageState extends ConsumerState<CartPage> {
   void initState() {
     super.initState();
     _cartController = ref.read(cartControllerProvider);
-    _premiumFeaturesController = PageController(viewportFraction: 0.88);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cartController.initRazorpay(
         onPaymentSuccess: _onPaymentSuccess,
@@ -55,7 +51,6 @@ class _CartPageState extends ConsumerState<CartPage> {
   void dispose() {
     _cartController.disposeRazorpay();
     _promoController.dispose();
-    _premiumFeaturesController.dispose();
     super.dispose();
   }
 
@@ -385,10 +380,9 @@ class _CartPageState extends ConsumerState<CartPage> {
                       itemBuilder: (context, index) {
                         // Last item: show the "What you get" premium features tile
                         if (index == unpaidOrders.length) {
-                          final cartL10n = ref.read(birthdateL10nProvider);
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 16),
-                            child: _buildPremiumFeaturesTile(context, cartL10n),
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 8, bottom: 16),
+                            child: YouWillGetSection(),
                           );
                         }
 
@@ -1321,14 +1315,13 @@ class _CartPageState extends ConsumerState<CartPage> {
 
   Widget _buildPromoFooter(BuildContext context, double basePrice) {
     final theme = Theme.of(context);
-    final l10n = ref.watch(birthdateL10nProvider);
     final hasBirthdates = ref
         .watch(effectiveBirthdateRecordsProvider)
         .isNotEmpty;
 
     return Column(
       children: [
-        _buildPremiumFeaturesTile(context, l10n),
+        const YouWillGetSection(),
         const SizedBox(height: 16),
         if (hasBirthdates)
           Container(
@@ -1379,280 +1372,6 @@ class _CartPageState extends ConsumerState<CartPage> {
             ),
           ),
       ],
-    );
-  }
-
-  /// Builds the "You will get ✨" section at the bottom of the cart list.
-  ///
-  /// Data is fetched from the [birthdate_features] Supabase table and rendered
-  /// as an image-first horizontally-scrollable PageView.
-  /// Title is shown above the image; description is shown below.
-  Widget _buildPremiumFeaturesTile(
-    BuildContext context,
-    Map<String, String> l10n,
-  ) {
-    final theme = Theme.of(context);
-    final accent = AnalysisTheme.getAccent(theme);
-    final lang = ref.watch(languageProvider);
-    final featuresAsync = ref.watch(birthdateFeaturesProvider);
-
-    return featuresAsync.when(
-      loading: () => MysticSection(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: MysticHeader(
-                title: 'You will get ✨',
-                icon: Icons.stars_rounded,
-                iconColor: Colors.amber,
-                iconBgColor: Colors.amber.withValues(alpha: 0.1),
-              ),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              height: 340,
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: accent,
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (features) {
-        if (features.isEmpty) return const SizedBox.shrink();
-
-        final activePage =
-            _premiumFeaturePage.clamp(0, features.length - 1);
-
-        return MysticSection(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Section header ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: MysticHeader(
-                  title: 'You will get ✨',
-                  icon: Icons.stars_rounded,
-                  iconColor: Colors.amber,
-                  iconBgColor: Colors.amber.withValues(alpha: 0.1),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // ── Feature cards PageView ───────────────────────────────
-              SizedBox(
-                height: 340,
-                child: PageView.builder(
-                  controller: _premiumFeaturesController,
-                  itemCount: features.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _premiumFeaturePage = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final feature = features[index];
-                    final title = feature.getTitle(lang);
-                    final description = feature.getDescription(lang);
-                    final hasImage = feature.imageUrl != null &&
-                        feature.imageUrl!.isNotEmpty;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: accent.withValues(alpha: 0.12),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 18,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // ── Title above image ────────────────────
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    accent.withValues(alpha: 0.08),
-                                    theme.colorScheme.surface,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Text(
-                                title,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: accent,
-                                  letterSpacing: 0.2,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-
-                            // ── Full-width image ─────────────────────
-                            Expanded(
-                              child: hasImage
-                                  ? Image.network(
-                                      feature.imageUrl!,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) =>
-                                          _buildFeaturePlaceholder(
-                                            context,
-                                            accent,
-                                          ),
-                                      loadingBuilder: (
-                                        context,
-                                        child,
-                                        progress,
-                                      ) {
-                                        if (progress == null) return child;
-                                        return Container(
-                                          color: accent
-                                              .withValues(alpha: 0.05),
-                                          child: Center(
-                                            child:
-                                                CircularProgressIndicator(
-                                              value: progress
-                                                          .expectedTotalBytes !=
-                                                      null
-                                                  ? progress
-                                                          .cumulativeBytesLoaded /
-                                                      progress
-                                                          .expectedTotalBytes!
-                                                  : null,
-                                              color: accent,
-                                              strokeWidth: 2,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : _buildFeaturePlaceholder(
-                                      context,
-                                      accent,
-                                    ),
-                            ),
-
-                            // ── Description below image ──────────────
-                            Container(
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                10,
-                                16,
-                                14,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    theme.colorScheme.surface,
-                                    accent.withValues(alpha: 0.05),
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ),
-                              ),
-                              child: Text(
-                                description,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme
-                                      .colorScheme.onSurfaceVariant,
-                                  height: 1.5,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ── Page indicator dots ──────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(features.length, (index) {
-                  final isActive = index == activePage;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: isActive ? 22 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? accent
-                          : accent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Branded gradient placeholder shown when [imageUrl] is absent or fails.
-  Widget _buildFeaturePlaceholder(BuildContext context, Color accent) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            accent.withValues(alpha: 0.08),
-            accent.withValues(alpha: 0.18),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.auto_awesome_rounded,
-          size: 48,
-          color: accent.withValues(alpha: 0.35),
-        ),
-      ),
     );
   }
 
