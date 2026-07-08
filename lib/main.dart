@@ -16,6 +16,7 @@ import 'core/services/messaging_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/widgets/force_update_gate.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -107,6 +108,9 @@ class MainApp extends ConsumerWidget {
         themeMode: themeMode,
         theme: buildLightTheme(),
         darkTheme: buildDarkTheme(),
+        builder: (context, child) {
+          return ForceUpdateGate(child: child ?? const SizedBox.shrink());
+        },
       ),
     );
   }
