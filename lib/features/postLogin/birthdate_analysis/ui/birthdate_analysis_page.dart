@@ -49,6 +49,7 @@ import 'sections/pinnacle_section.dart';
 import 'sections/life_path_section.dart';
 import 'sections/boosting_personality_section.dart';
 import 'sections/testimonials_section.dart';
+import 'sections/you_will_get_section.dart';
 import 'sections/user_feedback_section.dart';
 import '../providers/narration_provider.dart';
 
@@ -554,6 +555,7 @@ class _BirthdateAnalysisPageState extends ConsumerState<BirthdateAnalysisPage>
                                       pulseController: _pulseController,
                                     ),
                                   ],
+                                  const YouWillGetSection(),
                                   const SizedBox(height: 160),
                                 ],
                               ),
@@ -1462,3 +1464,5 @@ class _BirthdateHeaderDelegate extends SliverPersistentHeaderDelegate {
         backgroundColor != oldDelegate.backgroundColor;
   }
 }
+
+
