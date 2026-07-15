@@ -17,6 +17,7 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
+  final _userIdsController = TextEditingController();
 
   bool _sendToAll = false;
   final List<String> _selectedUserIds = [];
@@ -25,15 +26,34 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
   void dispose() {
     _titleController.dispose();
     _bodyController.dispose();
+    _userIdsController.dispose();
     super.dispose();
+  }
+
+  List<String> _parseUserIds(String rawIds) {
+    return rawIds
+        .split(RegExp(r'[\s,;]+'))
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+  }
+
+  List<String> _getRecipientUserIds() {
+    final pastedIds = _parseUserIds(_userIdsController.text);
+    return pastedIds.isNotEmpty ? pastedIds : _selectedUserIds;
   }
 
   Future<void> _handleSend() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_sendToAll && _selectedUserIds.isEmpty) {
+    final userIds = _getRecipientUserIds();
+
+    if (!_sendToAll && userIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one recipient')),
+        const SnackBar(
+          content: Text('Please select or paste at least one recipient'),
+        ),
       );
       return;
     }
@@ -41,7 +61,7 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
     final success = await ref
         .read(notificationControllerProvider.notifier)
         .sendNotification(
-          userIds: _selectedUserIds,
+          userIds: userIds,
           title: _titleController.text.trim(),
           body: _bodyController.text.trim(),
           sendToAll: _sendToAll,
@@ -56,6 +76,7 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
         _bodyController.clear();
         setState(() {
           _selectedUserIds.clear();
+          _userIdsController.clear();
           _sendToAll = false;
         });
       } else {
@@ -195,7 +216,37 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Select specific users:',
+          'Recipient user IDs',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _userIdsController,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            labelText: 'Paste user IDs',
+            hintText: 'One ID per line, or comma/space-separated',
+            border: OutlineInputBorder(),
+            alignLabelWithHint: true,
+          ),
+          validator: (val) {
+            if (!_sendToAll) {
+              final pastedIds = _parseUserIds(val ?? '');
+              if (pastedIds.isEmpty && _selectedUserIds.isEmpty) {
+                return 'Enter or select at least one user ID';
+              }
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Pasted IDs take precedence over selected users.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Or select users from the list below:',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -206,54 +257,49 @@ class _NotificationAdminPageState extends ConsumerState<NotificationAdminPage> {
           ),
           constraints: const BoxConstraints(maxHeight: 250),
           child: StreamBuilder<List<ModelUser>>(
-                  stream: ref
-                      .watch(supabaseClientProvider)
-                      .from(ModelUserFields.table)
-                      .stream(primaryKey: [ModelUserFields.userId])
-                      .map(
-                        (list) =>
-                            list.map((m) => ModelUser.fromMap(m)).toList(),
-                      ),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-                    final users = snapshot.data ?? [];
-                    if (users.isEmpty) {
-                      return const Center(child: Text('No users found'));
-                    }
+            stream: ref
+                .watch(supabaseClientProvider)
+                .from(ModelUserFields.table)
+                .stream(primaryKey: [ModelUserFields.userId])
+                .map((list) => list.map((m) => ModelUser.fromMap(m)).toList()),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              final users = snapshot.data ?? [];
+              if (users.isEmpty) {
+                return const Center(child: Text('No users found'));
+              }
 
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: users.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final user = users[index];
-                        final isSelected = _selectedUserIds.contains(
-                          user.userId,
-                        );
+              return ListView.separated(
+                shrinkWrap: true,
+                itemCount: users.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final isSelected = _selectedUserIds.contains(user.userId);
 
-                        return CheckboxListTile(
-                          title: Text(user.fullName ?? 'Unknown User'),
-                          subtitle: Text(user.userId),
-                          value: isSelected,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedUserIds.add(user.userId);
-                              } else {
-                                _selectedUserIds.remove(user.userId);
-                              }
-                            });
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
+                  return CheckboxListTile(
+                    title: Text(user.fullName ?? 'Unknown User'),
+                    subtitle: Text(user.userId),
+                    value: isSelected,
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          _selectedUserIds.add(user.userId);
+                        } else {
+                          _selectedUserIds.remove(user.userId);
+                        }
+                      });
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
         if (_selectedUserIds.isNotEmpty)
           Padding(
